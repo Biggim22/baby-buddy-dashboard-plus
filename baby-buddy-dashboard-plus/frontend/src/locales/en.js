@@ -25,6 +25,7 @@ export default {
     delete: "Delete",
     deleting: "Deleting...",
     saveFailed: "Save failed - check your connection and try again.",
+    invalidNumber: "Enter a valid number.",
     deleteFailed: "Delete failed - check your connection and try again.",
     chartSettings: "Chart settings",
     showOnChart: "Show on chart",

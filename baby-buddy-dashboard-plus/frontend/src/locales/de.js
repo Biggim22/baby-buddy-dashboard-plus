@@ -25,6 +25,7 @@ export default {
     delete: "Löschen",
     deleting: "Löschen...",
     saveFailed: "Speichern fehlgeschlagen – bitte Verbindung prüfen und erneut versuchen.",
+    invalidNumber: "Bitte eine gültige Zahl eingeben.",
     deleteFailed: "Löschen fehlgeschlagen – bitte Verbindung prüfen und erneut versuchen.",
     chartSettings: "Diagramm-Einstellungen",
     showOnChart: "Im Diagramm anzeigen",

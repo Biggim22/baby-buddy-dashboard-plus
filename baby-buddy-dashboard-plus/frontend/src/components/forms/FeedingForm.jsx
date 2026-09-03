@@ -6,7 +6,7 @@ import { colors } from "../../utils/colors";
 import { useUnits } from "../../utils/units";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
-import { toApiDatetime } from "../../utils/formatters";
+import { parseLocalizedNumber, toApiDatetime } from "../../utils/formatters";
 
 function toLocalDatetime(date) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -47,11 +47,16 @@ export default function FeedingForm({ childId, timerId, entry, onDone, onClose }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const amountValue = amount.trim() ? parseLocalizedNumber(amount) : null;
+    if (amount.trim() && (amountValue == null || amountValue < 0)) {
+      setError(t("common.invalidNumber"));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const data = { type, method };
-      if (amount) data.amount = parseFloat(amount);
+      if (amountValue != null) data.amount = amountValue;
       if (notes.trim()) data.notes = notes.trim();
       if (isEdit) {
         data.start = toApiDatetime(start);
@@ -96,7 +101,7 @@ export default function FeedingForm({ childId, timerId, entry, onDone, onClose }
           <FormSelect options={METHODS} value={method} onChange={(e) => setMethod(e.target.value)} />
         </FormField>
         <FormField label={t("feedingForm.amount", { unit: units.volume })}>
-          <FormInput type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("common.optional")} min="0" step="5" />
+        <FormInput type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("common.optional")} />
         </FormField>
         {(isEdit || !timerId) && (
           <>

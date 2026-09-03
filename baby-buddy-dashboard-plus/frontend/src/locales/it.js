@@ -25,6 +25,7 @@ export default {
     delete: "Elimina",
     deleting: "Eliminazione...",
     saveFailed: "Salvataggio non riuscito - controlla la connessione e riprova.",
+    invalidNumber: "Inserisci un numero valido.",
     deleteFailed: "Eliminazione non riuscita - controlla la connessione e riprova.",
     chartSettings: "Impostazioni grafico",
     showOnChart: "Mostra sul grafico",

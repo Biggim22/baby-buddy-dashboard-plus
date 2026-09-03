@@ -1,5 +1,5 @@
 name: "Baby Buddy Dashboard Plus"
-version: "2.3.1"
+version: "2.3.2"
 slug: "baby-buddy-dashboard-plus"
 description: >-
   A comprehensive Home Assistant dashboard for Baby Buddy. In addition to the
@@ -8,8 +8,8 @@ description: >-
   entries, care and bathing tracking, daily tasks, one-time appointments and
   configurable Home Assistant notifications or voice announcements. Display,
   language, overview content and individual page settings can be customized
-  directly in the dashboard. Version 2.3.1 adds forecast dates to the diaper
-  stock calculator and improves editing of care-history entries.
+  directly in the dashboard. Version 2.3.2 accepts locale-friendly decimal
+  input and validates local date/time values before they are saved.
 url: "https://github.com/Biggim22/baby-buddy-dashboard-plus"
 init: false
 homeassistant: "2026.4.0"

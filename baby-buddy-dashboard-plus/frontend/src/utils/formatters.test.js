@@ -17,6 +17,7 @@ import {
   averageBreastFeedingDurationMs,
   translateDosageUnit,
   toApiDatetime,
+  parseLocalizedNumber,
   calculateBmi,
 } from "./formatters";
 import { setLanguage } from "../locales";
@@ -26,6 +27,10 @@ const NOW = new Date("2026-07-20T12:00:00.000Z");
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
+  // Formatting assertions below use English unless a test explicitly switches
+  // language. Resetting here prevents a previous translation test from leaking
+  // its language through the shared browser storage into an unrelated test.
+  setLanguage("en");
 });
 
 afterEach(() => {
@@ -60,6 +65,31 @@ describe("toApiDatetime", () => {
     expect(roundTripped.getDate()).toBe(1);
     expect(roundTripped.getHours()).toBe(0);
     expect(roundTripped.getMinutes()).toBe(15);
+  });
+
+  it("rejects malformed and impossible local date/time values instead of normalising them", () => {
+    expect(() => toApiDatetime("2026-02-30T10:00")).toThrow(/Invalid/);
+    expect(() => toApiDatetime("2026-07-23 07:22")).toThrow(/Invalid/);
+    expect(() => toApiDatetime("")).toThrow(/Invalid/);
+  });
+});
+
+describe("parseLocalizedNumber", () => {
+  it("accepts both decimal separators", () => {
+    expect(parseLocalizedNumber("5,25")).toBe(5.25);
+    expect(parseLocalizedNumber("5.25")).toBe(5.25);
+  });
+
+  it("handles common thousands and decimal separator combinations", () => {
+    expect(parseLocalizedNumber("1.234,5")).toBe(1234.5);
+    expect(parseLocalizedNumber("1,234.5")).toBe(1234.5);
+    expect(parseLocalizedNumber("1 234,5")).toBe(1234.5);
+  });
+
+  it("rejects empty or malformed values", () => {
+    expect(parseLocalizedNumber("")).toBeNull();
+    expect(parseLocalizedNumber("5,2,1")).toBeNull();
+    expect(parseLocalizedNumber("five")).toBeNull();
   });
 });
 

@@ -7,6 +7,7 @@ import { useUnits, UnitContext } from "../../utils/units";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
 import { findMeasurementWithinDay, syncBmiForDate } from "../../utils/bmiSync";
+import { parseLocalizedNumber } from "../../utils/formatters";
 
 function toLocalDate(date) {
   const d = new Date(date);
@@ -26,12 +27,16 @@ export default function HeightForm({ childId, entry, onDone, onClose, weights = 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!height) return;
+    const heightValue = parseLocalizedNumber(height);
+    if (heightValue == null || heightValue <= 0 || heightValue > 200) {
+      setError(t("common.invalidNumber"));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const data = {
-        height: parseFloat(height),
+        height: heightValue,
         date,
       };
       if (isEdit) {
@@ -47,7 +52,7 @@ export default function HeightForm({ childId, entry, onDone, onClose, weights = 
           await syncBmiForDate({
             childId,
             date: matchingWeight.date,
-            weightValue: parseFloat(matchingWeight.weight),
+            weightValue: Number(matchingWeight.weight),
             heightValue: data.height,
             bmis,
             unitSystem,
@@ -81,7 +86,8 @@ export default function HeightForm({ childId, entry, onDone, onClose, weights = 
       <form onSubmit={handleSubmit}>
         <FormField label={t("heightForm.amount", { unit: units.length })}>
           <FormInput
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={height}
             onChange={(e) => setHeight(e.target.value)}
             placeholder="50.0"

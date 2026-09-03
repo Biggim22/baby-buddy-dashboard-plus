@@ -6,12 +6,59 @@ import { translate as t, getLocale, getTimeFormat } from "../locales";
 // not the browser's. If that differs from the device's local zone (e.g. server on UTC,
 // household on UTC+2), the same wall-clock time is silently misinterpreted as a couple
 // hours off - which surfaced as real "Date/time can not be in the future" API rejections
-// and bogus overlap conflicts. new Date(value) correctly parses a timezone-less
-// date-time string as LOCAL time (per the ECMAScript Date Time String spec), so
-// .toISOString() from there gives an unambiguous absolute UTC instant that Baby Buddy
-// interprets identically regardless of its own configured timezone.
+// and bogus overlap conflicts. Constructing the value from local date parts and emitting
+// UTC gives Baby Buddy one unambiguous instant. The component check also rejects impossible
+// calendar dates and local times skipped by a daylight-saving transition instead of silently
+// normalising them to a different time.
 export function toApiDatetime(localDatetimeValue) {
-  return new Date(localDatetimeValue).toISOString();
+  const match = String(localDatetimeValue || "").match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/
+  );
+  if (!match) throw new Error("Invalid local date/time value");
+
+  const [, year, month, day, hour, minute, second = "0", milliseconds = "0"] = match;
+  const local = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second),
+    Number(milliseconds.padEnd(3, "0"))
+  );
+  if (
+    local.getFullYear() !== Number(year) ||
+    local.getMonth() !== Number(month) - 1 ||
+    local.getDate() !== Number(day) ||
+    local.getHours() !== Number(hour) ||
+    local.getMinutes() !== Number(minute) ||
+    local.getSeconds() !== Number(second)
+  ) {
+    throw new Error("Invalid or non-existent local date/time value");
+  }
+  return local.toISOString();
+}
+
+// Browsers commonly reject a decimal comma in <input type="number"> even though it is the
+// normal separator in many locales. Keep the raw text in the form and normalise it only when
+// saving. A single comma/dot is treated as the decimal separator; when both appear, the last
+// one is the decimal separator and the other one is treated as a grouping separator.
+export function parseLocalizedNumber(value) {
+  const compact = String(value ?? "").trim().replace(/[\s\u00A0]/g, "");
+  if (!compact) return null;
+
+  let normalized = compact;
+  if (compact.includes(",") && compact.includes(".")) {
+    normalized = compact.lastIndexOf(",") > compact.lastIndexOf(".")
+      ? compact.replace(/\./g, "").replace(",", ".")
+      : compact.replace(/,/g, "");
+  } else if (compact.includes(",")) {
+    normalized = compact.replace(",", ".");
+  }
+
+  if (!/^[+-]?(?:\d+|\d*\.\d+)$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export function getAge(birthDate) {

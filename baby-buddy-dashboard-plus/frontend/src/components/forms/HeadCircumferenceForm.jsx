@@ -6,6 +6,7 @@ import { colors } from "../../utils/colors";
 import { useUnits } from "../../utils/units";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
+import { parseLocalizedNumber } from "../../utils/formatters";
 
 function toLocalDate(date) {
   const d = new Date(date);
@@ -26,12 +27,16 @@ export default function HeadCircumferenceForm({ childId, entry, onDone, onClose 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!headCircumference) return;
+    const headCircumferenceValue = parseLocalizedNumber(headCircumference);
+    if (headCircumferenceValue == null || headCircumferenceValue <= 0 || headCircumferenceValue > 70) {
+      setError(t("common.invalidNumber"));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const data = {
-        head_circumference: parseFloat(headCircumference),
+        head_circumference: headCircumferenceValue,
         date,
       };
       if (isEdit) {
@@ -64,7 +69,8 @@ export default function HeadCircumferenceForm({ childId, entry, onDone, onClose 
       <form onSubmit={handleSubmit}>
         <FormField label={t("headCircumferenceForm.amount", { unit: units.length })}>
           <FormInput
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={headCircumference}
             onChange={(e) => setHeadCircumference(e.target.value)}
             placeholder="35.0"

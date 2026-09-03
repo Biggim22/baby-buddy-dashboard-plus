@@ -6,7 +6,7 @@ import { colors } from "../../utils/colors";
 import { useUnits } from "../../utils/units";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
-import { toApiDatetime } from "../../utils/formatters";
+import { parseLocalizedNumber, toApiDatetime } from "../../utils/formatters";
 
 function toLocalDatetime(date) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -24,11 +24,15 @@ export default function TemperatureForm({ childId, entry, onDone, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!temp) return;
+    const temperatureValue = parseLocalizedNumber(temp);
+    if (temperatureValue == null || temperatureValue < 30 || temperatureValue > 45) {
+      setError(t("common.invalidNumber"));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      const data = { temperature: parseFloat(temp), time: toApiDatetime(time) };
+      const data = { temperature: temperatureValue, time: toApiDatetime(time) };
       if (isEdit) {
         await api.updateTemperature(entry.id, data);
       } else {
@@ -59,7 +63,8 @@ export default function TemperatureForm({ childId, entry, onDone, onClose }) {
       <form onSubmit={handleSubmit}>
         <FormField label={t("temperatureForm.amount", { unit: units.temp })}>
           <FormInput
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={temp}
             onChange={(e) => setTemp(e.target.value)}
             placeholder="36.6"

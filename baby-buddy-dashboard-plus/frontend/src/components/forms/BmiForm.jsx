@@ -5,6 +5,7 @@ import DeleteButton from "../DeleteButton";
 import { colors } from "../../utils/colors";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
+import { parseLocalizedNumber } from "../../utils/formatters";
 
 function toLocalDate(date) {
   const d = new Date(date);
@@ -22,12 +23,16 @@ export default function BmiForm({ childId, entry, onDone, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!bmi) return;
+    const bmiValue = parseLocalizedNumber(bmi);
+    if (bmiValue == null || bmiValue <= 0 || bmiValue > 50) {
+      setError(t("common.invalidNumber"));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const data = {
-        bmi: parseFloat(bmi),
+        bmi: bmiValue,
         date,
       };
       if (isEdit) {
@@ -60,7 +65,8 @@ export default function BmiForm({ childId, entry, onDone, onClose }) {
       <form onSubmit={handleSubmit}>
         <FormField label={t("bmiForm.amount")}>
           <FormInput
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={bmi}
             onChange={(e) => setBmi(e.target.value)}
             placeholder="16.5"

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 import GrowthTab from "./GrowthTab";
 import { UnitContext } from "../utils/units";
@@ -18,7 +18,7 @@ const feeding = {
   amount: 0,
 };
 
-test("Growth renders with duration-based feeding data", async () => {
+test("Growth renders with duration-based feeding data", () => {
   render(
     <UnitContext.Provider value="metric">
       <GrowthTab
@@ -37,5 +37,8 @@ test("Growth renders with duration-based feeding data", async () => {
       />
     </UnitContext.Provider>
   );
-  await waitFor(() => expect(screen.getByText(/Daily Feeding/i)).toBeInTheDocument());
+  // Feeding charts belong to Analytics. Growth still receives shared monthly
+  // data for its summary calculations, but must render without showing an
+  // obsolete Daily Feeding card.
+  expect(screen.getByText("Weight")).toBeInTheDocument();
 });

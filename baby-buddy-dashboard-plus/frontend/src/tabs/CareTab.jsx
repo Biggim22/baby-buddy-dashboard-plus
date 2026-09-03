@@ -11,6 +11,7 @@ import SectionCard from "../components/SectionCard";
 import SettingsTab from "./SettingsTab";
 import DeleteButton from "../components/DeleteButton";
 import { useTranslation } from "../locales";
+import { toApiDatetime } from "../utils/formatters";
 
 const CARE_TYPES = ["bath", "full_wash", "quick_wash", "caraway_suppository", "caraway_oil", "nail_care", "skin_care", "custom"];
 
@@ -47,7 +48,7 @@ function CareForm({ childId, entry, onClose, onSaved }) {
       child_id: childId,
       care_type: type,
       category_label: type === "custom" ? category.trim() : "",
-      time: new Date(time).toISOString(),
+      time: toApiDatetime(time),
       notes: notes.trim(),
     };
     try {

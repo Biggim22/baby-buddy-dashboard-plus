@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.2 (Local number and date/time safety)
+
+- Accepted decimal commas and decimal points for manually entered measurements, bottle amounts, medication doses and medication intervals.
+- Normalized numeric input only when saving, including common thousands-separator formats, so stored Baby Buddy values remain plain numbers.
+- Centralized local date/time conversion for Baby Buddy and local care entries; submissions now use explicit UTC timestamps.
+- Rejected malformed calendar dates and local times that do not exist during a daylight-saving transition rather than silently changing the selected time.
+- Added regression tests for localized number parsing and invalid local date/time input.
+
 ## 2.3.1 (Care editing, forecast dates and publication cleanup)
 
 - Moved deletion of care-history entries into the edit dialog.
