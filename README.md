@@ -6,6 +6,59 @@
 
 ---
 
+## Screenshots
+
+All screenshots use the built-in Baby Buddy demo data. / Alle Screenshots verwenden die integrierten Baby-Buddy-Demodaten.
+
+### Overview / Übersicht
+
+Configurable recent-event cards, a daily task, compact history cards and quick actions in one view.<br>
+Konfigurierbare Karten für letzte Ereignisse, eine Tagesaufgabe, kompakte Verlaufskarten und Schnellerfassungen in einer Ansicht.
+
+![Configurable overview with recent events, history cards and quick actions](screenshots/plus-overview.png)
+
+### Analytics / Auswertungen
+
+Colour-consistent feeding, bottle, diaper, sleep, temperature and tummy-time analytics, including non-overlapping rolling 24-hour sleep windows.<br>
+Farbliche konsistente Auswertungen für Stillen, Fläschchen, Windeln, Schlaf, Temperatur und Bauchlage – einschließlich nicht überlappender rollierender 24-Stunden-Schlaffenster.
+
+![Analytics with rolling sleep windows and seven-day activity charts](screenshots/plus-analytics.png)
+
+### Growth / Wachstum
+
+Weight, height, head circumference and automatically calculated BMI in one place; optional WHO percentile overlays can be enabled per chart.<br>
+Gewicht, Größe, Kopfumfang und automatisch berechneter BMI an einem Ort; optionale WHO-Perzentilkurven können je Diagramm eingeblendet werden.
+
+![Growth charts for weight, height, head circumference and BMI](screenshots/plus-growth.png)
+
+### Care tracker / Pflege-Tracker
+
+Care history supports bathing and washing hierarchy, nail trimming, custom categories and direct entry editing.<br>
+Der Pflegeverlauf unterstützt Bade- und Waschhierarchien, Nägel schneiden, eigene Kategorien und die direkte Bearbeitung von Einträgen.
+
+![Care tracker with care history and configurable categories](screenshots/plus-care.png)
+
+### Tasks and appointments / Aufgaben und Termine
+
+Recurring tasks and one-off appointments are separate, with an appointment time and a scheduled reminder.<br>
+Wiederkehrende Aufgaben und einmalige Termine sind getrennt; Termine besitzen eine Uhrzeit und eine zeitgesteuerte Erinnerung.
+
+![Separate task and appointment sections](screenshots/plus-tasks-and-appointments.png)
+
+### Notes and medication / Notizen und Medikamente
+
+Medication history, notes and a compact, selectable temperature trend stay together without overloading the page.<br>
+Medikamentenverlauf, Notizen und ein kompaktes auswählbares Temperaturdiagramm bleiben zusammen, ohne die Seite zu überladen.
+
+![Notes, medication history and temperature trend](screenshots/plus-notes-and-medication.png)
+
+### Browsable timeline / Durchblätterbarer Verlauf
+
+The timeline groups a day's sleep, feeding, diaper and other events in chronological order, with incremental loading for longer histories.<br>
+Der Verlauf fasst Schlaf-, Fütterungs-, Windel- und weitere Ereignisse eines Tages chronologisch zusammen und lädt längere Listen schrittweise nach.
+
+![Browsable sleep timeline with incremental loading](screenshots/plus-timeline.png)
+
 ## Deutsch
 
 ### Was ist Baby Buddy Dashboard Plus?
