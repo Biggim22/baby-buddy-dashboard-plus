@@ -12,7 +12,9 @@ services:
     restart: unless-stopped
 
   dashboard:
-    image: mbentancour/baby-buddy-dashboard:latest
+    build:
+      context: .
+    image: biggim22/baby-buddy-dashboard-plus:local
     environment:
       - BABY_BUDDY_URL=${BABY_BUDDY_URL:-http://babybuddy:8000}
       - BABY_BUDDY_API_KEY=${BABY_BUDDY_API_KEY}

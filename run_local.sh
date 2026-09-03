@@ -2,7 +2,7 @@
 set -e
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-ADDON_DIR="$REPO_DIR/baby-buddy-dashboard"
+ADDON_DIR="$REPO_DIR/baby-buddy-dashboard-plus"
 
 # --- Load .env ---
 if [ -f "$REPO_DIR/.env" ]; then

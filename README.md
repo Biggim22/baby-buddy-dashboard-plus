@@ -1,243 +1,171 @@
-# Baby Buddy Dashboard
+# Baby Buddy Dashboard Plus
 
-A modern, responsive dashboard for [Baby Buddy](https://github.com/babybuddy/babybuddy), built as a Home Assistant add-on. Provides a clean interface for viewing and logging baby care activities - feedings, sleep, diaper changes, tummy time, temperature, growth, and more.
+[Deutsch](#deutsch) · [English](#english) · [Original project](https://github.com/mbentancour/baby-buddy-dashboard)
 
-![Stack](https://img.shields.io/badge/React-18-blue) ![Stack](https://img.shields.io/badge/FastAPI-Python-green) ![Stack](https://img.shields.io/badge/Home%20Assistant-Add--on-blue)
+> An independent community fork of Baby Buddy Dashboard. **Baby Buddy Dashboard Plus 2.3.1 is based on Baby Buddy Dashboard 1.7.7.** Changes made in the upstream project after 1.7.7 are not included automatically; they are evaluated and ported deliberately.
 
-## Screenshots
+---
 
-| Overview | Growth |
-|----------|--------|
-| ![Overview](screenshots/overview.png) | ![Growth](screenshots/growth.png) |
+## Deutsch
 
-## Features
+### Was ist Baby Buddy Dashboard Plus?
 
-- **Overview dashboard** — daily stats, timelines, and charts for feedings, sleep, diapers, and tummy time
-- **Growth tracking** — 30-day feeding totals, sleep averages, weight, and height trend charts
-- **Quick logging** — grouped floating action button to quickly log feedings, sleep, diaper changes, tummy time, temperature, weight, height, and notes
-- **Multiple timers** — run concurrent timers for overlapping activities (feeding, sleep, tummy time)
-- **Metric / Imperial** — configurable unit labels (kg/lb, cm/in, mL/oz, °C/°F) with no data conversion
-- **Demo mode** — built-in mock data to preview the dashboard without a Baby Buddy instance
-- **Auto-refresh** — configurable polling interval keeps the dashboard up to date
-- **Dark theme** — designed for always-on displays and low-light nursery use
-- **Responsive** — works on desktop, tablet, and phone screens
-- **Multi-language** — English, Italian, and German, switchable per browser ([adding a language](TRANSLATING.md))
+Baby Buddy Dashboard Plus ist eine erweiterte Home-Assistant-App für [Baby Buddy](https://github.com/babybuddy/babybuddy). Sie verbindet sich über den Baby-Buddy-API-Schlüssel mit einer bestehenden Baby-Buddy-Instanz und ergänzt die übersichtliche Oberfläche des Originalprojekts um ausführlichere Auswertungen, Pflege- und Alltagsorganisation, bearbeitbare Verläufe sowie weitreichende Personalisierung.
 
-## Architecture
+Die Plus-Version wird als eigenständige App mit dem Slug `baby-buddy-dashboard-plus` installiert. Sie ersetzt weder Baby Buddy noch zwingend das originale Dashboard: Beide können parallel installiert sein. Die Bezeichnung in der Home-Assistant-Seitenleiste lässt sich im Dashboard zwischen **„Baby Buddy Dashboard Plus“** und dem Namen des in Baby Buddy ausgewählten Kindes umschalten.
 
-```
-┌─────────────┐       ┌──────────────┐       ┌─────────────┐
-│  Browser    │──────▶│  FastAPI     │──────▶│ Baby Buddy  │
-│ (React SPA) │◀──────│  Backend     │◀──────│   API       │
-└─────────────┘       └──────────────┘       └─────────────┘
-     :5173                 :8099
-  (dev only)          (proxy + static)
-```
+### Basis und Abgrenzung zum Original
 
-- **Frontend** — React 18 + Vite, with Recharts for data visualization
-- **Backend** — FastAPI (Python) proxy server that authenticates with Baby Buddy's API and serves the React SPA
-- **Deployment** — Docker container as a Home Assistant add-on, or run locally for development
+Dieses Projekt baut auf **Baby Buddy Dashboard 1.7.7** von [Martin Bentancour](https://github.com/mbentancour/baby-buddy-dashboard) auf. Die ursprüngliche MIT-Lizenz und die Urheberhinweise bleiben erhalten. Baby Buddy Dashboard Plus ist kein offizielles Baby-Buddy- oder Home-Assistant-Projekt und steht in keiner Verbindung zu den jeweiligen Maintainer:innen.
 
-The backend acts as an API proxy so the Baby Buddy API key stays server-side and is never exposed to the browser.
+| Bereich | Baby Buddy Dashboard 1.7.7 | Baby Buddy Dashboard Plus |
+| --- | --- | --- |
+| Übersicht | Kompaktes Tages-Dashboard | Konfigurierbare Karten, Reihenfolge und Sichtbarkeit je Bereich, „letzte Ereignisse“ und optionale Mini-Verläufe |
+| Auswertungen | Grundlegende Tages- und Wochenansichten | Getrennte Still-, Fläschchen-, Windel-, Schlaf-, Temperatur- und Bauchlage-Auswertungen mit einheitlichem Farbschema |
+| Schlaf | Tagesbezogene Darstellung | Nicht überlappende rollierende 24-Stunden-Fenster, Tag-/Nacht-/Gesamtschlaf und Vergleich über mehrere Tage |
+| Verlauf | Kurzlisten auf der Übersicht | Eigener, tageweise durchblätterbarer Zeitstrahl mit Bearbeiten/Löschen der Einträge |
+| Wachstum | Messwerte und Originalfunktionen | Automatische BMI-Ermittlung aus zeitnahen Größen- und Gewichtsmessungen, Wachstumskurven und optionale WHO-Überlagerungen |
+| Pflege | Nicht vorhanden | Pflegeverlauf, Bade- und Wascharten, frei definierbare Kategorien, Erinnerungen und Pflege-Kopfbereich nach Wunsch |
+| Aufgaben | Nicht vorhanden | Tagesaufgaben, Erinnerungen, Vitamin-D-ähnliche Routinen und einmalige Termine mit Uhrzeit |
+| Benachrichtigungen | Add-on-Konfiguration | Auswahl von Home-Assistant-Notify-Diensten bzw. Media-Playern, Testbenachrichtigung und Sprachansagen |
+| Vorrat | Nicht vorhanden | Optionaler Windelgrößen- und Vorratsrechner mit Gewichtstrend, Unter-/Erwartungs-/Obergrenze und Prognosedaten |
+| Erscheinungsbild | Theme des Originalprojekts | Unabhängige Sprach- und Zeitformatwahl, mehrere Farbspektren, Hell/Dunkel/Pastell sowie zeitgesteuerter Themenwechsel |
 
-## Home Assistant Add-on Installation
+### Zusätzliche Funktionen im Detail
 
-1. In Home Assistant, go to **Settings > Add-ons > Add-on Store**
-2. Click the **three dots** (top right) > **Repositories**
-3. Add this repository URL:
-   ```
-   https://github.com/mbentancour/baby-buddy-dashboard
-   ```
-4. Find **Baby Buddy Dashboard** in the store and click **Install**
-5. Configure the add-on:
-   - **Baby Buddy URL** — full URL to your instance (e.g., `http://192.168.1.100:8000`)
-   - **API Key** — found in Baby Buddy under *Settings > API Key*
-   - **Refresh Interval** — polling interval in seconds (default: 30)
-   - **Unit System** — `metric` or `imperial` (labels only, no conversion)
-   - **Demo Mode** — enable to preview with mock data (no Baby Buddy required)
-6. Start the add-on — the dashboard appears in the Home Assistant sidebar
+- **Anpassbare Übersicht:** Karten können je Tab ein- oder ausgeblendet und in der gewünschten Reihenfolge angeordnet werden. Das betrifft auch die Einträge der Übersicht und die Auswahl im Pflege-Kopfbereich.
+- **Ereigniskarten und Verlauf:** Letzte Mahlzeit, Windel, Schlaf, Medikament und Bauchlage zeigen Zeit, Dauer und relevante Details. Listen laden zunächst in handlichen Schritten; nach zwei Erweiterungen kann bei Bedarf alles angezeigt werden.
+- **Korrekturen von Daten:** Vergangene Baby-Buddy-Einträge können über den Zeitstrahl aufgerufen, bearbeitet oder gelöscht werden. Auch ein reiner Hygiene-Windelwechsel ohne nass/fest lässt sich erfassen.
+- **Detaillierte Fütterungsanalyse:** Stillmahlzeiten werden nach links/rechts und Dauer ausgewertet. Fläschchen erscheinen getrennt mit Menge, Anzahl oder Dauer. Eng aufeinanderfolgende Stillseiten werden für die Abstandsmetrik als zusammenhängende Mahlzeit behandelt.
+- **Schlafanalyse:** Neben Kalendertagen steht ein Vergleich gleich langer, nicht überlappender Zeitfenster zur Verfügung. Damit bedeutet beispielsweise „vor 24–48 h“ tatsächlich die 24 Stunden vor dem aktuellsten Fenster und nicht eine aufsummierte 48-Stunden-Zahl.
+- **Wachstum und Gesundheit:** Gewicht, Größe, Kopfumfang, BMI und Körpertemperatur werden in verständlichen Kurven dargestellt. Die BMI-Berechnung berücksichtigt auch Messungen, die am selben oder an einem nahe gelegenen Tag erfasst wurden. WHO-Referenzkurven können optional eingeblendet werden.
+- **Pflege-Tracker:** Vollbad, Ganzkörperwäsche und Katzenwäsche sind hierarchisch eingeordnet: Ein Vollbad zählt auch als Ganzkörper- und Katzenwäsche, ohne dass die Anzeige widersprüchlich wird. Zusätzlich sind etwa Nägel schneiden, Kümmelöl, Kümmelölzäpfchen und frei benannte Pflegearten möglich. Einträge lassen sich im selben Dialog bearbeiten oder löschen.
+- **Badeerinnerung:** Intervall und Uhrzeit für die Erinnerung an ein überfälliges Vollbad werden direkt in den Pflege-Einstellungen festgelegt.
+- **Aufgaben und Termine:** Tägliche bzw. datumsbezogene Aufgaben können in der Übersicht erscheinen und nach dem Abhaken verschwinden. Einmalige Termine – etwa U-Untersuchungen oder Impfungen – besitzen einen eigenen Bereich, Terminzeit und eine Erinnerung am Termin- oder Vortag.
+- **Medikamente und Notizen:** Regelmäßige Medikamente bleiben von Alltagsroutinen getrennt. Dosierung und nächstmögliche Gabe lassen sich erfassen; Notizen und Medikamentenverlauf bleiben übersichtlich und paginiert.
+- **Benachrichtigungs-Test:** In den globalen Einstellungen können Notify-Dienste und optionale Media-Player ausgewählt, auf- und zugeklappt sowie mit einer frei zusammengesetzten Testmeldung geprüft werden. Die Uhrzeit wird unabhängig von der gewählten Sprache im 12- oder 24-Stunden-Format dargestellt.
+- **Windelgrößen- und Vorratsrechner:** Nutzt standardmäßig überlappende Pampers-Gewichtsbereiche, die sich für andere Marken überschreiben lassen. Aus Gewichtstrend und tatsächlichem Verbrauch entstehen eine konservative Untergrenze, ein Erwartungswert und eine Obergrenze – jeweils mit voraussichtlichem Datum.
+- **Mehrkind-Unterstützung:** Wenn die Baby-Buddy-API mehrere Kinder liefert, kann im Dashboard zwischen ihnen gewechselt werden. Persönliche Daten sind nicht im Quellcode oder im App-Namen fest verdrahtet.
 
-## Docker Compose
+### Installation über Home Assistant
 
-Run the dashboard using Docker Compose — no Home Assistant required. You can either connect to an existing Baby Buddy instance or run one side-by-side.
+1. In Home Assistant **Einstellungen → Apps → App-Store** öffnen.
+2. Im Menü **Repositories** wählen und diese Repository-URL hinzufügen:
 
-1. Copy the example environment file:
-
-   ```bash
-   cp .env.example .env
+   ```text
+   https://github.com/Biggim22/baby-buddy-dashboard-plus
    ```
 
-2. Edit `.env` with your settings:
+3. **Baby Buddy Dashboard Plus** installieren und starten.
+4. In der App-Konfiguration die URL deiner Baby-Buddy-Instanz und den API-Schlüssel eintragen.
+5. Nach dem ersten Öffnen werden Sprache, Zeitformat, Darstellung, Benachrichtigungen und tab-spezifische Optionen direkt im Dashboard konfiguriert.
 
-   ```
-   BABY_BUDDY_URL=http://your-babybuddy-server:8000
-   BABY_BUDDY_API_KEY=your_api_key_here
-   ```
+Die App benötigt Home Assistant ab der in [`config.yaml`](baby-buddy-dashboard-plus/config.yaml) angegebenen Version und eine erreichbare Baby-Buddy-Instanz mit API-Schlüssel. Die App speichert die Zugangsdaten nicht im Browser-Bundle; lokale Einstellungen, Aufgaben, Termine und Pflegeeinträge werden im geschützten App-Datenverzeichnis von Home Assistant abgelegt. Bitte behandle Sicherungen dieses Verzeichnisses trotzdem wie persönliche Familiendaten.
 
-3. Start the dashboard:
-
-   ```bash
-   docker compose up -d
-   ```
-
-   The dashboard will be available at `http://localhost:8099`.
-
-### Running Baby Buddy side-by-side
-
-If you don't have a Baby Buddy instance yet, use the `full` profile to start one alongside the dashboard:
+### Entwicklung und Lokaler Start
 
 ```bash
-docker compose --profile full up -d
+cp .env.example .env
+# BABY_BUDDY_URL und BABY_BUDDY_API_KEY in .env setzen
+./run_local.sh
 ```
 
-This starts:
-- **Baby Buddy** on `http://localhost:8000`
-- **Dashboard** on `http://localhost:8099` (auto-connects to the Baby Buddy container)
-
-On first run, open Baby Buddy at `http://localhost:8000`, create an account, then grab your API key from *Settings > API Key* and add it to `.env`. Restart with `docker compose --profile full up -d`.
-
-## Local Development
-
-### Prerequisites
-
-- Node.js (18+)
-- Python 3.10+
-- A running Baby Buddy instance
-
-### Setup
-
-1. Copy the example environment file and fill in your Baby Buddy connection details:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Then edit `.env`:
-
-   ```
-   BABY_BUDDY_URL=http://192.168.1.100:8000
-   BABY_BUDDY_API_KEY=your_api_key_here
-   REFRESH_INTERVAL=30
-   UNIT_SYSTEM=metric
-   ```
-
-2. Run the development servers:
-
-   ```bash
-   ./run_local.sh
-   ```
-
-   This starts:
-   - **Backend** (FastAPI) on `http://localhost:8099` — proxies API requests to Baby Buddy
-   - **Frontend** (Vite dev server) on `http://localhost:5173` — hot-reloads on code changes
-
-3. Open `http://localhost:5173` in your browser
-
-The script auto-installs npm and pip dependencies on first run. Press `Ctrl+C` to stop both servers.
-
-> **Note:** `.env` is gitignored so your credentials are never committed.
-
-### Building for production
+Für einen Produktionsbuild:
 
 ```bash
-cd baby-buddy-dashboard/frontend
+cd baby-buddy-dashboard-plus/frontend
+npm ci
 npm run build
 ```
 
-The built files are output to `baby-buddy-dashboard/frontend/dist/`.
+### Hinweise
 
-## Project Structure
+- Das Dashboard ist eine Organisations- und Visualisierungshilfe, keine medizinische Beratung. Bei Fragen zu Medikamenten, Fieber, Ernährung oder Wachstum gilt immer die fachliche Einschätzung von Ärzt:innen bzw. Hebammen.
+- Die App kann vorhandene Baby-Buddy-Daten ändern oder löschen, wenn diese Aktionen bewusst im Zeitstrahl oder in Bearbeitungsdialogen ausgelöst werden.
+- Fehlerberichte und Verbesserungsvorschläge sind willkommen. Bitte niemals API-Schlüssel, interne URLs, Namen oder Gesundheitsdaten in Issues veröffentlichen.
 
-This repository follows the [Home Assistant add-on repository](https://developers.home-assistant.io/docs/add-ons/repository/) layout — each add-on lives in its own subdirectory.
+---
 
+## English
+
+### What is Baby Buddy Dashboard Plus?
+
+Baby Buddy Dashboard Plus is an extended Home Assistant app for [Baby Buddy](https://github.com/babybuddy/babybuddy). It connects to an existing Baby Buddy instance through its API key and builds on the approachable upstream interface with richer analytics, care and daily-life tracking, editable history, and extensive personalisation.
+
+Plus installs as a separate app with the `baby-buddy-dashboard-plus` slug. It does not replace Baby Buddy and does not require replacing the upstream dashboard; both can be installed in parallel. The Home Assistant sidebar label can be switched inside the dashboard between **“Baby Buddy Dashboard Plus”** and the selected child’s name.
+
+### Upstream base and scope
+
+This project is based on **Baby Buddy Dashboard 1.7.7** by [Martin Bentancour](https://github.com/mbentancour/baby-buddy-dashboard). The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus is an independent community fork; it is not an official Baby Buddy or Home Assistant project and is not affiliated with either project’s maintainers.
+
+Upstream changes released after version 1.7.7 are **not** automatically present in this fork. They are reviewed and ported deliberately so that the Plus-specific features stay reliable.
+
+| Area | Baby Buddy Dashboard 1.7.7 | Baby Buddy Dashboard Plus |
+| --- | --- | --- |
+| Overview | Compact daily dashboard | Configurable cards, per-section order and visibility, last-event cards, optional compact trend charts |
+| Analytics | Basic daily and weekly views | Separate breastfeeding, bottle, diaper, sleep, temperature, and tummy-time analytics with a consistent colour system |
+| Sleep | Calendar-day presentation | Non-overlapping rolling 24-hour windows, day/night/total sleep, and multi-day comparisons |
+| History | Short overview lists | Dedicated day-by-day, browsable timeline with edit and delete actions |
+| Growth | Measurements and upstream features | Automatic BMI calculation from nearby height/weight measurements, growth charts, and optional WHO overlays |
+| Care | Not available | Care history, bathing and washing types, custom categories, reminders, and configurable care header |
+| Tasks | Not available | Daily tasks, reminders, vitamin-D-style routines, and one-off appointments with a time |
+| Notifications | Add-on configuration | Select Home Assistant notify services and media players, test notifications, and optional voice announcements |
+| Stock planning | Not available | Optional diaper-size and stock calculator using weight trend plus conservative, expected, and upper estimates |
+| Appearance | Upstream theme | Independent language and time format, multiple colour spectra, light/dark/pastel themes, and scheduled theme switching |
+
+### Plus features in detail
+
+- **Customisable overview:** Cards can be shown, hidden and reordered per tab. The same approach applies to overview event groups and the care header.
+- **Last-event cards and history:** Last feeding, diaper, sleep, medication and tummy time include time, duration and useful details. Long lists load in manageable steps; after two expansions, an explicit “show all” action is available.
+- **Data corrections:** Past Baby Buddy records can be opened, edited or deleted from the timeline. A hygiene-only diaper change without wet/solid content can also be recorded.
+- **Detailed feeding analytics:** Breastfeeding is evaluated by left/right side and duration. Bottles are shown separately by volume, count or duration. Closely spaced breast sides are treated as one feeding when calculating intervals.
+- **Sleep analytics:** Alongside calendar days, Plus provides equal-length, non-overlapping rolling windows. “24–48 h ago” therefore means the 24 hours immediately before the latest window, not a cumulative 48-hour total.
+- **Growth and health:** Weight, height, head circumference, BMI and body temperature are displayed in clear charts. BMI calculation also considers measurements entered on the same or nearby days. WHO reference curves can be enabled when desired.
+- **Care tracker:** Full baths, full-body washes and quick washes follow a hierarchy: a full bath also counts as a full-body and quick wash, avoiding conflicting “last wash” values. Nail trimming, caraway oil, caraway suppositories and custom care types are supported. Edit and delete actions live together in the edit dialog.
+- **Bath reminders:** The full-bath interval and reminder time are configured directly in the Care tab settings.
+- **Tasks and appointments:** Daily or date-specific tasks can appear on the overview and disappear when completed. One-off appointments – for example check-ups or vaccinations – have their own section, appointment time, and a reminder on the appointment day or the day before.
+- **Medication and notes:** Recurring medication stays separate from everyday routines. Dose and next allowed dose can be recorded while medication history and notes remain compact and paginated.
+- **Notification testing:** Global settings provide collapsible selection of notify services and optional media players, plus a composable test message. The 12/24-hour time setting is independent from the selected language.
+- **Diaper size and stock calculator:** Uses overlapping Pampers weight ranges by default, with editable ranges for other brands. Weight trend and real diaper use produce conservative minimum, expected and maximum estimates, each with a projected date.
+- **Multiple children:** When the Baby Buddy API returns more than one child, the dashboard can switch between them. Personal names, addresses and health data are never hard-coded into the source or app title.
+
+### Install through Home Assistant
+
+1. Open **Settings → Apps → App Store** in Home Assistant.
+2. Open **Repositories** from the menu and add:
+
+   ```text
+   https://github.com/Biggim22/baby-buddy-dashboard-plus
+   ```
+
+3. Install and start **Baby Buddy Dashboard Plus**.
+4. Enter the URL of your Baby Buddy instance and its API key in the app configuration.
+5. After first launch, configure language, time format, appearance, notifications and page-specific options from inside the dashboard.
+
+The app requires the Home Assistant version declared in [`config.yaml`](baby-buddy-dashboard-plus/config.yaml) and a reachable Baby Buddy instance with an API key. Credentials are not embedded in the browser bundle. Local settings, tasks, appointments and care records live in Home Assistant’s protected app-data directory; backups of that directory should still be treated as personal family data.
+
+### Development and local run
+
+```bash
+cp .env.example .env
+# Set BABY_BUDDY_URL and BABY_BUDDY_API_KEY in .env
+./run_local.sh
 ```
-baby-buddy-dashboard/               # ← repository root
-├── repository.yaml                  # HA add-on repository metadata
-├── README.md
-├── LICENSE
-├── Dockerfile                       # Standalone Docker image (non-HA)
-├── docker-compose.yml               # Docker Compose with Baby Buddy + Dashboard
-├── .env.example                     # Environment variable template
-├── .gitignore
-├── run_local.sh                     # Local development script (sources .env)
-├── screenshots/                     # UI screenshots for README
-│
-└── baby-buddy-dashboard/            # ← the add-on
-    ├── config.yaml                  # Home Assistant add-on config
-    ├── Dockerfile
-    ├── build.yaml                   # Docker multi-arch build config
-    ├── run.sh                       # Production entry script (Home Assistant)
-    ├── translations/
-    │   └── en.yaml                  # HA config UI labels
-    ├── backend/
-    │   ├── server.py                # FastAPI app — API proxy + static file server
-    │   └── requirements.txt         # Python dependencies
-    └── frontend/
-        ├── index.html               # Entry HTML
-        ├── vite.config.js           # Vite config with API proxy for dev
-        ├── package.json
-        └── src/
-            ├── main.jsx             # React entry point
-            ├── App.jsx              # Main app shell — layout, tabs, modals, FAB
-            ├── styles.css           # Global styles, CSS variables, animations
-            ├── api.js               # API client for all Baby Buddy endpoints
-            ├── hooks/
-            │   ├── useBabyData.js   # Fetches and polls all baby data
-            │   └── useTimers.js     # Timer state management
-            ├── tabs/
-            │   ├── OverviewTab.jsx  # Daily stats, timelines, and charts
-            │   └── GrowthTab.jsx    # Weight, height, feeding & sleep trends
-            ├── components/
-            │   ├── Icons.jsx        # SVG icon components
-            │   ├── StatCard.jsx     # Stat display card
-            │   ├── SectionCard.jsx  # Section container with header
-            │   ├── TimelineItem.jsx # Timeline entry
-            │   ├── TimerButton.jsx  # Timer start/stop button
-            │   ├── DiaperBadge.jsx  # Diaper type badge
-            │   ├── CustomTooltip.jsx # Chart tooltip
-            │   ├── Modal.jsx        # Modal + form primitives
-            │   └── forms/
-            │       ├── FeedingForm.jsx
-            │       ├── SleepForm.jsx
-            │       ├── DiaperForm.jsx
-            │       ├── TemperatureForm.jsx
-            │       ├── TummyTimeForm.jsx
-            │       ├── WeightForm.jsx
-            │       ├── HeightForm.jsx
-            │       └── NoteForm.jsx
-            └── utils/
-                ├── colors.js        # Color palette
-                ├── units.js         # Unit system context (metric/imperial)
-                ├── mockData.js      # Demo mode mock data generator
-                └── formatters.js    # Date, time, and data formatting
+
+For a production build:
+
+```bash
+cd baby-buddy-dashboard-plus/frontend
+npm ci
+npm run build
 ```
 
-## Configuration
+### Notes
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `baby_buddy_url` | Full URL to your Baby Buddy instance | — |
-| `baby_buddy_api_key` | Baby Buddy API token | — |
-| `refresh_interval` | Polling interval in seconds (5–300) | 30 |
-| `unit_system` | Unit labels: `metric` (kg, cm, mL, °C) or `imperial` (lb, in, oz, °F) | metric |
-| `demo_mode` | Show mock data without connecting to Baby Buddy | false |
+- This dashboard is an organisation and visualisation tool, not medical advice. For medication, fever, nutrition or growth questions, always follow qualified medical guidance.
+- The app can change or delete existing Baby Buddy records only when those actions are deliberately requested from the timeline or an edit dialog.
+- Bug reports and ideas are welcome. Never include API keys, internal URLs, names or health data in public issues.
 
-### Getting your API key
+## License and attribution
 
-1. Open your Baby Buddy instance
-2. Go to **Settings** (or `/user/settings/`)
-3. Find the **API Key** section
-4. Copy the token string
-
-## Baby Buddy API Notes
-
-This dashboard uses Baby Buddy's REST API. A few important details about the filter parameters:
-
-- Endpoints with `start`/`end` fields (feedings, sleep, tummy times) use `start_min`/`start_max` for date filtering
-- Endpoints with a `time` field (diaper changes, temperature) use `date_min`/`date_max`
-- All date filters expect **ISO 8601 datetime strings** (e.g., `2025-01-15T00:00:00`), not plain dates
-- Datetimes should be in **local time without a timezone suffix** so Baby Buddy interprets them in its configured timezone
-
-## License
-
-This project is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute it. See the LICENSE file for the full text.
+Baby Buddy Dashboard Plus is distributed under the [MIT License](LICENSE). It retains the attribution and licence of its upstream base, [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard), version 1.7.7. Baby Buddy itself is a separate project with its own licence and community.

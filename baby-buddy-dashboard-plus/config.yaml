@@ -1,0 +1,61 @@
+name: "Baby Buddy Dashboard Plus"
+version: "2.3.1"
+slug: "baby-buddy-dashboard-plus"
+description: >-
+  A comprehensive Home Assistant dashboard for Baby Buddy. In addition to the
+  original dashboard it provides extended feeding, sleep, diaper, temperature
+  and growth analytics, a daily timeline, medication history, editable past
+  entries, care and bathing tracking, daily tasks, one-time appointments and
+  configurable Home Assistant notifications or voice announcements. Display,
+  language, overview content and individual page settings can be customized
+  directly in the dashboard. Version 2.3.1 adds forecast dates to the diaper
+  stock calculator and improves editing of care-history entries.
+url: "https://github.com/Biggim22/baby-buddy-dashboard-plus"
+init: false
+homeassistant: "2026.4.0"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+  - armhf
+  - i386
+startup: application
+boot: auto
+ingress: true
+ingress_port: 8099
+ingress_entry: "/"
+watchdog: "http://[HOST]:[PORT:8099]/api/health"
+panel_icon: "mdi:baby-bottle-outline"
+panel_title: "Baby Buddy Dashboard Plus"
+panel_admin: false
+homeassistant_api: true
+options:
+  baby_buddy_url: ""
+  baby_buddy_api_key: ""
+  refresh_interval: 30
+  demo_mode: false
+  unit_system: metric
+  enable_medication_alerts: false
+schema:
+  baby_buddy_url: url
+  baby_buddy_api_key: password
+  refresh_interval: "int(5,300)"
+  demo_mode: bool
+  unit_system: "list(metric|imperial)"
+  enable_medication_alerts: bool
+  child_sex: "list(male|female)?"
+  color_preset: "list(teal_terracotta)?"
+  theme_light_bg: "str?"
+  theme_light_card_bg: "str?"
+  theme_light_border: "str?"
+  theme_light_text: "str?"
+  theme_light_text_muted: "str?"
+  theme_light_text_dim: "str?"
+  theme_light_accent: "str?"
+  theme_dark_bg: "str?"
+  theme_dark_card_bg: "str?"
+  theme_dark_border: "str?"
+  theme_dark_text: "str?"
+  theme_dark_text_muted: "str?"
+  theme_dark_text_dim: "str?"
+  theme_dark_accent: "str?"

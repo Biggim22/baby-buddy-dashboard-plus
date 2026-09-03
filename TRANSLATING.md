@@ -13,8 +13,8 @@ They are unrelated, and you probably only care about the first one:
 
 | What | Where | Who sees it |
 | --- | --- | --- |
-| The dashboard UI | `baby-buddy-dashboard/frontend/src/locales/*.js` | Anyone using the dashboard, in the language they pick in Settings |
-| The add-on config panel | `baby-buddy-dashboard/translations/*.yaml` | Home Assistant admins editing the add-on's options, in their **Home Assistant** language |
+| The dashboard UI | `baby-buddy-dashboard-plus/frontend/src/locales/*.js` | Anyone using the dashboard, in the language they pick in Settings |
+| The add-on config panel | `baby-buddy-dashboard-plus/translations/*.yaml` | Home Assistant admins editing the add-on's options, in their **Home Assistant** language |
 
 This guide is mostly about the first. The second is covered at the end, and is
 entirely optional.
@@ -24,7 +24,7 @@ entirely optional.
 ### 1. Copy the English file
 
 ```bash
-cp baby-buddy-dashboard/frontend/src/locales/en.js baby-buddy-dashboard/frontend/src/locales/fr.js
+cp baby-buddy-dashboard-plus/frontend/src/locales/en.js baby-buddy-dashboard-plus/frontend/src/locales/fr.js
 ```
 
 Use the ISO 639-1 code for the filename (`fr`, `pt`, `nl`, …).
@@ -83,7 +83,7 @@ The rules that actually matter:
 
 ### 3. Register it
 
-All four edits are in `baby-buddy-dashboard/frontend/src/locales/index.js`:
+All four edits are in `baby-buddy-dashboard-plus/frontend/src/locales/index.js`:
 
 ```js
 import en from "./en";
@@ -153,7 +153,7 @@ sequence, not a sign you did something wrong.
 ### 5. Check it
 
 ```bash
-cd baby-buddy-dashboard/frontend
+cd baby-buddy-dashboard-plus/frontend
 npm test
 npm run build
 ```
@@ -198,12 +198,12 @@ which strings are still hardcoded is useful on its own.
 
 ## Translating the add-on config panel
 
-Optional, and independent of everything above. `baby-buddy-dashboard/translations/en.yaml`
+Optional, and independent of everything above. `baby-buddy-dashboard-plus/translations/en.yaml`
 holds the field names and help text Home Assistant shows when an admin edits
 the add-on's options.
 
 ```bash
-cp baby-buddy-dashboard/translations/en.yaml baby-buddy-dashboard/translations/fr.yaml
+cp baby-buddy-dashboard-plus/translations/en.yaml baby-buddy-dashboard-plus/translations/fr.yaml
 ```
 
 Translate the `name` and `description` values, leave the option keys

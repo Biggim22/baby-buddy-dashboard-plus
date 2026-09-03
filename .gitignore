@@ -1,6 +1,8 @@
 .env
 node_modules/
 **/dist/
+!baby-buddy-dashboard-plus/frontend/dist/
+!baby-buddy-dashboard-plus/frontend/dist/**
 __pycache__/
 *.pyc
 .DS_Store
