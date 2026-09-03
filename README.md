@@ -1,6 +1,6 @@
 # Baby Buddy Dashboard Plus
 
-[Deutsch](#deutsch) · [English](#english) · [Original project](https://github.com/mbentancour/baby-buddy-dashboard)
+[Deutsch](#deutsch) · [English](#english) · [Baby Buddy – data source](https://github.com/babybuddy/babybuddy) · [Upstream dashboard](https://github.com/mbentancour/baby-buddy-dashboard)
 
 > An independent community fork of Baby Buddy Dashboard. **Baby Buddy Dashboard Plus 2.3.1 is based on Baby Buddy Dashboard 1.7.7.** Changes made in the upstream project after 1.7.7 are not included automatically; they are evaluated and ported deliberately.
 
@@ -63,7 +63,7 @@ Der Verlauf fasst Schlaf-, Fütterungs-, Windel- und weitere Ereignisse eines Ta
 
 ### Was ist Baby Buddy Dashboard Plus?
 
-Baby Buddy Dashboard Plus ist eine erweiterte Home-Assistant-App für [Baby Buddy](https://github.com/babybuddy/babybuddy). Sie verbindet sich über den Baby-Buddy-API-Schlüssel mit einer bestehenden Baby-Buddy-Instanz und ergänzt die übersichtliche Oberfläche des Originalprojekts um ausführlichere Auswertungen, Pflege- und Alltagsorganisation, bearbeitbare Verläufe sowie weitreichende Personalisierung.
+Baby Buddy Dashboard Plus ist ein erweitertes Home-Assistant-Dashboard für [Baby Buddy](https://github.com/babybuddy/babybuddy), die eigentliche Anwendung für Erfassung und Datenhaltung von Mahlzeiten, Schlaf, Windeln, Medikamenten und Wachstum. Plus verbindet sich über den Baby-Buddy-API-Schlüssel mit einer bestehenden Instanz und ergänzt das ursprüngliche [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard) um ausführlichere Auswertungen, Pflege- und Alltagsorganisation, bearbeitbare Verläufe sowie weitreichende Personalisierung. Pflege, Aufgaben und Termine sind zusätzliche, lokal im geschützten Home-Assistant-App-Datenverzeichnis gespeicherte Plus-Funktionen.
 
 Die Plus-Version wird als eigenständige App mit dem Slug `baby-buddy-dashboard-plus` installiert. Sie ersetzt weder Baby Buddy noch zwingend das originale Dashboard: Beide können parallel installiert sein. Die Bezeichnung in der Home-Assistant-Seitenleiste lässt sich im Dashboard zwischen **„Baby Buddy Dashboard Plus“** und dem Namen des in Baby Buddy ausgewählten Kindes umschalten.
 
@@ -143,7 +143,7 @@ npm run build
 
 ### What is Baby Buddy Dashboard Plus?
 
-Baby Buddy Dashboard Plus is an extended Home Assistant app for [Baby Buddy](https://github.com/babybuddy/babybuddy). It connects to an existing Baby Buddy instance through its API key and builds on the approachable upstream interface with richer analytics, care and daily-life tracking, editable history, and extensive personalisation.
+Baby Buddy Dashboard Plus is an extended Home Assistant dashboard for [Baby Buddy](https://github.com/babybuddy/babybuddy), the application responsible for entering and storing feedings, sleep, diapers, medication and growth data. It connects to an existing Baby Buddy instance through its API key and builds on the approachable [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard) interface with richer analytics, care and daily-life tracking, editable history, and extensive personalisation. Care, tasks and appointments are additional Plus features stored locally in Home Assistant's protected app-data directory.
 
 Plus installs as a separate app with the `baby-buddy-dashboard-plus` slug. It does not replace Baby Buddy and does not require replacing the upstream dashboard; both can be installed in parallel. The Home Assistant sidebar label can be switched inside the dashboard between **“Baby Buddy Dashboard Plus”** and the selected child’s name.
 
