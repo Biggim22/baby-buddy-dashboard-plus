@@ -2,7 +2,7 @@
 
 [Deutsch](#deutsch) · [English](#english) · [Roadmap](ROADMAP.md) · [Development](DEVELOPMENT.md) · [Release process](RELEASING.md) · [Baby Buddy – data source](https://github.com/babybuddy/babybuddy) · [Upstream dashboard](https://github.com/mbentancour/baby-buddy-dashboard)
 
-> An independent community fork of Baby Buddy Dashboard. **Baby Buddy Dashboard Plus 2.3.2 is based on Baby Buddy Dashboard 1.7.7.** Changes made in the upstream project after 1.7.7 are not included automatically; they are evaluated and ported deliberately.
+> An independent community fork of Baby Buddy Dashboard. **Baby Buddy Dashboard Plus 2.3.3 is based on Baby Buddy Dashboard 1.7.7.** Changes made in the upstream project after 1.7.7 are not included automatically; they are evaluated and ported deliberately.
 
 ---
 

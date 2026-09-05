@@ -3,6 +3,7 @@ import { api } from "../api";
 import { Icons } from "../components/Icons";
 import Modal, {
   FormButton,
+  FormError,
   FormField,
   FormInput,
   FormSelect,
@@ -12,6 +13,7 @@ import SettingsTab from "./SettingsTab";
 import DeleteButton from "../components/DeleteButton";
 import { useTranslation } from "../locales";
 import { toApiDatetime } from "../utils/formatters";
+import { logError } from "../utils/errorLog";
 
 const CARE_TYPES = ["bath", "full_wash", "quick_wash", "caraway_suppository", "caraway_oil", "nail_care", "skin_care", "custom"];
 
@@ -57,7 +59,8 @@ function CareForm({ childId, entry, onClose, onSaved }) {
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err.message);
+      setError(t("common.saveFailed"));
+      logError(entry ? "Update Care" : "Save Care", err.message);
     } finally {
       setSaving(false);
     }
@@ -72,7 +75,8 @@ function CareForm({ childId, entry, onClose, onSaved }) {
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err.message);
+      setError(t("common.deleteFailed"));
+      logError("Delete Care", err.message);
       setSaving(false);
     }
   };
@@ -100,7 +104,7 @@ function CareForm({ childId, entry, onClose, onSaved }) {
         <FormField label={t("plus.note")}>
           <textarea className="preview-textarea" value={notes} onChange={(event) => setNotes(event.target.value)} />
         </FormField>
-        {error && <div className="preview-error">{error}</div>}
+        <FormError message={error} />
         {entry && <DeleteButton onDelete={remove} disabled={saving} />}
         <FormButton type="submit" color="#06B6D4" disabled={saving}>
           {saving ? t("plus.saving") : t("plus.save")}

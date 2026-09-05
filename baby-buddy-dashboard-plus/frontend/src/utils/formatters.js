@@ -39,6 +39,14 @@ export function toApiDatetime(localDatetimeValue) {
   return local.toISOString();
 }
 
+// Manual start/end forms use local wall-clock values. Convert both through the
+// same validated path that is used for API submission before comparing them so
+// daylight-saving changes cannot turn a sensible local interval into a wrong
+// duration.
+export function localDatetimeDurationMs(start, end) {
+  return new Date(toApiDatetime(end)).getTime() - new Date(toApiDatetime(start)).getTime();
+}
+
 // Browsers commonly reject a decimal comma in <input type="number"> even though it is the
 // normal separator in many locales. Keep the raw text in the form and normalise it only when
 // saving. A single comma/dot is treated as the decimal separator; when both appear, the last

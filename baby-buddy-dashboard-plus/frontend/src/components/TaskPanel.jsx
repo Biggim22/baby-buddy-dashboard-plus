@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { Icons } from "./Icons";
-import Modal, { FormButton, FormField, FormInput, FormSelect } from "./Modal";
+import Modal, { FormButton, FormError, FormField, FormInput, FormSelect } from "./Modal";
 import SectionCard from "./SectionCard";
 import { useTranslation } from "../locales";
+import { logError } from "../utils/errorLog";
 
 const today = () => new Date().toLocaleDateString("sv-SE");
 
@@ -44,7 +45,8 @@ function TaskForm({ childId, entry, initialKind = "task", onClose, onSaved }) {
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err.message);
+      setError(t("common.saveFailed"));
+      logError(entry ? "Update Task" : "Save Task", err.message);
     }
   };
 
@@ -57,7 +59,7 @@ function TaskForm({ childId, entry, initialKind = "task", onClose, onSaved }) {
         {kind === "task" && <><label className="preview-check"><input type="checkbox" checked={showOverview} onChange={(event) => setShowOverview(event.target.checked)} /> {t("plus.tasks.showOverview")}</label><FormField label={t("plus.tasks.displayAfter")}><FormInput type="time" value={displayAfter} onChange={(event) => setDisplayAfter(event.target.value)} /></FormField><FormField label={t("plus.tasks.reminder")}><FormInput type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value)} /></FormField></>}
         {kind === "appointment" && <><FormField label={t("plus.tasks.appointmentTime")}><FormInput type="time" value={appointmentTime} onChange={(event) => setAppointmentTime(event.target.value)} required /></FormField><FormField label={t("plus.tasks.appointmentReminderDay")}><FormSelect value={String(daysBefore)} onChange={(event) => setDaysBefore(event.target.value)} options={[{ value: "0", label: t("plus.tasks.sameDay") }, { value: "1", label: t("plus.tasks.previousDay") }, { value: "2", label: t("plus.tasks.daysBefore", { days: 2 }) }, { value: "3", label: t("plus.tasks.daysBefore", { days: 3 }) }]} /></FormField><FormField label={t("plus.tasks.appointmentReminderTime")}><FormInput type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value)} required /></FormField></>}
         <FormField label={t("plus.note")}><textarea className="preview-textarea" value={notes} onChange={(event) => setNotes(event.target.value)} /></FormField>
-        {error && <div className="preview-error">{error}</div>}
+        <FormError message={error} />
         <FormButton type="submit" color="#14B8A6">{t("plus.save")}</FormButton>
       </form>
     </Modal>
@@ -84,16 +86,29 @@ export function useTasks(childId, includeAll = true) {
 
 export function TaskRows({ tasks, onReload, editable = false, onEdit, showCheckbox = true }) {
   const t = useTranslation();
+  const [actionError, setActionError] = useState("");
   const toggle = async (task, completed) => {
-    await api.toggleTask(task.id, completed);
-    await onReload();
+    setActionError("");
+    try {
+      await api.toggleTask(task.id, completed);
+      await onReload();
+    } catch (err) {
+      setActionError(t("common.saveFailed"));
+      logError("Update Task", err.message);
+    }
   };
   const remove = async (task) => {
     if (!window.confirm(t("plus.tasks.confirmDelete", { title: task.title }))) return;
-    await api.deleteTask(task.id);
-    await onReload();
+    setActionError("");
+    try {
+      await api.deleteTask(task.id);
+      await onReload();
+    } catch (err) {
+      setActionError(t("common.deleteFailed"));
+      logError("Delete Task", err.message);
+    }
   };
-  return <div className="preview-list">{tasks.map((task) => (
+  return <><FormError message={actionError} /><div className="preview-list">{tasks.map((task) => (
     <div className={`preview-row${task.completed ? " preview-complete" : ""}`} key={task.id}>
       {showCheckbox && <input type="checkbox" checked={Boolean(task.completed)} onChange={(event) => toggle(task, event.target.checked)} />}
       <button className="preview-row-main" onClick={() => editable && onEdit(task)}>
@@ -102,7 +117,7 @@ export function TaskRows({ tasks, onReload, editable = false, onEdit, showCheckb
       </button>
       {editable && <button className="danger-icon" onClick={() => remove(task)}>{t("plus.delete")}</button>}
     </div>
-  ))}</div>;
+  ))}</div></>;
 }
 
 export function TaskOverview({ childId, hideWhenEmpty = false }) {

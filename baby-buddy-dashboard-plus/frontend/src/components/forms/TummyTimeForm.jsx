@@ -5,7 +5,9 @@ import DeleteButton from "../DeleteButton";
 import { colors } from "../../utils/colors";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
-import { toApiDatetime } from "../../utils/formatters";
+import { formatElapsedHM, localDatetimeDurationMs, toApiDatetime } from "../../utils/formatters";
+
+const LONG_TUMMY_TIME_MS = 2 * 60 * 60 * 1000;
 
 function toLocalDatetime(date) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -25,6 +27,20 @@ export default function TummyTimeForm({ childId, timerId, entry, onDone, onClose
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isEdit || !timerId) {
+      let durationMs;
+      try {
+        durationMs = localDatetimeDurationMs(start, end);
+      } catch {
+        setError(t("common.invalidDateTime"));
+        return;
+      }
+      if (durationMs <= 0) {
+        setError(t("common.endAfterStart"));
+        return;
+      }
+      if (durationMs > LONG_TUMMY_TIME_MS && !window.confirm(t("common.confirmLongDuration", { type: t("action.tummyTime").toLowerCase(), duration: formatElapsedHM(durationMs) }))) return;
+    }
     setSaving(true);
     setError(null);
     try {

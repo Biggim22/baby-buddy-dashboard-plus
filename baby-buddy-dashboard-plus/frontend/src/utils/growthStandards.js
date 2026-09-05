@@ -45,3 +45,13 @@ export function toAgeWeekSeries(entries, valueKey, birthDate) {
     .filter((d) => Number.isFinite(d.week) && d.week >= 0)
     .sort((a, b) => a.week - b.week);
 }
+
+// Recharts supplies a continuous cursor coordinate as `label`, while the WHO
+// bands are discrete weekly reference rows. Always label the tooltip with the
+// actual row/measurement that supplied its values; rounding the cursor can
+// otherwise show “week 2” alongside the week-1 percentile values.
+export function resolveWhoTooltipWeek(label, band, childPoint) {
+  const week = band?.week ?? childPoint?.payload?.week ?? label;
+  const numericWeek = Number(week);
+  return Number.isFinite(numericWeek) ? Math.round(numericWeek) : null;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ageInWeeks, hasWhoStandard, buildWhoBandSeries, toAgeWeekSeries } from "./growthStandards";
+import { ageInWeeks, hasWhoStandard, buildWhoBandSeries, toAgeWeekSeries, resolveWhoTooltipWeek } from "./growthStandards";
 
 describe("ageInWeeks", () => {
   it("returns 0 for a measurement on the birth date", () => {
@@ -89,5 +89,15 @@ describe("toAgeWeekSeries", () => {
     const entry = { date: "2026-01-01", weight: 3.3, id: 42 };
     const [point] = toAgeWeekSeries([entry], "weight", birthDate);
     expect(point.entry).toBe(entry);
+  });
+});
+
+describe("resolveWhoTooltipWeek", () => {
+  it("uses the discrete WHO row instead of rounding the continuous cursor", () => {
+    expect(resolveWhoTooltipWeek(1.7, { week: 1 })).toBe(1);
+  });
+
+  it("uses a child measurement week when no WHO row is present", () => {
+    expect(resolveWhoTooltipWeek(1.7, null, { payload: { week: 2.2 } })).toBe(2);
   });
 });

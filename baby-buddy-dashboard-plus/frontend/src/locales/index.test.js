@@ -1,5 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { getLanguage, setLanguage, translate, getLocale, SUPPORTED_LANGUAGES } from "./index";
+import en from "./en";
+import de from "./de";
+import itLocale from "./it";
+
+function leafKeys(object, prefix = "") {
+  return Object.entries(object).flatMap(([key, value]) => (
+    value && typeof value === "object" && !Array.isArray(value)
+      ? leafKeys(value, `${prefix}${key}.`)
+      : [`${prefix}${key}`]
+  ));
+}
 
 beforeEach(() => {
   setLanguage("en");
@@ -65,5 +76,16 @@ describe("translate", () => {
     const days = translate("time.dayNames");
     expect(Array.isArray(days)).toBe(true);
     expect(days).toHaveLength(7);
+  });
+});
+
+describe("translation catalog completeness", () => {
+  it("keeps German and Italian keys in sync with English", () => {
+    const expected = new Set(leafKeys(en));
+    for (const catalog of [de, itLocale]) {
+      const actual = new Set(leafKeys(catalog));
+      expect([...expected].filter((key) => !actual.has(key))).toEqual([]);
+      expect([...actual].filter((key) => !expected.has(key))).toEqual([]);
+    }
   });
 });

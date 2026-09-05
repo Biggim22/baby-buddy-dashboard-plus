@@ -13,7 +13,7 @@ import {
 import SectionCard from "./SectionCard";
 import ChartDetailBar from "./ChartDetailBar";
 import { toGrowthSeries, formatGrowthTick } from "../utils/formatters";
-import { ageInWeeks, buildWhoBandSeries, toAgeWeekSeries, hasWhoStandard } from "../utils/growthStandards";
+import { ageInWeeks, buildWhoBandSeries, toAgeWeekSeries, hasWhoStandard, resolveWhoTooltipWeek } from "../utils/growthStandards";
 import { useTranslation } from "../locales";
 
 function PercentileTooltip({ active, payload, label, color, unit }) {
@@ -21,6 +21,7 @@ function PercentileTooltip({ active, payload, label, color, unit }) {
   if (!active || !payload?.length) return null;
   const band = payload.find((p) => p.dataKey === "p50")?.payload;
   const childPoint = payload.find((p) => p.dataKey === "value");
+  const week = resolveWhoTooltipWeek(label, band, childPoint);
   return (
     <div
       style={{
@@ -34,7 +35,7 @@ function PercentileTooltip({ active, payload, label, color, unit }) {
         boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
       }}
     >
-      <div style={{ fontWeight: 600, marginBottom: 4 }}>{t("growth.weekOfAge", { week: Math.round(label) })}</div>
+      <div style={{ fontWeight: 600, marginBottom: 4 }}>{t("growth.weekOfAge", { week: week ?? "—" })}</div>
       {childPoint && (
         <div style={{ color, fontWeight: 600 }}>
           {t("growth.yourChild")}: {childPoint.value} {unit}

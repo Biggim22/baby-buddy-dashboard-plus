@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.3 (WHO alignment, reliability and translations)
+
+- Fixed WHO percentile tooltips so the displayed week always matches the discrete WHO reference row that supplied the percentile values.
+- Added local validation that end time follows start time for manually entered feeding, sleep and tummy-time records.
+- Added a confirmation for unusually long manual entries: more than 4 hours for feeding, 18 hours for sleep, or 2 hours for tummy time.
+- Made task, appointment and care save/delete failures visible in the relevant dialog or list and retained the technical detail in the error log.
+- Completed the Italian Plus translation catalog and added an automated test that keeps all three language catalogs structurally aligned.
+
 ## 2.3.2 (Local number and date/time safety)
 
 - Accepted decimal commas and decimal points for manually entered measurements, bottle amounts, medication doses and medication intervals.

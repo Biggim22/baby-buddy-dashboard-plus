@@ -6,7 +6,9 @@ import { colors } from "../../utils/colors";
 import { useUnits } from "../../utils/units";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
-import { parseLocalizedNumber, toApiDatetime } from "../../utils/formatters";
+import { formatElapsedHM, localDatetimeDurationMs, parseLocalizedNumber, toApiDatetime } from "../../utils/formatters";
+
+const LONG_FEEDING_MS = 4 * 60 * 60 * 1000;
 
 function toLocalDatetime(date) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -51,6 +53,20 @@ export default function FeedingForm({ childId, timerId, entry, onDone, onClose }
     if (amount.trim() && (amountValue == null || amountValue < 0)) {
       setError(t("common.invalidNumber"));
       return;
+    }
+    if (isEdit || !timerId) {
+      let durationMs;
+      try {
+        durationMs = localDatetimeDurationMs(start, end);
+      } catch {
+        setError(t("common.invalidDateTime"));
+        return;
+      }
+      if (durationMs <= 0) {
+        setError(t("common.endAfterStart"));
+        return;
+      }
+      if (durationMs > LONG_FEEDING_MS && !window.confirm(t("common.confirmLongDuration", { type: t("action.feeding").toLowerCase(), duration: formatElapsedHM(durationMs) }))) return;
     }
     setSaving(true);
     setError(null);

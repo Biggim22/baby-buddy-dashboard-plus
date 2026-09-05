@@ -7,22 +7,23 @@ Baby Buddy Dashboard Plus remains a dashboard and companion for [Baby Buddy](htt
 ## Status legend
 
 - **Planned** — agreed direction; implementation has not started.
+- **Completed** — delivered in a released version; retained here as a record.
 - **Research** — worth investigating before a product decision.
 - **Candidate** — useful idea, but not committed to a release.
 
-## 2.3.x – reliability and polish
+## 2.3.x – reliability and polish (completed in 2.3.3)
 
-### Localised numeric input — Planned
+### Localised numeric input — Completed
 
 Accept both a decimal comma and a decimal point when entering values such as weight, height, temperature, bottle volume and medication amounts. The stored value remains a normal number, independent of the active UI language.
 
-### Form reliability and data integrity — Planned
+### Form reliability and data integrity — Completed
 
 - Show save and delete errors directly in the relevant dialog instead of failing silently.
 - Ask for confirmation before saving implausibly long feeding, sleep or tummy-time entries.
 - Audit date, time and time-zone handling for manually edited entries so the entered local time is preserved.
 
-### Translation audit — Planned
+### Translation audit — Completed
 
 Complete an end-to-end language review: tabs, card titles, dialogs, chart tooltips, settings, notifications, empty states and validation messages must consistently use the selected language. The changelog remains English.
 

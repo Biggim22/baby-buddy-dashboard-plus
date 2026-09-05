@@ -17,6 +17,7 @@ import {
   averageBreastFeedingDurationMs,
   translateDosageUnit,
   toApiDatetime,
+  localDatetimeDurationMs,
   parseLocalizedNumber,
   calculateBmi,
 } from "./formatters";
@@ -71,6 +72,16 @@ describe("toApiDatetime", () => {
     expect(() => toApiDatetime("2026-02-30T10:00")).toThrow(/Invalid/);
     expect(() => toApiDatetime("2026-07-23 07:22")).toThrow(/Invalid/);
     expect(() => toApiDatetime("")).toThrow(/Invalid/);
+  });
+});
+
+describe("localDatetimeDurationMs", () => {
+  it("compares validated local wall-clock timestamps", () => {
+    expect(localDatetimeDurationMs("2026-07-20T10:00", "2026-07-20T11:30")).toBe(90 * 60 * 1000);
+  });
+
+  it("retains a negative result so the form can reject an end before its start", () => {
+    expect(localDatetimeDurationMs("2026-07-20T11:30", "2026-07-20T10:00")).toBe(-90 * 60 * 1000);
   });
 });
 
