@@ -1,12 +1,18 @@
 # Baby Buddy Dashboard Plus
 
-[Deutsch](#deutsch) · [English](#english) · [Roadmap](ROADMAP.md) · [Development](DEVELOPMENT.md) · [Release process](RELEASING.md) · [Baby Buddy – data source](https://github.com/babybuddy/babybuddy) · [Upstream dashboard](https://github.com/mbentancour/baby-buddy-dashboard)
+[Deutsch](#deutsch) · [English](#english) · [Screenshots](#tour-in-screenshots) · [Installation](#installation-via-home-assistant) · [Roadmap](ROADMAP.md) · [Development](DEVELOPMENT.md) · [Release process](RELEASING.md)
 
-> An independent community fork of Baby Buddy Dashboard. **Baby Buddy Dashboard Plus 2.3.3 is based on Baby Buddy Dashboard 1.7.7.** Changes made in the upstream project after 1.7.7 are not included automatically; they are evaluated and ported deliberately.
+> An independent community fork that turns [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard) into a more complete everyday companion for Home Assistant and [Baby Buddy](https://github.com/babybuddy/babybuddy).
+
+| Built for | Runs as | Current upstream base |
+| --- | --- | --- |
+| Families already using Baby Buddy | A standalone Home Assistant app | Baby Buddy Dashboard **1.7.7** |
+
+**A note on the upstream base:** the original Plus fork started from Baby Buddy Dashboard 1.2.8. With **Baby Buddy Dashboard Plus 2.1.7**, it was rebased onto the complete Baby Buddy Dashboard **1.7.7** codebase, bringing in the upstream improvements available up to that version. Changes made upstream after 1.7.7 are reviewed and ported deliberately; they are not included automatically.
 
 ---
 
-## Screenshots
+## Tour in screenshots
 
 All screenshots use the built-in Baby Buddy demo data. / Alle Screenshots verwenden die integrierten Baby-Buddy-Demodaten.
 
@@ -67,9 +73,28 @@ Baby Buddy Dashboard Plus ist ein erweitertes Home-Assistant-Dashboard für [Bab
 
 Die Plus-Version wird als eigenständige App mit dem Slug `baby-buddy-dashboard-plus` installiert. Sie ersetzt weder Baby Buddy noch zwingend das originale Dashboard: Beide können parallel installiert sein. Die Bezeichnung in der Home-Assistant-Seitenleiste lässt sich im Dashboard zwischen **„Baby Buddy Dashboard Plus“** und dem Namen des in Baby Buddy ausgewählten Kindes umschalten.
 
-### Basis und Abgrenzung zum Original
+### Auf einen Blick
 
-Dieses Projekt baut auf **Baby Buddy Dashboard 1.7.7** von [Martin Bentancour](https://github.com/mbentancour/baby-buddy-dashboard) auf. Die ursprüngliche MIT-Lizenz und die Urheberhinweise bleiben erhalten. Baby Buddy Dashboard Plus ist kein offizielles Baby-Buddy- oder Home-Assistant-Projekt und steht in keiner Verbindung zu den jeweiligen Maintainer:innen.
+| Du möchtest … | Dashboard Plus bietet … |
+| --- | --- |
+| den Alltag schnell erfassen | Schnellerfassungen, letzte Ereignisse, bearbeitbaren Tagesverlauf und optionale Karten |
+| Muster erkennen | farblich abgestimmte Auswertungen für Fütterung, Fläschchen, Windeln, Schlaf, Temperatur und Bauchlage |
+| Dinge außerhalb von Baby Buddy organisieren | lokalen Pflege-Tracker, Aufgaben, einmalige Termine und Erinnerungen |
+| das Dashboard an eure Routine anpassen | auswählbare und sortierbare Karten, Sprache, Zeitformat, Themes, Farben und zeitgesteuerten Designwechsel |
+
+### Projektgeschichte, Basis und Abgrenzung zum Original
+
+Die erste Plus-Fork ging von **Baby Buddy Dashboard 1.2.8** aus. Mit **Baby Buddy Dashboard Plus 2.1.7** wurde die Basis auf den vollständigen Stand von **Baby Buddy Dashboard 1.7.7** von [Martin Bentancour](https://github.com/mbentancour/baby-buddy-dashboard) aktualisiert. Dadurch sind die bis dahin in der Main Branch verfügbaren Verbesserungen Bestandteil dieser Fork. Nachfolgende Änderungen des Originalprojekts werden bewusst geprüft und bei Bedarf einzeln übernommen.
+
+Die ursprüngliche MIT-Lizenz und die Urheberhinweise bleiben erhalten. Baby Buddy Dashboard Plus ist kein offizielles Baby-Buddy- oder Home-Assistant-Projekt und steht in keiner Verbindung zu den jeweiligen Maintainer:innen.
+
+**Die Rollen der drei Projekte:**
+
+| Projekt | Aufgabe |
+| --- | --- |
+| [Baby Buddy](https://github.com/babybuddy/babybuddy) | Die eigentliche Anwendung: hier werden Kind, Mahlzeiten, Schlaf, Windeln, Medikamente und Wachstum gespeichert. |
+| [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard) | Das ursprüngliche, schlanke Home-Assistant-Dashboard. |
+| Baby Buddy Dashboard Plus | Diese Fork: erweitert das Dashboard um Auswertungen, Organisation und persönliche Anpassung. |
 
 | Bereich | Baby Buddy Dashboard 1.7.7 | Baby Buddy Dashboard Plus |
 | --- | --- | --- |
@@ -100,7 +125,7 @@ Dieses Projekt baut auf **Baby Buddy Dashboard 1.7.7** von [Martin Bentancour](h
 - **Windelgrößen- und Vorratsrechner:** Nutzt standardmäßig überlappende Pampers-Gewichtsbereiche, die sich für andere Marken überschreiben lassen. Aus Gewichtstrend und tatsächlichem Verbrauch entstehen eine konservative Untergrenze, ein Erwartungswert und eine Obergrenze – jeweils mit voraussichtlichem Datum.
 - **Mehrkind-Unterstützung:** Wenn die Baby-Buddy-API mehrere Kinder liefert, kann im Dashboard zwischen ihnen gewechselt werden. Persönliche Daten sind nicht im Quellcode oder im App-Namen fest verdrahtet.
 
-### Installation über Home Assistant
+### Installation via Home Assistant
 
 1. In Home Assistant **Einstellungen → Apps → App-Store** öffnen.
 2. Im Menü **Repositories** wählen und diese Repository-URL hinzufügen:
@@ -147,11 +172,28 @@ Baby Buddy Dashboard Plus is an extended Home Assistant dashboard for [Baby Budd
 
 Plus installs as a separate app with the `baby-buddy-dashboard-plus` slug. It does not replace Baby Buddy and does not require replacing the upstream dashboard; both can be installed in parallel. The Home Assistant sidebar label can be switched inside the dashboard between **“Baby Buddy Dashboard Plus”** and the selected child’s name.
 
-### Upstream base and scope
+### At a glance
 
-This project is based on **Baby Buddy Dashboard 1.7.7** by [Martin Bentancour](https://github.com/mbentancour/baby-buddy-dashboard). The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus is an independent community fork; it is not an official Baby Buddy or Home Assistant project and is not affiliated with either project’s maintainers.
+| If you want to … | Dashboard Plus provides … |
+| --- | --- |
+| record everyday events quickly | quick actions, last-event cards, an editable day-by-day history, and optional cards |
+| spot patterns | colour-consistent analytics for feeding, bottles, diapers, sleep, temperature, and tummy time |
+| organise things outside Baby Buddy | a local care tracker, tasks, one-off appointments, and reminders |
+| tailor the dashboard to your routine | selectable and reorderable cards, language, time format, themes, colours, and scheduled appearance switching |
 
-Upstream changes released after version 1.7.7 are **not** automatically present in this fork. They are reviewed and ported deliberately so that the Plus-specific features stay reliable.
+### Project history, upstream base and scope
+
+The first Plus fork started from **Baby Buddy Dashboard 1.2.8**. With **Baby Buddy Dashboard Plus 2.1.7**, the fork was rebased onto the complete **Baby Buddy Dashboard 1.7.7** codebase by [Martin Bentancour](https://github.com/mbentancour/baby-buddy-dashboard). This brought the upstream main-branch improvements available up to that version into Plus. Upstream changes released later are reviewed and ported deliberately, when appropriate.
+
+The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus is an independent community fork; it is not an official Baby Buddy or Home Assistant project and is not affiliated with either project’s maintainers.
+
+**How the three projects fit together:**
+
+| Project | Role |
+| --- | --- |
+| [Baby Buddy](https://github.com/babybuddy/babybuddy) | The primary application: it stores children, feedings, sleep, diapers, medication, and growth data. |
+| [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard) | The original, lightweight Home Assistant dashboard. |
+| Baby Buddy Dashboard Plus | This fork: it extends the dashboard with analytics, organisation, and personalisation. |
 
 | Area | Baby Buddy Dashboard 1.7.7 | Baby Buddy Dashboard Plus |
 | --- | --- | --- |

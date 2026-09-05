@@ -120,7 +120,7 @@
 
 - Fixed Home Assistant startup loops caused by Windows CRLF line endings in `run.sh` (`unable to exec bashio\r`). The archive now contains LF line endings and the Docker build normalises the script again defensively.
 
-## 2.1.8 (Dashboard Plus)
+## 2.1.7 (Dashboard Plus upstream rebase)
 
 - Rebased Dashboard Plus on Baby Buddy Dashboard 1.7.7, retaining its medication backlog, UTC timestamp fixes, automatic BMI, WHO percentile charts, translations, themes, temperature tracking, and edit/delete support.
 - Added a compact, configurable overview with today's open tasks, latest feeding/diaper/sleep/medication/tummy-time cards, recent lists, and the latest solid diaper timestamp. Charts now live in Analytics.
