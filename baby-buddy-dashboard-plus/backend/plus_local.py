@@ -8,7 +8,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Awaitable, Callable, Literal
 from zoneinfo import ZoneInfo
 import httpx
 from fastapi import APIRouter, HTTPException, Query
@@ -393,7 +393,13 @@ async def send_ha_notification(child_id: int, title: str, message: str) -> bool:
     return any(result.get("ok") for result in results)
 
 
-async def check_bath_reminders() -> None:
+async def check_bath_reminders(active_child_ids: set[int] | None = None) -> None:
+    """Send full-bath reminders only for children that still exist in Baby Buddy.
+
+    Local Plus data intentionally survives add-on reinstalls and migrations. That can
+    leave settings for an old Baby Buddy child ID behind. Such an orphan must never
+    result in a family notification, while its local data stays recoverable.
+    """
     now = local_now()
     today = now.date()
     pending: list[tuple[int, str]] = []
@@ -403,6 +409,9 @@ async def check_bath_reminders() -> None:
         ).fetchall()
         for child_row in child_rows:
             child_id = child_row["child_id"]
+            if active_child_ids is not None and child_id not in active_child_ids:
+                logger.info("Skipping bath reminder for orphaned local child ID %s", child_id)
+                continue
             reminder_time = get_setting(
                 connection, child_id, "bath_reminder_time", DEFAULT_BATH_TIME
             )
@@ -456,7 +465,7 @@ async def check_bath_reminders() -> None:
                 )
 
 
-async def check_task_reminders() -> None:
+async def check_task_reminders(active_child_ids: set[int] | None = None) -> None:
     now = local_now()
     today = now.date()
     # The loop starts at add-on startup and is not aligned to a full minute. Check
@@ -471,6 +480,9 @@ async def check_task_reminders() -> None:
         ).fetchall()
         for row in rows:
             task = dict(row)
+            if active_child_ids is not None and task["child_id"] not in active_child_ids:
+                logger.info("Skipping task reminder for orphaned local child ID %s", task["child_id"])
+                continue
             language = get_setting(connection, task["child_id"], "language", "de")
             days_before = int(task.get("reminder_days_before") or 0)
             due_for_reminder = today + timedelta(days=days_before)
@@ -513,11 +525,23 @@ async def check_task_reminders() -> None:
                 )
 
 
-async def reminder_loop() -> None:
+async def reminder_loop(
+    active_child_ids_provider: Callable[[], Awaitable[set[int] | None]] | None = None,
+) -> None:
     while True:
         try:
-            await check_bath_reminders()
-            await check_task_reminders()
+            active_child_ids = None
+            if active_child_ids_provider is not None:
+                active_child_ids = await active_child_ids_provider()
+                if active_child_ids is None:
+                    # Failing closed is deliberate: a temporary Baby Buddy outage must
+                    # not turn stale local records into notifications for a non-existent
+                    # child. The next loop retries the lookup a minute later.
+                    logger.warning("Skipping local reminders until active Baby Buddy children can be verified")
+                    await asyncio.sleep(60)
+                    continue
+            await check_bath_reminders(active_child_ids)
+            await check_task_reminders(active_child_ids)
         except asyncio.CancelledError:
             raise
         except Exception:

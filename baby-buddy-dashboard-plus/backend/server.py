@@ -176,6 +176,35 @@ medication_alert_task: asyncio.Task | None = None
 plus_reminder_task: asyncio.Task | None = None
 
 
+async def get_active_baby_buddy_child_ids() -> set[int] | None:
+    """Return current Baby Buddy child IDs, or ``None`` when they cannot be verified.
+
+    Plus-local care, tasks and appointments are persisted independently of Baby Buddy.
+    A child removed from Baby Buddy can therefore leave an old local row behind after a
+    migration. Reminder delivery must be fail-safe: an unavailable or malformed lookup
+    suppresses that cycle rather than sending a notification for stale data.
+    """
+    if DEMO_MODE:
+        return set()
+    if http_client is None:
+        logger.warning("Baby Buddy client is unavailable; local reminders are paused")
+        return None
+    try:
+        response = await http_client.get("/api/children/", params={"page_size": 100})
+        response.raise_for_status()
+        payload = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("Could not verify active Baby Buddy children; local reminders are paused: %s", exc)
+        return None
+
+    rows = payload if isinstance(payload, list) else payload.get("results", []) if isinstance(payload, dict) else []
+    try:
+        return {int(child["id"]) for child in rows if isinstance(child, dict) and child.get("id") is not None}
+    except (TypeError, ValueError) as exc:
+        logger.warning("Baby Buddy returned an invalid child ID; local reminders are paused: %s", exc)
+        return None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global http_client, medication_alert_task, plus_reminder_task
@@ -200,7 +229,7 @@ async def lifespan(app: FastAPI):
             "or demo mode is active; skipping Home Assistant entity updates"
         )
 
-    plus_reminder_task = asyncio.create_task(reminder_loop())
+    plus_reminder_task = asyncio.create_task(reminder_loop(get_active_baby_buddy_child_ids))
 
     try:
         yield

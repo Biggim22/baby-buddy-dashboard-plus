@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.4 (Reminder integrity)
+
+- Prevented stale, locally persisted child records from sending full-bath, task or appointment reminders after a Baby Buddy migration or child removal.
+- Reminder delivery now verifies the current Baby Buddy child list before each cycle. If Baby Buddy cannot be reached, that cycle is safely skipped instead of risking a notification for stale local data.
+- Kept orphaned local records intact for recovery; they are excluded from notification delivery rather than silently deleted.
+
 ## 2.3.3 (WHO alignment, reliability and translations)
 
 - Fixed WHO percentile tooltips so the displayed week always matches the discrete WHO reference row that supplied the percentile values.

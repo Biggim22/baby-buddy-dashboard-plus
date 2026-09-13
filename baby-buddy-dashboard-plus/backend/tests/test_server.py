@@ -42,6 +42,22 @@ async def test_get_config_returns_settings_without_secrets():
     assert "baby_buddy_api_key" not in json.dumps(body)
 
 
+async def test_active_child_ids_come_from_baby_buddy(app_client):
+    assert await server_mod.get_active_baby_buddy_child_ids() == {1}
+
+
+async def test_active_child_ids_pause_reminders_when_baby_buddy_is_unavailable(monkeypatch):
+    def failing_handler(request: httpx.Request):
+        raise httpx.ConnectError("offline", request=request)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(failing_handler), base_url="http://fake-baby-buddy")
+    monkeypatch.setattr(server_mod, "http_client", client)
+    try:
+        assert await server_mod.get_active_baby_buddy_child_ids() is None
+    finally:
+        await client.aclose()
+
+
 async def test_get_config_theme_has_both_modes_with_all_seven_fields():
     transport = httpx.ASGITransport(app=server_mod.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:

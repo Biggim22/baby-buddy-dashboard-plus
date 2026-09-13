@@ -24,7 +24,7 @@ export THEME_DARK_TEXT_MUTED=$(bashio::config 'theme_dark_text_muted' '')
 export THEME_DARK_TEXT_DIM=$(bashio::config 'theme_dark_text_dim' '')
 export THEME_DARK_ACCENT=$(bashio::config 'theme_dark_accent' '')
 
-bashio::log.info "Starting Baby Buddy Dashboard Plus 2.3.3..."
+bashio::log.info "Starting Baby Buddy Dashboard Plus 2.3.4..."
 bashio::log.info "Connecting to Baby Buddy at: ${BABY_BUDDY_URL}"
 
 cd /app
