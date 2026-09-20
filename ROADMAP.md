@@ -40,6 +40,36 @@ Move caraway-oil suppositories out of the local Care categories and into Baby Bu
 - Existing local care entries for caraway-oil suppositories remain visible and recoverable. A migration guide will offer an explicit, one-time copy to medication history; no historical care entry is silently deleted or reclassified.
 - The examples discussed during planning (paracetamol liquid or suppositories, caraway-oil suppositories and glycerin suppositories) are not included in the app. They remain examples only for a family deciding what to create in its own list.
 
+### Home Assistant quick controls on Overview — Planned after medication presets
+
+Allow an optional Overview card with a small, user-selected set of Home Assistant entities that are useful in a care routine, for example switching a night light on or off.
+
+- The user explicitly chooses every entity in Dashboard Plus settings; nothing from Home Assistant appears automatically.
+- The first scope is limited to safe, directly controllable entity types such as `light`, `switch`, `scene` and `script`. The card displays its current state and exposes the appropriate on/off or activate action.
+- Entities remain Home Assistant entities. Dashboard Plus does not duplicate device credentials, states or automations.
+- The card follows the existing per-tab visibility and ordering controls and is disabled by default.
+- Device and service names are shown exactly as supplied by Home Assistant; the UI makes no claim that an entity is medically relevant or safe for unattended operation.
+
+### Care on Overview — Planned with the Overview controls
+
+Offer Care as an optional Overview section, so families can see the selected latest care entries alongside the existing last-event cards without first switching to the Care tab.
+
+- Disabled by default and enabled through the existing Overview visibility and ordering settings.
+- Reuse the care-header selection: only the care categories that the family selected for the Care page header appear in the compact Overview section.
+- Each displayed item links to its editable care entry; no duplicate local care data or separate summary state is created.
+- The compact section must remain useful on mobile and must not replace the existing Care history.
+
+### Home Assistant actions to log local care and routines — Planned after quick controls
+
+Let Home Assistant automations, voice assistants and physical buttons create an explicit Plus care entry or mark a routine as completed. This supports workflows such as logging a full bath, trimmed nails or a Vitamin D dose from Alexa or a Zigbee button.
+
+- Provide documented Home Assistant services with a deliberately narrow schema, for example `baby_buddy_dashboard_plus.log_care` and `baby_buddy_dashboard_plus.log_routine`.
+- Each service call requires an explicit child and a fixed, supported care/routine type; optional timestamp and note are validated. Free-form service calls cannot execute arbitrary code or arbitrary Home Assistant services.
+- The dashboard settings contain an allow-list: families opt in to every care type or routine that may be written from Home Assistant.
+- Calls are idempotency-aware so one button press or voice command cannot create duplicate entries through a retry. The resulting record identifies that it was created through Home Assistant and remains editable in Dashboard Plus.
+- Vitamin D remains a medication/routine completion rather than a care category. The implementation must map it to the existing Baby Buddy medication/task model without inventing a second medication history.
+- Documentation will include small Home Assistant automation examples for an Alexa-exposed helper and a Zigbee button, but never bundle credentials, personal entity IDs or a default automation.
+
 ### Home Assistant calendar bridge — Completed in 2.4.1
 
 Connect the existing Tasks & appointments area to calendars already configured in Home Assistant, including CalDAV integrations, without collecting calendar credentials in Dashboard Plus.
