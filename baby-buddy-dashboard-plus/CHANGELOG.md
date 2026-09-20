@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.4.1 (Home Assistant calendar bridge)
+
+- Added an optional calendar bridge for appointments using the `calendar.*` entities already configured in Home Assistant, including calendars provided through CalDAV integrations.
+- Calendar credentials remain exclusively in Home Assistant; Dashboard Plus stores only the selected entity IDs and never CalDAV credentials.
+- Added a configurable calendar selection in Settings and an optional Calendar card in Tasks & appointments.
+- Shows the next 90 days of selected external calendar events and lets a family import an event once as a local appointment without automatic duplicate creation.
+- Added an explicit opt-in when creating or editing a local appointment to also export it to one selected Home Assistant calendar.
+- Deliberately does not claim to provide automatic two-way synchronization: edits, recurring-event exceptions and deletions stay unambiguous and under the user's control.
+
 ## 2.3.4 (Reminder integrity)
 
 - Prevented stale, locally persisted child records from sending full-bath, task or appointment reminders after a Baby Buddy migration or child removal.

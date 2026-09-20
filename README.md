@@ -178,7 +178,7 @@ Plus installs as a separate app with the `baby-buddy-dashboard-plus` slug. It do
 | --- | --- |
 | record everyday events quickly | quick actions, last-event cards, an editable day-by-day history, and optional cards |
 | spot patterns | colour-consistent analytics for feeding, bottles, diapers, sleep, temperature, and tummy time |
-| organise things outside Baby Buddy | a local care tracker, tasks, one-off appointments, and reminders |
+| organise things outside Baby Buddy | a local care tracker, tasks, one-off appointments, reminders, and an optional Home Assistant calendar bridge |
 | tailor the dashboard to your routine | selectable and reorderable cards, language, time format, themes, colours, and scheduled appearance switching |
 
 ### Project history, upstream base and scope
@@ -204,6 +204,7 @@ The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus
 | Growth | Measurements and upstream features | Automatic BMI calculation from nearby height/weight measurements, growth charts, and optional WHO overlays |
 | Care | Not available | Care history, bathing and washing types, custom categories, reminders, and configurable care header |
 | Tasks | Not available | Daily tasks, reminders, vitamin-D-style routines, and one-off appointments with a time |
+| Calendar | Not available | Optional bridge to selected Home Assistant calendars, including CalDAV calendars, with explicit import and export |
 | Notifications | Add-on configuration | Select Home Assistant notify services and media players, test notifications, and optional voice announcements |
 | Stock planning | Not available | Optional diaper-size and stock calculator using weight trend plus conservative, expected, and upper estimates |
 | Appearance | Upstream theme | Independent language and time format, multiple colour spectra, light/dark/pastel themes, and scheduled theme switching |
@@ -218,7 +219,7 @@ The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus
 - **Growth and health:** Weight, height, head circumference, BMI and body temperature are displayed in clear charts. BMI calculation also considers measurements entered on the same or nearby days. WHO reference curves can be enabled when desired.
 - **Care tracker:** Full baths, full-body washes and quick washes follow a hierarchy: a full bath also counts as a full-body and quick wash, avoiding conflicting “last wash” values. Nail trimming, caraway oil, caraway suppositories and custom care types are supported. Edit and delete actions live together in the edit dialog.
 - **Bath reminders:** The full-bath interval and reminder time are configured directly in the Care tab settings.
-- **Tasks and appointments:** Daily or date-specific tasks can appear on the overview and disappear when completed. One-off appointments – for example check-ups or vaccinations – have their own section, appointment time, and a reminder on the appointment day or the day before.
+- **Tasks, appointments and calendar:** Daily or date-specific tasks can appear on the overview and disappear when completed. One-off appointments – for example check-ups or vaccinations – have their own section, appointment time, and a reminder on the appointment day or the day before. Selected Home Assistant calendars, including CalDAV calendars configured there, can show their upcoming events in Plus. An event can be imported once as a local appointment; a local appointment can be exported explicitly. Credentials stay in Home Assistant and there is deliberately no opaque automatic two-way sync.
 - **Medication and notes:** Recurring medication stays separate from everyday routines. Dose and next allowed dose can be recorded while medication history and notes remain compact and paginated.
 - **Notification testing:** Global settings provide collapsible selection of notify services and optional media players, plus a composable test message. The 12/24-hour time setting is independent from the selected language.
 - **Diaper size and stock calculator:** Uses overlapping Pampers weight ranges by default, with editable ranges for other brands. Weight trend and real diaper use produce conservative minimum, expected and maximum estimates, each with a projected date.

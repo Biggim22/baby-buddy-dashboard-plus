@@ -6,7 +6,7 @@ import logging
 import os
 import sqlite3
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal
 from zoneinfo import ZoneInfo
@@ -121,6 +121,9 @@ def init_database() -> None:
             ("appointment_time", "TEXT NOT NULL DEFAULT ''"),
             ("task_kind", "TEXT NOT NULL DEFAULT 'task'"),
             ("reminder_days_before", "INTEGER NOT NULL DEFAULT 0"),
+            ("calendar_entity_id", "TEXT NOT NULL DEFAULT ''"),
+            ("calendar_exported_at", "TEXT NOT NULL DEFAULT ''"),
+            ("calendar_source_event", "TEXT NOT NULL DEFAULT ''"),
         ):
             if name not in task_columns:
                 connection.execute(
@@ -192,6 +195,7 @@ def ensure_child_defaults(child_id: int) -> None:
             "notification_targets": json.dumps([NOTIFY_SERVICE]),
             "media_player_targets": json.dumps([]),
             "media_player_mode": "custom",
+            "calendar_entities": json.dumps([]),
             "analytics_sleep_period_mode": "rolling",
             "tab_hidden_cards": json.dumps({}),
             "tab_card_order": json.dumps({}),
@@ -293,6 +297,7 @@ class SettingsPatch(BaseModel):
     notification_targets: list[str] | None = None
     media_player_targets: list[str] | None = None
     media_player_mode: Literal["custom", "alexa_tts", "alexa_announce"] | None = None
+    calendar_entities: list[str] | None = None
     analytics_sleep_period_mode: Literal["rolling", "calendar"] | None = None
     tab_hidden_cards: dict[str, list[str]] | None = None
     tab_card_order: dict[str, list[str]] | None = None
@@ -314,6 +319,49 @@ class NotificationTestIn(BaseModel):
     notification_targets: list[str] = []
     media_player_targets: list[str] = []
     media_player_mode: Literal["custom", "alexa_tts", "alexa_announce"] = "custom"
+
+
+class CalendarExportIn(BaseModel):
+    child_id: int
+    task_id: int
+    calendar_entity_id: str = Field(pattern=r"^calendar\.[a-z0-9_]+$")
+
+
+class CalendarImportIn(BaseModel):
+    child_id: int
+    calendar_entity_id: str = Field(pattern=r"^calendar\.[a-z0-9_]+$")
+    summary: str = Field(min_length=1, max_length=120)
+    start: str = Field(min_length=1, max_length=80)
+    end: str = Field(default="", max_length=80)
+    description: str = Field(default="", max_length=4000)
+    location: str = Field(default="", max_length=300)
+
+
+def calendar_datetime(value: str) -> datetime:
+    """Convert the Home Assistant calendar date/datetime representation safely."""
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            parsed = datetime.combine(date.fromisoformat(value), time.min)
+        except ValueError as exc:
+            raise HTTPException(422, "Invalid calendar date") from exc
+    return parsed.replace(tzinfo=LOCAL_TIMEZONE) if parsed.tzinfo is None else parsed.astimezone(LOCAL_TIMEZONE)
+
+
+def calendar_export_payload(task: dict[str, Any]) -> dict[str, str]:
+    if task.get("task_kind") != "appointment":
+        raise HTTPException(400, "Only appointments can be exported to a calendar")
+    start_date = date.fromisoformat(task["start_date"])
+    event_time = task.get("appointment_time") or "09:00"
+    start = datetime.combine(start_date, time.fromisoformat(event_time), LOCAL_TIMEZONE)
+    end = start + timedelta(hours=1)
+    return {
+        "summary": task["title"],
+        "description": task.get("notes") or "",
+        "start_date_time": start.isoformat(),
+        "end_date_time": end.isoformat(),
+    }
 
 
 def task_due(task: dict[str, Any], due: date) -> bool:
@@ -774,7 +822,7 @@ async def get_local_settings(child_id: int):
         due_date = due.isoformat()
         warning = local_now().date() >= due - timedelta(days=1)
     settings = {row["key"]: row["value"] for row in setting_rows}
-    for key in ("overview_sections", "overview_hidden", "care_header_types", "notification_targets", "media_player_targets"):
+    for key in ("overview_sections", "overview_hidden", "care_header_types", "notification_targets", "media_player_targets", "calendar_entities"):
         try:
             settings[key] = json.loads(settings.get(key, "[]"))
         except (json.JSONDecodeError, TypeError):
@@ -826,6 +874,159 @@ async def get_ha_targets():
     except (httpx.HTTPError, ValueError, TypeError):
         logger.exception("Could not load Home Assistant notification targets")
         return {"notify": ["notify.notify"], "media_players": []}
+
+
+def supervisor_headers() -> dict[str, str]:
+    if not SUPERVISOR_TOKEN:
+        raise HTTPException(503, "Home Assistant API is unavailable")
+    return {"Authorization": f"Bearer {SUPERVISOR_TOKEN}"}
+
+
+@router.get("/api/local/calendar-targets")
+async def get_calendar_targets():
+    """List calendar entities managed by Home Assistant, never CalDAV credentials."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(
+                "http://supervisor/core/api/states", headers=supervisor_headers()
+            )
+        response.raise_for_status()
+        calendars = [
+            {
+                "entity_id": state["entity_id"],
+                "name": state.get("attributes", {}).get("friendly_name", state["entity_id"]),
+            }
+            for state in response.json()
+            if state.get("entity_id", "").startswith("calendar.")
+        ]
+        return {"calendars": sorted(calendars, key=lambda item: item["name"].lower())}
+    except HTTPException:
+        raise
+    except (httpx.HTTPError, ValueError, TypeError):
+        logger.exception("Could not load Home Assistant calendars")
+        raise HTTPException(502, "Home Assistant calendars could not be loaded")
+
+
+def calendar_service_events(payload: Any, requested: list[str]) -> list[dict[str, Any]]:
+    """Normalize service response variants used by supported HA Core versions."""
+    response = payload.get("response", payload) if isinstance(payload, dict) else {}
+    if isinstance(response, dict) and isinstance(response.get("service_response"), dict):
+        response = response["service_response"]
+    events: list[dict[str, Any]] = []
+    if not isinstance(response, dict):
+        return events
+    for entity_id in requested:
+        item = response.get(entity_id, {})
+        for event in item.get("events", []) if isinstance(item, dict) else []:
+            if not isinstance(event, dict) or not event.get("summary") or not event.get("start"):
+                continue
+            events.append({
+                "calendar_entity_id": entity_id,
+                "summary": str(event["summary"]),
+                "start": str(event["start"]),
+                "end": str(event.get("end") or ""),
+                "description": str(event.get("description") or ""),
+                "location": str(event.get("location") or ""),
+            })
+    return sorted(events, key=lambda item: item["start"])
+
+
+@router.get("/api/local/calendar-events")
+async def get_calendar_events(
+    entity_ids: list[str] = Query(default=[]),
+    start: datetime | None = None,
+    end: datetime | None = None,
+):
+    selected = sorted({item for item in entity_ids if item.startswith("calendar.")})
+    if not selected:
+        return {"events": []}
+    range_start = start or local_now()
+    range_end = end or range_start + timedelta(days=90)
+    if range_end <= range_start:
+        raise HTTPException(422, "The calendar end must be after the start")
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(
+                "http://supervisor/core/api/services/calendar/get_events?return_response",
+                headers=supervisor_headers(),
+                json={
+                    "entity_id": selected,
+                    "start_date_time": range_start.isoformat(),
+                    "end_date_time": range_end.isoformat(),
+                },
+            )
+        response.raise_for_status()
+        return {"events": calendar_service_events(response.json(), selected)}
+    except HTTPException:
+        raise
+    except (httpx.HTTPError, ValueError, TypeError):
+        logger.exception("Could not read Home Assistant calendar events")
+        raise HTTPException(502, "Home Assistant calendar events could not be loaded")
+
+
+@router.post("/api/local/calendar-export")
+async def export_calendar_event(export: CalendarExportIn):
+    with db() as connection:
+        row = connection.execute(
+            "SELECT * FROM task_definitions WHERE id = ? AND child_id = ?",
+            (export.task_id, export.child_id),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(404, "Appointment not found")
+    task = dict(row)
+    payload = calendar_export_payload(task)
+    payload["entity_id"] = export.calendar_entity_id
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(
+                "http://supervisor/core/api/services/calendar/create_event",
+                headers=supervisor_headers(), json=payload,
+            )
+        response.raise_for_status()
+    except HTTPException:
+        raise
+    except httpx.HTTPError:
+        logger.exception("Could not export appointment to Home Assistant calendar")
+        raise HTTPException(502, "The appointment could not be exported to Home Assistant")
+    exported_at = local_now().isoformat()
+    with db() as connection:
+        connection.execute(
+            "UPDATE task_definitions SET calendar_entity_id = ?, calendar_exported_at = ? WHERE id = ?",
+            (export.calendar_entity_id, exported_at, export.task_id),
+        )
+    return {"ok": True, "calendar_entity_id": export.calendar_entity_id, "exported_at": exported_at}
+
+
+@router.post("/api/local/calendar-import", status_code=201)
+async def import_calendar_event(event: CalendarImportIn):
+    start = calendar_datetime(event.start)
+    source_key = f"{event.calendar_entity_id}|{start.isoformat()}|{event.summary.strip()}"
+    with db() as connection:
+        existing = connection.execute(
+            "SELECT * FROM task_definitions WHERE child_id = ? AND calendar_source_event = ?",
+            (event.child_id, source_key),
+        ).fetchone()
+        if existing is not None:
+            result = dict(existing)
+            result["weekdays"] = json.loads(result["weekdays"] or "[]")
+            result["already_imported"] = True
+            return result
+        notes = event.description.strip()
+        if event.location.strip():
+            notes = f"{notes}\n\nOrt: {event.location.strip()}".strip()
+        cursor = connection.execute(
+            """INSERT INTO task_definitions
+               (child_id, title, recurrence_type, weekdays, interval_days, start_date,
+                active, sort_order, notes, show_overview, display_after, reminder_time,
+                appointment_time, task_kind, reminder_days_before, calendar_entity_id, calendar_source_event)
+               VALUES (?, ?, 'once', '[]', 1, ?, 1, 0, ?, 0, '00:00', '', ?, 'appointment', 0, ?, ?)""",
+            (event.child_id, event.summary.strip(), start.date().isoformat(), notes, start.strftime("%H:%M"), event.calendar_entity_id, source_key),
+        )
+        row = connection.execute("SELECT * FROM task_definitions WHERE id = ?", (cursor.lastrowid,)).fetchone()
+    result = dict(row)
+    result["weekdays"] = []
+    result["already_imported"] = False
+    return result
 
 
 @router.post("/api/local/test-notification")

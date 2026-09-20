@@ -29,6 +29,15 @@ Complete an end-to-end language review: tabs, card titles, dialogs, chart toolti
 
 ## 2.4 – optional tracking and reporting
 
+### Home Assistant calendar bridge — Completed in 2.4.1
+
+Connect the existing Tasks & appointments area to calendars already configured in Home Assistant, including CalDAV integrations, without collecting calendar credentials in Dashboard Plus.
+
+- Users choose one or more `calendar.*` entities in Settings.
+- The app shows upcoming external events and supports a deliberate one-time import as a local appointment.
+- Local appointments can be exported explicitly to one selected Home Assistant calendar.
+- Automatic two-way synchronization is intentionally out of scope: recurring exceptions, edits and deletion conflicts must remain explicit and predictable.
+
 ### Pumping / expressed milk — Candidate
 
 Add an optional pumping workflow without changing existing breastfeeding or bottle tracking:

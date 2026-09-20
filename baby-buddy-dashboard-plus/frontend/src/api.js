@@ -200,6 +200,16 @@ export const api = {
   toggleTask: (id, completed, dueDate = new Date().toLocaleDateString("sv-SE")) =>
     localRequest(`tasks/${id}/toggle`, { method: "POST", body: JSON.stringify({ completed, due_date: dueDate }) }),
   deleteTask: (id) => localRequest(`tasks/${id}`, { method: "DELETE" }),
+  getCalendarTargets: () => localRequest("calendar-targets"),
+  getCalendarEvents: (entityIds, start, end) => {
+    const params = new URLSearchParams();
+    (entityIds || []).forEach((entityId) => params.append("entity_ids", entityId));
+    if (start) params.set("start", start);
+    if (end) params.set("end", end);
+    return localRequest(`calendar-events?${params.toString()}`);
+  },
+  exportCalendarEvent: (data) => localRequest("calendar-export", { method: "POST", body: JSON.stringify(data) }),
+  importCalendarEvent: (data) => localRequest("calendar-import", { method: "POST", body: JSON.stringify(data) }),
   getLocalSettings: (childId) => localRequest(`settings/${childId}`),
   getHaTargets: () => localRequest("ha-targets"),
   testNotification: (data) => localRequest("test-notification", { method: "POST", body: JSON.stringify(data) }),

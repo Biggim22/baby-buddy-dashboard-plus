@@ -30,6 +30,7 @@ const DEFAULTS = {
   notification_targets: ["notify.notify"],
   media_player_targets: [],
   media_player_mode: "custom",
+  calendar_entities: [],
   analytics_sleep_period_mode: "rolling",
   tab_hidden_cards: {},
   appearance_schedule_enabled: false,
@@ -51,6 +52,7 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
   const [settings, setSettings] = useState(DEFAULTS);
   const [status, setStatus] = useState("");
   const [haTargets, setHaTargets] = useState({ notify: ["notify.notify"], media_players: [] });
+  const [calendarTargets, setCalendarTargets] = useState([]);
   const [test, setTest] = useState({ title: "Baby Buddy Dashboard Plus", message: "Dies ist eine Testbenachrichtigung." });
   const [testStatus, setTestStatus] = useState("");
 
@@ -58,11 +60,13 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
     if (!childId) return;
     try {
       await api.bootstrapLocal(childId);
-      const [result, targets] = await Promise.all([
+      const [result, targets, calendars] = await Promise.all([
         api.getLocalSettings(childId),
         api.getHaTargets().catch(() => ({ notify: ["notify.notify"], media_players: [] })),
+        api.getCalendarTargets().catch(() => ({ calendars: [] })),
       ]);
       setHaTargets(targets);
+      setCalendarTargets(calendars.calendars || []);
       const savedOrder = Array.isArray(result.overview_sections)
         ? result.overview_sections.filter((section) => section in CATEGORY_LABELS)
         : [];
@@ -138,6 +142,7 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
         notification_targets: settings.notification_targets,
         media_player_targets: settings.media_player_targets,
         media_player_mode: settings.media_player_mode,
+        calendar_entities: settings.calendar_entities,
         analytics_sleep_period_mode: settings.analytics_sleep_period_mode,
         tab_hidden_cards: settings.tab_hidden_cards,
         appearance_schedule_enabled: Boolean(settings.appearance_schedule_enabled),
@@ -213,6 +218,16 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
           <p className="form-hint">{t("plus.settings.testHint")}</p>
           <button className="primary-inline" disabled={!test.message.trim()} onClick={sendTest}>{t("plus.settings.sendTest")}</button>
           {testStatus && <div className="notification-test-result">{testStatus}</div>}
+        </div></details>
+      </SectionCard>}
+
+      {(scope === "global") && <SectionCard title={t("plus.settings.calendar")} icon={<Icons.Clipboard />} color="#8B5CF6">
+        <p className="form-hint">{t("plus.settings.calendarHint")}</p>
+        <details className="settings-expander"><summary>{t("plus.settings.chooseCalendars")}</summary><div className="settings-expander-body">
+          <div className="preview-list">
+            {calendarTargets.map((calendar) => <label className="preview-check" key={calendar.entity_id}><input type="checkbox" checked={(settings.calendar_entities || []).includes(calendar.entity_id)} onChange={() => toggleTarget("calendar_entities", calendar.entity_id)} /> {calendar.name} <small>({calendar.entity_id})</small></label>)}
+            {!calendarTargets.length && <span className="form-hint">{t("plus.settings.noCalendars")}</span>}
+          </div>
         </div></details>
       </SectionCard>}
 
