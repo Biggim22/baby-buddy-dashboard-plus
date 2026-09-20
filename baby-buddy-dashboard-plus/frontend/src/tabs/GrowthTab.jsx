@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MeasurementsReportModal from "../components/MeasurementsReportModal";
+import PaediatricReportModal from "../components/PaediatricReportModal";
 import GrowthTrendChart from "../components/GrowthTrendChart";
 import { Icons } from "../components/Icons";
 import { colors } from "../utils/colors";
@@ -22,10 +23,11 @@ function MeasurementCard({ icon, color, label, value, date, onClick }) {
   );
 }
 
-export default function GrowthTab({ childId, hiddenCards = [], cardOrder = [], birthDate, childSex, weights, heights, headCircumferences, bmis, onEditEntry }) {
+export default function GrowthTab({ childId, childName, hiddenCards = [], cardOrder = [], birthDate, childSex, weights, heights, headCircumferences, bmis, onEditEntry }) {
   const t = useTranslation();
   const units = useUnits();
   const [showMeasureReport, setShowMeasureReport] = useState(false);
+  const [showPaediatricReport, setShowPaediatricReport] = useState(false);
   const latestWeight = weights[0];
   const latestHeight = heights[0];
   const latestHeadCircumference = headCircumferences[0];
@@ -35,6 +37,7 @@ export default function GrowthTab({ childId, hiddenCards = [], cardOrder = [], b
 
   return (
     <div className="analytics-grid fade-in">
+      {!hiddenCards.includes("paediatricReport") && <div className="preview-toolbar" style={{ order: orderOf("paediatricReport") }}><div><strong>{t("report.paediatricTitle")}</strong><span>{t("report.paediatricHint")}</span></div><button className="secondary-inline" onClick={() => setShowPaediatricReport(true)}>{t("report.paediatricCreate")}</button></div>}
       {!hiddenCards.includes("summary") && <div className="stats-grid" style={{ order: orderOf("summary") }}>
         <MeasurementCard icon={<Icons.Weight />} color={colors.growth} label={t("growth.weight")} value={latestWeight ? `${latestWeight.weight} ${units.weight}` : null} date={latestWeight?.date} onClick={openReport} />
         <MeasurementCard icon={<Icons.Ruler />} color={colors.height} label={t("growth.height")} value={latestHeight ? `${latestHeight.height} ${units.length}` : null} date={latestHeight?.date} onClick={openReport} />
@@ -50,6 +53,7 @@ export default function GrowthTab({ childId, hiddenCards = [], cardOrder = [], b
       </div>
 
       {showMeasureReport && <MeasurementsReportModal weights={weights} heights={heights} headCircumferences={headCircumferences} bmis={bmis} onClose={() => setShowMeasureReport(false)} />}
+      {showPaediatricReport && <PaediatricReportModal childId={childId} childName={childName} onClose={() => setShowPaediatricReport(false)} />}
     </div>
   );
 }

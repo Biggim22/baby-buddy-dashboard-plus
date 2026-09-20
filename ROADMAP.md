@@ -47,13 +47,13 @@ Add an optional pumping workflow without changing existing breastfeeding or bott
 - recent pumping history and daily/weekly volume analytics;
 - a separate card that can be hidden or reordered like every other card.
 
-### Paediatric appointment summary — Research
+### Paediatric appointment summary — Completed in 2.4.2
 
 Offer a user-triggered, privacy-conscious export for a selected period. The document could include growth measurements, temperature readings, medication history and selected Baby Buddy events, plus optional local care and appointment notes.
 
 - Export is a factual record only, never medical advice or interpretation.
 - The user selects the period and every included section before export.
-- PDF generation, layout and language need to be evaluated before implementation.
+- The first version uses a browser print view (including “Save as PDF”) and a text download, both generated locally. A dedicated PDF renderer can be considered later only if it adds a concrete benefit.
 
 ### Optional elapsed-time reminders — Candidate
 

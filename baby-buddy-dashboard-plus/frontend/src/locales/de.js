@@ -207,7 +207,7 @@ export default {
     columnWeight: "Gewicht ({unit})",
     columnHeight: "Größe ({unit})",
     columnHeadCircumference: "Kopfumfang ({unit})",
-    columnBmi: "BMI",
+    columnBmi: "BMI", paediatricTitle: "Kinderarzt-Bericht", paediatricHint: "Erstellt einen sachlichen, lokal erzeugten Bericht für den gewählten Zeitraum. Er enthält keine medizinische Bewertung oder Empfehlung.", paediatricPeriod: "Zeitraum", paediatricGrowth: "Wachstum und Messwerte", paediatricTemperature: "Temperatur", paediatricActivities: "Aktivitäten", paediatricDiapers: "Windelwechsel", paediatricLocal: "Pflege und Termine", paediatricDisclaimer: "Faktenexport aus Baby Buddy Dashboard Plus – keine medizinische Beratung.", paediatricCreate: "Bericht erstellen", paediatricRefresh: "Daten neu laden", paediatricDownload: "Text herunterladen", paediatricPrint: "Druckansicht / als PDF sichern", paediatricGenerated: "Lokal in Baby Buddy Dashboard Plus erstellt.", paediatricInvalidRange: "Das Enddatum muss am oder nach dem Startdatum liegen.", paediatricPopup: "Die Druckansicht wurde vom Browser blockiert. Bitte Pop-ups für das Dashboard erlauben.",
   },
 
   dayActivities: {

@@ -207,7 +207,7 @@ export default {
     columnWeight: "Weight ({unit})",
     columnHeight: "Height ({unit})",
     columnHeadCircumference: "Head Circ. ({unit})",
-    columnBmi: "BMI",
+    columnBmi: "BMI", paediatricTitle: "Paediatric report", paediatricHint: "Creates a factual, locally generated report for the selected period. It contains no medical assessment or recommendation.", paediatricPeriod: "Period", paediatricGrowth: "Growth and measurements", paediatricTemperature: "Temperature", paediatricActivities: "Activities", paediatricDiapers: "Diaper changes", paediatricLocal: "Care and appointments", paediatricDisclaimer: "Factual export from Baby Buddy Dashboard Plus – not medical advice.", paediatricCreate: "Create report", paediatricRefresh: "Refresh data", paediatricDownload: "Download text", paediatricPrint: "Print view / save as PDF", paediatricGenerated: "Generated locally in Baby Buddy Dashboard Plus.", paediatricInvalidRange: "The end date must be on or after the start date.", paediatricPopup: "The browser blocked the print view. Please allow pop-ups for the dashboard.",
   },
 
   dayActivities: {

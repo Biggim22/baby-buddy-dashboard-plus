@@ -332,7 +332,7 @@ export default function App() {
       <main className="tab-content">
         {activeTab !== "overview" && <div className="page-settings-row"><TabDisplaySettings childId={data.child?.id} tabId={activeTab} onChange={setTabCardPreferences} cards={
           activeTab === "analytics" ? [{ id: "summary", label: t("plus.analytics.summary") }, { id: "sleep", label: t("plus.analytics.rollingSleep") }, { id: "breast", label: t("plus.analytics.breastfeedingWeek") }, { id: "bottles", label: t("plus.analytics.bottlesWeek") }, { id: "diapers", label: t("plus.analytics.diapersWeek") }, { id: "temperature", label: t("plus.analytics.temperature") }, { id: "tummy", label: t("plus.analytics.tummyWeek") }, { id: "diaperCalculator", label: t("plus.diaperCalculator.title") }]
-          : activeTab === "growth" ? [{ id: "summary", label: t("plus.settings.measurementSummary") }, { id: "weight", label: t("growth.weightTrend") }, { id: "height", label: t("growth.heightTrend") }, { id: "head", label: t("growth.headCircumferenceTrend") }, { id: "bmi", label: t("growth.bmiTrend") }]
+          : activeTab === "growth" ? [{ id: "summary", label: t("plus.settings.measurementSummary") }, { id: "weight", label: t("growth.weightTrend") }, { id: "height", label: t("growth.heightTrend") }, { id: "head", label: t("growth.headCircumferenceTrend") }, { id: "bmi", label: t("growth.bmiTrend") }, { id: "paediatricReport", label: t("report.paediatricTitle") }]
           : activeTab === "care" ? [{ id: "summary", label: t("plus.settings.careSummary") }, { id: "history", label: t("plus.careHistory") }]
           : activeTab === "tasks" ? [{ id: "tasks", label: t("plus.tasks") }, { id: "appointments", label: t("plus.appointments") }, { id: "calendar", label: t("plus.tasks.calendar") }]
           : activeTab === "notes" ? [{ id: "medications", label: t("notes.medications") }, { id: "temperature", label: t("notes.temperature") }, { id: "notes", label: t("notes.notesTitle") }]
@@ -386,6 +386,7 @@ export default function App() {
             hiddenCards={tabCardPreferences.hidden}
             cardOrder={tabCardPreferences.order}
             childId={data.child?.id}
+            childName={data.child?.first_name}
             demoMode={data.demoMode}
             birthDate={data.child?.birth_date}
             childSex={data.childSex || "male"}

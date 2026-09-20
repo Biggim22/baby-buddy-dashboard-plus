@@ -207,6 +207,7 @@ The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus
 | Calendar | Not available | Optional bridge to selected Home Assistant calendars, including CalDAV calendars, with explicit import and export |
 | Notifications | Add-on configuration | Select Home Assistant notify services and media players, test notifications, and optional voice announcements |
 | Stock planning | Not available | Optional diaper-size and stock calculator using weight trend plus conservative, expected, and upper estimates |
+| Paediatric visits | Not available | Selectable factual report for a date range, printable or saveable as PDF locally; never a medical assessment |
 | Appearance | Upstream theme | Independent language and time format, multiple colour spectra, light/dark/pastel themes, and scheduled theme switching |
 
 ### Plus features in detail
@@ -217,6 +218,7 @@ The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus
 - **Detailed feeding analytics:** Breastfeeding is evaluated by left/right side and duration. Bottles are shown separately by volume, count or duration. Closely spaced breast sides are treated as one feeding when calculating intervals.
 - **Sleep analytics:** Alongside calendar days, Plus provides equal-length, non-overlapping rolling windows. “24–48 h ago” therefore means the 24 hours immediately before the latest window, not a cumulative 48-hour total.
 - **Growth and health:** Weight, height, head circumference, BMI and body temperature are displayed in clear charts. BMI calculation also considers measurements entered on the same or nearby days. WHO reference curves can be enabled when desired.
+- **Paediatric report:** A deliberately factual report can be created for a chosen period with only the sections a family selects: measurements, temperature, medication, activity totals, care and appointments. It opens in a local browser print view for “Save as PDF” and includes no diagnosis or medical recommendation.
 - **Care tracker:** Full baths, full-body washes and quick washes follow a hierarchy: a full bath also counts as a full-body and quick wash, avoiding conflicting “last wash” values. Nail trimming, caraway oil, caraway suppositories and custom care types are supported. Edit and delete actions live together in the edit dialog.
 - **Bath reminders:** The full-bath interval and reminder time are configured directly in the Care tab settings.
 - **Tasks, appointments and calendar:** Daily or date-specific tasks can appear on the overview and disappear when completed. One-off appointments – for example check-ups or vaccinations – have their own section, appointment time, and a reminder on the appointment day or the day before. Selected Home Assistant calendars, including CalDAV calendars configured there, can show their upcoming events in Plus. An event can be imported once as a local appointment; a local appointment can be exported explicitly. Credentials stay in Home Assistant and there is deliberately no opaque automatic two-way sync.

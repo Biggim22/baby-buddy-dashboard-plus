@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.2 (Paediatric report)
+
+- Added a user-triggered paediatric report in Growth with a freely selected date range and individually selectable report sections.
+- The report can include growth and BMI measurements, temperature readings, medication history, factual activity totals, and optional Plus care entries and appointments.
+- Added a browser print view suitable for “Save as PDF”, as well as a plain-text download. Both are generated locally in the browser and do not upload family data.
+- Added a prominent disclaimer: this is a factual record for a medical appointment, not medical advice, interpretation or a diagnostic tool.
+- Made the report card hideable and reorderable through the existing per-tab card settings.
+
 ## 2.4.1 (Home Assistant calendar bridge)
 
 - Added an optional calendar bridge for appointments using the `calendar.*` entities already configured in Home Assistant, including calendars provided through CalDAV integrations.
