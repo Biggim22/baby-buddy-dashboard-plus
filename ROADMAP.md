@@ -29,6 +29,17 @@ Complete an end-to-end language review: tabs, card titles, dialogs, chart toolti
 
 ## 2.4 – optional tracking and reporting
 
+### Medication presets and custom medicine list — Next release (2.4.4)
+
+Move caraway-oil suppositories out of the local Care categories and into Baby Buddy's medication history. Add an optional, editable personal medicine list so logging a medicine that the family already uses is quicker while every actual dose remains a normal Baby Buddy medication entry.
+
+- There are no shipped medication presets and no recommendations. Every list entry is created, named, changed and removed by the family.
+- Families can add, rename, reorder and hide their own entries in the medication settings. The list is empty on first use.
+- A preset may include only a name and optional preferred dosage unit. It must never contain an age-, weight- or condition-based dose, frequency, treatment suggestion or automated reminder.
+- The logging form continues to require the caregiver to enter the actual amount and follows Baby Buddy's existing medication-history model.
+- Existing local care entries for caraway-oil suppositories remain visible and recoverable. A migration guide will offer an explicit, one-time copy to medication history; no historical care entry is silently deleted or reclassified.
+- The examples discussed during planning (paracetamol liquid or suppositories, caraway-oil suppositories and glycerin suppositories) are not included in the app. They remain examples only for a family deciding what to create in its own list.
+
 ### Home Assistant calendar bridge — Completed in 2.4.1
 
 Connect the existing Tasks & appointments area to calendars already configured in Home Assistant, including CalDAV integrations, without collecting calendar credentials in Dashboard Plus.
