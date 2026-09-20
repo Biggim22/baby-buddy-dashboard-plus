@@ -38,13 +38,13 @@ Connect the existing Tasks & appointments area to calendars already configured i
 - Local appointments can be exported explicitly to one selected Home Assistant calendar.
 - Automatic two-way synchronization is intentionally out of scope: recurring exceptions, edits and deletion conflicts must remain explicit and predictable.
 
-### Pumping / expressed milk — Candidate
+### Pumping / expressed milk — Completed in 2.4.3
 
 Add an optional pumping workflow without changing existing breastfeeding or bottle tracking:
 
-- quick start/stop timer and manual entry;
+- manual entry using Baby Buddy's native pumping records;
 - volume, duration and optional note;
-- recent pumping history and daily/weekly volume analytics;
+- recent pumping history and seven-day volume analytics;
 - a separate card that can be hidden or reordered like every other card.
 
 ### Paediatric appointment summary — Completed in 2.4.2

@@ -19,6 +19,7 @@ import { averageBreastFeedingDurationMs, averageFeedingGapMs, dailyDiaperTotals,
 import { useUnits } from "../utils/units";
 import { getLanguage, getLocale, getTimeFormat, useTranslation } from "../locales";
 import DiaperSizeCalculator from "../components/DiaperSizeCalculator";
+import PumpingCard from "../components/PumpingCard";
 
 function dateKey(value) {
   const date = new Date(value);
@@ -191,7 +192,7 @@ function windowLabel(start, end, locale) {
   return `${start.toLocaleString(locale, options)}–${end.toLocaleString(locale, options)}`;
 }
 
-export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = [], weights = [], heights = [], bmis = [], weeklyFeedings, weeklySleep, weeklyChanges, weeklyTummyTimes, temperatures, monthlyFeedings, monthlySleep, monthlyChanges }) {
+export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = [], weights = [], heights = [], bmis = [], weeklyFeedings, weeklySleep, weeklyChanges, weeklyTummyTimes, temperatures, monthlyFeedings, monthlySleep, monthlyChanges, weeklyPumping, onDataChanged }) {
   const t = useTranslation();
   const locale = getLocale();
   const units = useUnits();
@@ -278,6 +279,7 @@ export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = []
         <div className="chart-height-medium"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartTummy}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} /><XAxis dataKey="day" tick={{ fill: "var(--text-muted)", fontSize: 11 }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: "var(--text-muted)", fontSize: 11 }} axisLine={false} tickLine={false} /><Tooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.tooltip || ""} formatter={(value) => [formatMinutes(value), t("plus.analytics.tummyTime")]} contentStyle={{ background: "var(--tooltip-bg)", border: "1px solid var(--border)" }} /><Bar dataKey="minuten" fill={colors.tummy} radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div>
       </SectionCard>}
       {!hiddenCards.includes("diaperCalculator") && <DiaperSizeCalculator childId={childId} weights={weights} heights={heights} bmis={bmis} changes={monthlyChanges} style={cardStyle("diaperCalculator")} />}
+      {!hiddenCards.includes("pumping") && <PumpingCard childId={childId} entries={weeklyPumping} style={cardStyle("pumping")} onDataChanged={onDataChanged} />}
     </div>
   );
 }

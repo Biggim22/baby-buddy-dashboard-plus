@@ -39,6 +39,7 @@ export function useBabyData() {
   const [monthlyFeedings, setMonthlyFeedings] = useState([]);
   const [monthlySleep, setMonthlySleep] = useState([]);
   const [monthlyChanges, setMonthlyChanges] = useState([]);
+  const [weeklyPumping, setWeeklyPumping] = useState([]);
   const [notes, setNotes] = useState([]);
   const [timers, setTimers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +93,7 @@ export function useBabyData() {
         monthlyFeedingsRes,
         monthlySleepRes,
         monthlyChangesRes,
+        pumpingRes,
       ] = await Promise.all([
         api.getFeedings({ child: c, start_min: todayMin, start_max: todayMax, limit: 100, ordering: "-start" }),
         api.getFeedings({ child: c, start_min: weekMin, limit: 200, ordering: "-start" }),
@@ -111,6 +113,7 @@ export function useBabyData() {
         api.getFeedings({ child: c, start_min: monthMin, limit: 500, ordering: "-start" }),
         api.getSleep({ child: c, start_min: monthMin, limit: 500, ordering: "-start" }),
         api.getChanges({ child: c, date_min: monthMin, limit: 500, ordering: "-time" }),
+        api.getPumping({ child: c, start_min: weekMin, limit: 200, ordering: "-start" }),
       ]);
 
       setFeedings(feedingsRes.results || []);
@@ -132,6 +135,7 @@ export function useBabyData() {
       setMonthlyFeedings(monthlyFeedingsRes.results || []);
       setMonthlySleep(monthlySleepRes.results || []);
       setMonthlyChanges(monthlyChangesRes.results || []);
+      setWeeklyPumping(pumpingRes.results || []);
       try {
         const changed = await syncBmisForMeasurements({ childId: c, weights: weightRes.results || [], heights: heightRes.results || [], bmis: fetchedBmis, unitSystem });
         if (changed) {
@@ -202,6 +206,7 @@ export function useBabyData() {
     setMonthlyFeedings(mock.monthlyFeedings);
     setMonthlySleep(mock.monthlySleep);
     setMonthlyChanges(mock.monthlyChanges);
+    setWeeklyPumping(mock.pumping || []);
     setLastSync(new Date());
     setLoading(false);
   }, []);
@@ -280,7 +285,8 @@ export function useBabyData() {
     medications,
     monthlyFeedings,
     monthlySleep,
-    monthlyChanges,
+      monthlyChanges,
+      weeklyPumping,
     notes,
     timers,
     loading,

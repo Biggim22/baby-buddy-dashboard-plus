@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.3 (Pumping)
+
+- Added an optional, hideable and reorderable Pumping card to Analytics using Baby Buddy's native pumping records.
+- Added manual pumping entries with amount, start, end and an optional note; entries are stored in Baby Buddy, not a duplicate local database.
+- Added a seven-day total, session count and recent-history view.
+
 ## 2.4.2 (Paediatric report)
 
 - Added a user-triggered paediatric report in Growth with a freely selected date range and individually selectable report sections.

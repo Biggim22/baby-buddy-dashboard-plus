@@ -1,5 +1,5 @@
 name: "Baby Buddy Dashboard Plus"
-version: "2.4.2"
+version: "2.4.3"
 slug: "baby-buddy-dashboard-plus"
 description: >-
   A comprehensive Home Assistant dashboard for Baby Buddy. In addition to the
@@ -9,7 +9,7 @@ description: >-
   configurable Home Assistant notifications or voice announcements. Display,
   language, overview content and individual page settings can be customized
   directly in the dashboard. Version 2.4.2 also includes a privacy-conscious,
-  factual paediatric report that can be printed or saved as a PDF locally.
+  factual paediatric report and native Baby Buddy pumping tracking.
 url: "https://github.com/Biggim22/baby-buddy-dashboard-plus"
 init: false
 homeassistant: "2026.4.0"
