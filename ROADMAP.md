@@ -127,6 +127,33 @@ An optional planner inspired by the diaper-size and stock calculator. Its job is
 - Should the first version support only EU centimetre sizes, or also UK/US age labels?
 - How should users enter their existing wardrobe without turning the feature into a full inventory application?
 
+## 3.0 – Standalone self-hosting without Home Assistant — Planned (low priority)
+
+Make Dashboard Plus usable for families who do not run Home Assistant, for example on an old laptop, mini PC or NAS at home. Baby Buddy and Dashboard Plus run side by side via Docker; everything stays on the family's own hardware.
+
+### Distribution
+
+- Publish a multi-architecture (amd64/arm64) standalone image built from the existing root `Dockerfile`, under a Plus-owned image name. Prefer GitHub Container Registry so no additional Docker Hub account is required.
+- Build and publish only on release tags or a manual workflow trigger, never on every push. Registry credentials live exclusively in GitHub repository secrets.
+- An upstream Docker Hub workflow exists in the original project's history (commit `8f53981`). It targets the original project's paths and image and is not copied; the idea is re-implemented for Plus.
+
+### Safe defaults for standalone use
+
+- Persist local Plus data: the `docker-compose.yml` example must mount a volume at `/data`. Today the standalone container keeps care entries, tasks, appointments, settings and the medication list inside the container, so they would be lost when it is recreated.
+- Access protection: inside Home Assistant, ingress authenticates every request. A standalone installation has no such layer, so anyone on the same network could read and change baby data through the dashboard and its Baby Buddy proxy. Before 3.0 is published, add a simple built-in login or require and document an authenticating reverse proxy; the default must never be an open dashboard.
+- Graceful degradation without Home Assistant: notifications, voice output, the calendar bridge, the medication-overdue entity and all Home Assistant controls/actions are hidden or clearly marked as unavailable when no Supervisor token exists, instead of failing repeatedly in the background.
+- Sensible defaults: time zone taken from the host or asked during setup instead of a fixed example zone.
+
+### Setup and documentation
+
+- A complete `docker-compose.yml` example for Baby Buddy plus Dashboard Plus with persistent volumes for both.
+- A beginner-friendly guide in German and English: installing Docker, starting the stack, creating the first Baby Buddy user and API key, connecting Dashboard Plus, backups and updates.
+- Backup and restore instructions covering both the Baby Buddy database and the Plus `/data` volume.
+
+### Later, separately evaluated
+
+- Research: a notification path that does not need Home Assistant (for example ntfy, Gotify or e-mail) as an explicit opt-in feature.
+
 ## Later ideas
 
 ### Sleep sounds through Home Assistant media players — Research
