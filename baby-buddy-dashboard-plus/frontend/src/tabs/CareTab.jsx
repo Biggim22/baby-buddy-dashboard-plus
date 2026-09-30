@@ -14,8 +14,10 @@ import DeleteButton from "../components/DeleteButton";
 import { useTranslation } from "../locales";
 import { toApiDatetime } from "../utils/formatters";
 import { logError } from "../utils/errorLog";
+import { CARAWAY_SUPPOSITORY, createPresetId, hasPresetNamed, normalizePresets, planCarawayMigration, runCarawayMigration } from "../utils/medicationPresets";
 
-const CARE_TYPES = ["bath", "full_wash", "quick_wash", "caraway_suppository", "caraway_oil", "nail_care", "skin_care", "custom"];
+// caraway_suppository stays here only so existing entries keep their label until they are transferred.
+const CARE_TYPES = ["bath", "full_wash", "quick_wash", CARAWAY_SUPPOSITORY, "caraway_oil", "nail_care", "skin_care", "custom"];
 
 function getCareLabels(t) {
   return Object.fromEntries(CARE_TYPES.map((type) => [type, t(`plus.careTypes.${type}`)]));
@@ -30,7 +32,9 @@ function localDatetime(value = new Date()) {
 function CareForm({ childId, entry, onClose, onSaved }) {
   const t = useTranslation();
   const labels = getCareLabels(t);
-  const types = CARE_TYPES.map((value) => ({ value, label: labels[value] }));
+  const types = CARE_TYPES
+    .filter((value) => value !== CARAWAY_SUPPOSITORY || entry?.care_type === CARAWAY_SUPPOSITORY)
+    .map((value) => ({ value, label: labels[value] }));
   const [type, setType] = useState(entry?.care_type || "bath");
   const [category, setCategory] = useState(entry?.category_label || "");
   const [time, setTime] = useState(localDatetime(entry?.time));
@@ -114,7 +118,70 @@ function CareForm({ childId, entry, onClose, onSaved }) {
   );
 }
 
-export default function CareTab({ childId, hiddenCards = [], cardOrder = [], autoOpen = false, onAutoOpenHandled }) {
+function CarawayMigrationModal({ childId, entries, presets, onClose, onDone }) {
+  const t = useTranslation();
+  const [name, setName] = useState(t("plus.careTypes.caraway_suppository"));
+  const [addToList, setAddToList] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const times = entries.map((entry) => new Date(entry.time)).sort((a, b) => a - b);
+  const listed = hasPresetNamed(presets, name);
+  const formatDay = (date) => date.toLocaleDateString([], { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  const transfer = async () => {
+    if (!name.trim() || !times.length) return;
+    setRunning(true);
+    setError("");
+    try {
+      const start = new Date(times[0]);
+      start.setDate(start.getDate() - 1);
+      const existing = await api.getMedication({ child: childId, date_min: `${start.toLocaleDateString("sv-SE")}T00:00:00`, limit: 1000 });
+      const plan = planCarawayMigration(entries, existing.results || [], name);
+      const outcome = await runCarawayMigration({ plan, name, childId, createMedication: api.createMedication, deleteCare: api.deleteCare });
+      if (addToList && !listed && outcome.transferred > 0) {
+        try {
+          const current = normalizePresets(presets);
+          await api.updateLocalSettings(childId, { medication_presets: [...current, { id: createPresetId(current), name: name.trim(), unit: "", hidden: false }] });
+        } catch (listError) {
+          outcome.listFailed = true;
+          logError("Add transferred medication to list", listError.message);
+        }
+      }
+      setResult(outcome);
+      await onDone();
+    } catch (err) {
+      setError(t("plus.carawayMigration.failed"));
+      logError("Transfer caraway suppositories", err.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <Modal title={t("plus.carawayMigration.title")} onClose={onClose}>
+      {result ? <>
+        <p className="form-hint">{t("plus.carawayMigration.done", { count: result.transferred })}</p>
+        {result.failed > 0 && <FormError message={t("plus.carawayMigration.partial", { count: result.failed })} />}
+        {result.listFailed && <FormError message={t("plus.carawayMigration.listFailed")} />}
+        <FormButton type="button" color="#06B6D4" onClick={onClose}>{t("common.close")}</FormButton>
+      </> : <>
+        <p className="form-hint">{t("plus.carawayMigration.summary", { count: entries.length, from: times.length ? formatDay(times[0]) : "—", to: times.length ? formatDay(times.at(-1)) : "—" })}</p>
+        <FormField label={t("plus.carawayMigration.name")}>
+          <FormInput value={name} maxLength={80} onChange={(event) => setName(event.target.value)} required />
+        </FormField>
+        {!listed && <label className="preview-check"><input type="checkbox" checked={addToList} onChange={(event) => setAddToList(event.target.checked)} /> {t("plus.carawayMigration.addToList")}</label>}
+        <p className="form-hint">{t("plus.carawayMigration.warning")}</p>
+        <FormError message={error} />
+        <FormButton type="button" color="#06B6D4" disabled={running || !name.trim()} onClick={transfer}>
+          {running ? t("plus.saving") : t("plus.carawayMigration.confirm", { count: entries.length })}
+        </FormButton>
+      </>}
+    </Modal>
+  );
+}
+
+export default function CareTab({ childId, hiddenCards = [], cardOrder = [], autoOpen = false, onAutoOpenHandled, onDataChanged }) {
   const t = useTranslation();
   const labels = getCareLabels(t);
   const [entries, setEntries] = useState([]);
@@ -123,6 +190,8 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
   const [error, setError] = useState("");
   const [settings, setSettings] = useState({});
   const [showSettings, setShowSettings] = useState(false);
+  const [carawayEntries, setCarawayEntries] = useState([]);
+  const [showMigration, setShowMigration] = useState(false);
   const orderOf = (id) => { const index = cardOrder.indexOf(id); return index < 0 ? 99 : index; };
 
   useEffect(() => {
@@ -134,8 +203,13 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
     setLoading(true);
     try {
       await api.bootstrapLocal(childId);
-      const [response, localSettings] = await Promise.all([api.getCare(childId), api.getLocalSettings(childId)]);
+      const [response, localSettings, caraway] = await Promise.all([
+        api.getCare(childId),
+        api.getLocalSettings(childId),
+        api.getCare(childId, 1000, CARAWAY_SUPPOSITORY),
+      ]);
       setEntries(response.results || []);
+      setCarawayEntries(caraway.results || []);
       setSettings(localSettings || {});
       setError("");
     } catch (err) {
@@ -154,9 +228,10 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
   }, [entries]);
 
   const headerCards = useMemo(() => {
-    const selected = Array.isArray(settings.care_header_types) && settings.care_header_types.length
-      ? settings.care_header_types
-      : ["bath", "full_wash", "quick_wash"];
+    const saved = Array.isArray(settings.care_header_types)
+      ? settings.care_header_types.filter((type) => type !== CARAWAY_SUPPOSITORY)
+      : [];
+    const selected = saved.length ? saved : ["bath", "full_wash", "quick_wash"];
     const matchingTypes = {
       bath: ["bath"],
       full_wash: ["bath", "full_wash"],
@@ -171,7 +246,8 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
   const ago = (value) => {
     if (!value) return t("plus.notRecorded");
     const days = Math.floor((Date.now() - new Date(value).getTime()) / 86400000);
-    return days < 1 ? t("plus.careToday") : t("plus.careDaysAgo", { days });
+    if (days < 1) return t("plus.careToday");
+    return days === 1 ? t("plus.oneDayAgo") : t("plus.careDaysAgo", { days });
   };
 
   return (
@@ -183,6 +259,13 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
         </div>
         <div style={{ display: "flex", gap: 8 }}><button className="tab-settings-button" onClick={() => setShowSettings(true)} aria-label={t("plus.careSettings")} title={t("plus.careSettings")}><Icons.Settings /></button><button className="primary-inline" onClick={() => setEditing(null)}>{t("plus.addCare")}</button></div>
       </div>
+      {carawayEntries.length > 0 && <div className="care-migration-notice">
+        <div>
+          <strong>{t("plus.carawayMigration.noticeTitle")}</strong>
+          <span>{t("plus.carawayMigration.notice", { count: carawayEntries.length })}</span>
+        </div>
+        <button className="secondary-inline" onClick={() => setShowMigration(true)}>{t("plus.carawayMigration.open")}</button>
+      </div>}
       {!hiddenCards.includes("summary") && <div className="care-summary-grid" style={{ order: orderOf("summary") }}>
         {headerCards.map(({ type, entry }) => <div className="care-summary-card" key={type}>
           <span>{t("plus.lastCare", { category: labels[type] || type })}</span>
@@ -210,6 +293,13 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
       {editing !== undefined && (
         <CareForm childId={childId} entry={editing} onClose={() => setEditing(undefined)} onSaved={load} />
       )}
+      {showMigration && <CarawayMigrationModal
+        childId={childId}
+        entries={carawayEntries}
+        presets={settings.medication_presets}
+        onClose={() => setShowMigration(false)}
+        onDone={async () => { await load(); onDataChanged?.(); }}
+      />}
       {showSettings && <Modal title={t("plus.careSettings")} onClose={() => setShowSettings(false)}><SettingsTab childId={childId} scope="care" /></Modal>}
     </div>
   );

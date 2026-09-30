@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.4.4 (Personal medication list, caraway suppositories as medication, diaper size browsing)
+
+- Added an optional personal medication list in the display settings of Notes & medication. It is empty on first use; families add, rename, reorder, hide and delete their own entries.
+- A list entry can contain only a name and an optional preferred unit. The backend rejects any dose, interval, age/weight rule or other field, and the app ships no presets or recommendations.
+- New medication entries show the visible list entries as quick-select chips. A chip fills in only the name and unit; the amount and every other field are still entered by the caregiver.
+- Caraway oil suppositories are now logged as medication instead of a Care category. Existing care entries stay visible until a family starts a deliberate, one-time transfer from the Care tab.
+- The transfer shows the number of entries and their date range, keeps time and note, and deletes each care entry only after its Baby Buddy medication entry was saved. Failed entries remain in Care; a repeated transfer recognises already-created medication entries and does not duplicate them. Create a Home Assistant backup before starting the transfer.
+- The caraway oil tummy rub remains a Care category.
+- The diaper calculator can now browse between all weight-compatible sizes, for example from the recommended size 2 to size 3, with a separate stock forecast for the selected size and a one-click return to the recommendation.
+- Replaced the medication-name placeholder that named a specific medicine with a neutral label.
+- Reviewed and completed the Italian translation: consistent feeding, diaper and tummy-time terminology, correct “carvi” for caraway, sentence-case titles, gender-neutral timeline texts and the new 2.4.4 texts.
+- Home Assistant bath, task and appointment reminders are now also sent in Italian instead of falling back to German.
+- Fixed untranslated texts: the view error message, the default test-notification message, the Temperature card label in Notes settings and the Tasks & appointments card labels, which could previously break the Tasks card settings.
+- Fixed “1 days ago” style texts in Overview and Care, lowercase mg/ml units and the German Care header wording.
+
 ## 2.4.3 (Pumping)
 
 - Added an optional, hideable and reorderable Pumping card to Analytics using Baby Buddy's native pumping records.

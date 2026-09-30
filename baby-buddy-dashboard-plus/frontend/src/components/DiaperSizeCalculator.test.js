@@ -14,4 +14,24 @@ describe("diaper stock forecast", () => {
     expect(result.lowerCount).toBeLessThanOrEqual(result.expectedCount);
     expect(result.expectedCount).toBeLessThanOrEqual(result.upperCount);
   });
+
+  it("forecasts another weight-compatible size while keeping the recommendation", () => {
+    const now = new Date();
+    const weights = [0, 14, 28, 42].map((daysAgo, index) => ({ date: new Date(now.getTime() - daysAgo * 86400000).toISOString(), weight: 6.05 - index * 0.5 }));
+    const changes = [];
+    for (let day = 1; day <= 14; day += 1) {
+      for (let item = 0; item < 7; item += 1) changes.push({ time: new Date(now.getTime() - day * 86400000 + item * 3600000).toISOString() });
+    }
+    const input = { weights, heights: [], bmis: [], changes, ranges: PAMPERS_RANGES, fit: "smaller" };
+    const recommended = calculateDiaperForecast(input);
+    const browsed = calculateDiaperForecast({ ...input, sizeLabel: "3" });
+    const unknown = calculateDiaperForecast({ ...input, sizeLabel: "5" });
+
+    expect(recommended.candidates.map((range) => range.label)).toEqual(["2", "3"]);
+    expect(recommended.chosen.label).toBe("2");
+    expect(browsed.chosen.label).toBe("3");
+    expect(browsed.recommended.label).toBe("2");
+    expect(browsed.expectedCount).toBeGreaterThan(recommended.expectedCount);
+    expect(unknown.chosen.label).toBe("2");
+  });
 });

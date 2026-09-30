@@ -32,7 +32,7 @@ function forecastDate(days) {
   return date.toLocaleDateString(getLocale(), { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function calculate({ weights, heights, bmis, changes, ranges, fit }) {
+function calculate({ weights, heights, bmis, changes, ranges, fit, sizeLabel = null }) {
   const validWeights = (weights || []).map((entry) => ({ value: Number(entry.weight), date: new Date(entry.date) })).filter((entry) => Number.isFinite(entry.value) && !Number.isNaN(entry.date.getTime())).sort((a, b) => a.date - b.date);
   if (!validWeights.length) return { reason: "weight" };
   const latest = validWeights.at(-1);
@@ -54,7 +54,8 @@ function calculate({ weights, heights, bmis, changes, ranges, fit }) {
     const progress = base.max == null ? 0 : (latest.value - base.min) / Math.max(0.1, base.max - base.min);
     if (bodyTrend > 1.05 || progress >= 0.75) chosenIndex = Math.min(candidates.length - 1, chosenIndex + 1);
   }
-  const chosen = candidates[chosenIndex];
+  const recommended = candidates[chosenIndex];
+  const chosen = candidates.find((range) => sizeLabel != null && range.label === sizeLabel) || recommended;
 
   const growthRates = [];
   for (let index = 1; index < validWeights.length; index += 1) {
@@ -92,7 +93,7 @@ function calculate({ weights, heights, bmis, changes, ranges, fit }) {
   const upperDays = daysTo(upperTarget, slowGrowth);
   const enoughData = recentRates.length >= 2 && nonEmptyDays >= 7 && upperTarget != null;
   return {
-    weight: latest.value, weightDate: latest.date, candidates, chosen, next,
+    weight: latest.value, weightDate: latest.date, candidates, chosen, recommended, next,
     growthRates: recentRates, daily, nonEmptyDays,
     usageLow, usageExpected, usageHigh,
     lowerDays, expectedDays, upperDays, enoughData,
@@ -105,14 +106,30 @@ function calculate({ weights, heights, bmis, changes, ranges, fit }) {
 export default function DiaperSizeCalculator({ childId, weights, heights, bmis, changes, style }) {
   const t = useTranslation();
   const [settings, setSettings] = useState(null);
-  useEffect(() => { if (childId) api.getLocalSettings(childId).then(setSettings).catch(() => setSettings(null)); }, [childId]);
+  const [sizeLabel, setSizeLabel] = useState(null);
+  useEffect(() => { setSizeLabel(null); if (childId) api.getLocalSettings(childId).then(setSettings).catch(() => setSettings(null)); }, [childId]);
   const ranges = settings?.diaper_size_profile === "custom" && Array.isArray(settings.diaper_size_ranges) && settings.diaper_size_ranges.length ? settings.diaper_size_ranges : PAMPERS_RANGES;
-  const result = useMemo(() => calculate({ weights, heights, bmis, changes, ranges, fit: settings?.diaper_fit_preference || "auto" }), [weights, heights, bmis, changes, ranges, settings?.diaper_fit_preference]);
+  const result = useMemo(() => calculate({ weights, heights, bmis, changes, ranges, fit: settings?.diaper_fit_preference || "auto", sizeLabel }), [weights, heights, bmis, changes, ranges, settings?.diaper_fit_preference, sizeLabel]);
   if (!settings || !(settings.analytics_diaper_calculator_enabled === true || String(settings.analytics_diaper_calculator_enabled).toLowerCase() === "true")) return null;
+  const sizeIndex = result.candidates ? result.candidates.indexOf(result.chosen) : -1;
+  const isRecommended = result.chosen === result.recommended;
+  const browse = (direction) => {
+    const target = result.candidates[sizeIndex + direction];
+    if (target) setSizeLabel(target === result.recommended ? null : target.label);
+  };
   return <SectionCard title={t("plus.diaperCalculator.title")} icon={<Icons.Droplet />} color={colors.diaper} style={style}>
     {result.reason && <div className="empty-compact">{t(`plus.diaperCalculator.missing.${result.reason}`)}</div>}
     {!result.reason && <div className="diaper-calculator">
-      <div className="diaper-recommendation"><span>{t("plus.diaperCalculator.recommended")}</span><strong>{t("plus.diaperCalculator.sizeValue", { size: result.chosen.label })}</strong><small>{result.weight.toFixed(2)} kg · {t("plus.diaperCalculator.fitsAlso", { sizes: result.candidates.map((item) => item.label).join(", ") })}</small></div>
+      <div className={`diaper-recommendation${isRecommended ? "" : " alternative"}`}>
+        <span>{isRecommended ? t("plus.diaperCalculator.recommended") : t("plus.diaperCalculator.alternative")}</span>
+        <div className="diaper-size-switcher">
+          {result.candidates.length > 1 && <button type="button" disabled={sizeIndex <= 0} onClick={() => browse(-1)} aria-label={t("plus.diaperCalculator.previousSize")} title={t("plus.diaperCalculator.previousSize")}>‹</button>}
+          <strong aria-live="polite">{t("plus.diaperCalculator.sizeValue", { size: result.chosen.label })}</strong>
+          {result.candidates.length > 1 && <button type="button" disabled={sizeIndex >= result.candidates.length - 1} onClick={() => browse(1)} aria-label={t("plus.diaperCalculator.nextSize")} title={t("plus.diaperCalculator.nextSize")}>›</button>}
+        </div>
+        <small>{result.weight.toFixed(2)} kg · {t("plus.diaperCalculator.fitsAlso", { sizes: result.candidates.map((item) => item.label).join(", ") })}</small>
+        {!isRecommended && <small>{t("plus.diaperCalculator.alternativeHint", { size: result.chosen.label, recommended: result.recommended.label })} <button type="button" className="diaper-back-button" onClick={() => setSizeLabel(null)}>{t("plus.diaperCalculator.backToRecommended")}</button></small>}
+      </div>
       {result.enoughData ? <><div className="diaper-stock-range"><div><span>{t("plus.diaperCalculator.minimum")}</span><strong>{result.lowerCount}</strong><small>{forecastDate(result.lowerDays)}</small></div><div className="expected"><span>{t("plus.diaperCalculator.expected")}</span><strong>{result.expectedCount}</strong><small>{forecastDate(result.expectedDays)}</small></div><div><span>{t("plus.diaperCalculator.maximum")}</span><strong>{result.upperCount}</strong><small>{forecastDate(result.upperDays)}</small></div></div><p className="form-hint">{t("plus.diaperCalculator.projection", { days: result.daily.length, weights: result.growthRates.length + 1, low: result.usageLow.toFixed(1), high: result.usageHigh.toFixed(1) })}</p></> : <div className="diaper-data-warning">{t("plus.diaperCalculator.moreData", { days: result.nonEmptyDays, weights: result.growthRates.length + 1 })}</div>}
       <p className="form-hint">{t("plus.diaperCalculator.fitNotice")}</p>
     </div>}

@@ -189,7 +189,8 @@ export const api = {
 
   // Dashboard Plus data stored locally below /data.
   bootstrapLocal: (childId) => localRequest(`bootstrap/${childId}`, { method: "POST" }),
-  getCare: (childId, limit = 100) => localRequest(`care?child_id=${childId}&limit=${limit}`),
+  getCare: (childId, limit = 100, careType = "") =>
+    localRequest(`care?child_id=${childId}&limit=${limit}${careType ? `&care_type=${encodeURIComponent(careType)}` : ""}`),
   createCare: (data) => localRequest("care", { method: "POST", body: JSON.stringify(data) }),
   updateCare: (id, data) => localRequest(`care/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteCare: (id) => localRequest(`care/${id}`, { method: "DELETE" }),

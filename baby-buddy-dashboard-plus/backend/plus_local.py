@@ -12,7 +12,7 @@ from typing import Any, Awaitable, Callable, Literal
 from zoneinfo import ZoneInfo
 import httpx
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 router = APIRouter()
 logger = logging.getLogger("baby-buddy-dashboard-plus")
@@ -23,6 +23,40 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", "/data" if Path("/data").exists() els
 DB_PATH = DATA_DIR / "baby_buddy_dashboard_plus.db"
 DEFAULT_BATH_DAYS = 7
 DEFAULT_BATH_TIME = "10:00"
+
+BATH_TEXTS = {
+    "de": {
+        "title": "Baby Buddy – Vollbad",
+        "tomorrow": "Das nächste Vollbad ist morgen fällig. Das letzte Vollbad war vor {age} Tagen.",
+        "today": "Das nächste Vollbad ist heute fällig. Das letzte Vollbad war vor {age} Tagen.",
+        "overdue": "Das nächste Vollbad ist seit {overdue} Tag(en) überfällig. Das letzte Vollbad war vor {age} Tagen.",
+        "none": "Es wurde noch kein Vollbad erfasst.",
+    },
+    "en": {
+        "title": "Baby Buddy – Full bath",
+        "tomorrow": "The next full bath is due tomorrow. The last full bath was {age} days ago.",
+        "today": "The next full bath is due today. The last full bath was {age} days ago.",
+        "overdue": "The next full bath is {overdue} day(s) overdue. The last full bath was {age} days ago.",
+        "none": "No full bath has been recorded yet.",
+    },
+    "it": {
+        "title": "Baby Buddy – Bagno completo",
+        "tomorrow": "Il prossimo bagno completo è previsto per domani. L'ultimo bagno completo risale a {age} giorni fa.",
+        "today": "Il prossimo bagno completo è previsto per oggi. L'ultimo bagno completo risale a {age} giorni fa.",
+        "overdue": "Il prossimo bagno completo è in ritardo di {overdue} giorno/i. L'ultimo bagno completo risale a {age} giorni fa.",
+        "none": "Non è ancora stato registrato alcun bagno completo.",
+    },
+}
+
+TASK_TEXTS = {
+    "de": {"title": "Baby Buddy – Erinnerung", "message": "Erinnerung: „{title}“", "today": " ist heute", "tomorrow": " ist morgen", "in_days": " ist in {days} Tagen", "at": " um {time} Uhr"},
+    "en": {"title": "Baby Buddy – Reminder", "message": "Reminder: “{title}”", "today": " is today", "tomorrow": " is tomorrow", "in_days": " is in {days} days", "at": " at {time}"},
+    "it": {"title": "Baby Buddy – Promemoria", "message": "Promemoria: «{title}»", "today": " è oggi", "tomorrow": " è domani", "in_days": " è tra {days} giorni", "at": " alle {time}"},
+}
+
+
+def notification_language(language: str) -> str:
+    return language if language in BATH_TEXTS else "de"
 
 @contextmanager
 def db():
@@ -203,6 +237,7 @@ def ensure_child_defaults(child_id: int) -> None:
             "diaper_size_profile": "pampers_de",
             "diaper_size_ranges": json.dumps([]),
             "diaper_fit_preference": "auto",
+            "medication_presets": json.dumps([]),
             "appearance_schedule_enabled": "false",
             "appearance_schedule_start": "20:00",
             "appearance_schedule_end": "06:00",
@@ -281,6 +316,23 @@ class ToggleIn(BaseModel):
     completed: bool
 
 
+class MedicationPreset(BaseModel):
+    # extra="forbid" keeps dose, interval or age/weight rules out of the family list by design.
+    model_config = ConfigDict(extra="forbid")
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,40}$")
+    name: str = Field(min_length=1, max_length=80)
+    unit: Literal["", "mg", "ml", "tablets", "drops"] = ""
+    hidden: bool = False
+
+    @field_validator("name")
+    @classmethod
+    def name_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Medication name must not be blank")
+        return value
+
+
 class SettingsPatch(BaseModel):
     bath_reminder_days: int | None = Field(default=None, ge=1, le=60)
     bath_reminder_time: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
@@ -305,11 +357,19 @@ class SettingsPatch(BaseModel):
     diaper_size_profile: Literal["pampers_de", "custom"] | None = None
     diaper_size_ranges: list[dict[str, Any]] | None = None
     diaper_fit_preference: Literal["auto", "smaller", "larger"] | None = None
+    medication_presets: list[MedicationPreset] | None = Field(default=None, max_length=50)
     appearance_schedule_enabled: bool | None = None
     appearance_schedule_start: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     appearance_schedule_end: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     appearance_schedule_theme: Literal["dark", "light", "pastel", "nord", "dracula", "solarized"] | None = None
     appearance_schedule_accent: Literal["amber", "mint", "blue", "rose", "violet"] | None = None
+
+    @field_validator("medication_presets")
+    @classmethod
+    def unique_preset_ids(cls, value: list[MedicationPreset] | None) -> list[MedicationPreset] | None:
+        if value is not None and len({preset.id for preset in value}) != len(value):
+            raise ValueError("Medication list entries need unique IDs")
+        return value
 
 
 class NotificationTestIn(BaseModel):
@@ -477,7 +537,7 @@ async def check_bath_reminders(active_child_ids: set[int] | None = None) -> None
                     connection, child_id, "bath_reminder_days", str(DEFAULT_BATH_DAYS)
                 )
             )
-            language = get_setting(connection, child_id, "language", "de")
+            texts = BATH_TEXTS[notification_language(get_setting(connection, child_id, "language", "de"))]
             latest = connection.execute(
                 """SELECT time FROM care_entries
                    WHERE child_id = ? AND care_type = 'bath'
@@ -489,22 +549,16 @@ async def check_bath_reminders(active_child_ids: set[int] | None = None) -> None
                 age_days = (today - last_date).days
                 should_notify = age_days >= max(0, threshold - 1)
                 remaining = threshold - age_days
-                if remaining > 0:
-                    message = (f"The next full bath is due tomorrow. The last full bath was {age_days} days ago." if language == "en" else f"Das nächste Vollbad ist morgen fällig. Das letzte Vollbad war vor {age_days} Tagen.")
-                elif remaining == 0:
-                    message = (f"The next full bath is due today. The last full bath was {age_days} days ago." if language == "en" else f"Das nächste Vollbad ist heute fällig. Das letzte Vollbad war vor {age_days} Tagen.")
-                else:
-                    message = (f"The next full bath is {abs(remaining)} day(s) overdue. The last full bath was {age_days} days ago." if language == "en" else f"Das nächste Vollbad ist seit {abs(remaining)} Tag(en) überfällig. Das letzte Vollbad war vor {age_days} Tagen.")
+                key = "tomorrow" if remaining > 0 else "today" if remaining == 0 else "overdue"
+                message = texts[key].format(age=age_days, overdue=abs(remaining))
             else:
                 should_notify = True
-                message = "No full bath has been recorded yet." if language == "en" else "Es wurde noch kein Vollbad erfasst."
+                message = texts["none"]
             if should_notify:
-                pending.append((child_id, message))
+                pending.append((child_id, texts["title"], message))
 
-    for child_id, message in pending:
-        with db() as connection:
-            language = get_setting(connection, child_id, "language", "de")
-        sent = await send_ha_notification(child_id, "Baby Buddy – Full bath" if language == "en" else "Baby Buddy – Vollbad", message)
+    for child_id, title, message in pending:
+        sent = await send_ha_notification(child_id, title, message)
         if sent:
             with db() as connection:
                 connection.execute(
@@ -531,7 +585,7 @@ async def check_task_reminders(active_child_ids: set[int] | None = None) -> None
             if active_child_ids is not None and task["child_id"] not in active_child_ids:
                 logger.info("Skipping task reminder for orphaned local child ID %s", task["child_id"])
                 continue
-            language = get_setting(connection, task["child_id"], "language", "de")
+            texts = TASK_TEXTS[notification_language(get_setting(connection, task["child_id"], "language", "de"))]
             days_before = int(task.get("reminder_days_before") or 0)
             due_for_reminder = today + timedelta(days=days_before)
             if not task_due(task, due_for_reminder):
@@ -550,21 +604,13 @@ async def check_task_reminders(active_child_ids: set[int] | None = None) -> None
             # must still fire at the selected time even if somebody marked the event.
             if (task.get("task_kind") != "appointment" and completed) or already_sent:
                 continue
-            if language == "en":
-                suffix = " is tomorrow" if days_before == 1 else (f" is in {days_before} days" if days_before else " is today")
-                event_time = f" at {task['appointment_time']}" if task.get("task_kind") == "appointment" and task.get("appointment_time") else ""
-            else:
-                suffix = " ist morgen" if days_before == 1 else (f" ist in {days_before} Tagen" if days_before else " ist heute")
-                event_time = f" um {task['appointment_time']} Uhr" if task.get("task_kind") == "appointment" and task.get("appointment_time") else ""
-            pending.append((task["child_id"], task["id"], f"{task['title']}{suffix}{event_time}."))
+            suffix = texts["tomorrow"] if days_before == 1 else (texts["in_days"].format(days=days_before) if days_before else texts["today"])
+            event_time = texts["at"].format(time=task["appointment_time"]) if task.get("task_kind") == "appointment" and task.get("appointment_time") else ""
+            summary = f"{task['title']}{suffix}{event_time}."
+            pending.append((task["child_id"], task["id"], texts["title"], texts["message"].format(title=summary)))
 
-    for child_id, task_id, title in pending:
-        with db() as connection:
-            language = get_setting(connection, child_id, "language", "de")
-        sent = await send_ha_notification(
-                child_id, "Baby Buddy – Reminder" if language == "en" else "Baby Buddy – Erinnerung",
-                f"Reminder: “{title}”" if language == "en" else f"Erinnerung: „{title}“",
-            )
+    for child_id, task_id, title, message in pending:
+        sent = await send_ha_notification(child_id, title, message)
         if sent:
             with db() as connection:
                 connection.execute(
@@ -605,13 +651,24 @@ async def bootstrap_child(child_id: int):
 
 
 @router.get("/api/local/care")
-async def list_care(child_id: int, limit: int = Query(100, ge=1, le=1000)):
+async def list_care(
+    child_id: int,
+    limit: int = Query(100, ge=1, le=1000),
+    care_type: str | None = Query(default=None, min_length=1, max_length=80),
+):
     ensure_child_defaults(child_id)
     with db() as connection:
-        rows = connection.execute(
-            "SELECT * FROM care_entries WHERE child_id = ? ORDER BY time DESC LIMIT ?",
-            (child_id, limit),
-        ).fetchall()
+        if care_type:
+            rows = connection.execute(
+                """SELECT * FROM care_entries WHERE child_id = ? AND care_type = ?
+                   ORDER BY time DESC LIMIT ?""",
+                (child_id, care_type, limit),
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                "SELECT * FROM care_entries WHERE child_id = ? ORDER BY time DESC LIMIT ?",
+                (child_id, limit),
+            ).fetchall()
     return {"results": [dict(row) for row in rows]}
 
 
@@ -822,7 +879,7 @@ async def get_local_settings(child_id: int):
         due_date = due.isoformat()
         warning = local_now().date() >= due - timedelta(days=1)
     settings = {row["key"]: row["value"] for row in setting_rows}
-    for key in ("overview_sections", "overview_hidden", "care_header_types", "notification_targets", "media_player_targets", "calendar_entities"):
+    for key in ("overview_sections", "overview_hidden", "care_header_types", "notification_targets", "media_player_targets", "calendar_entities", "medication_presets"):
         try:
             settings[key] = json.loads(settings.get(key, "[]"))
         except (json.JSONDecodeError, TypeError):
@@ -1041,6 +1098,8 @@ async def test_notification(test: NotificationTestIn):
 async def patch_local_settings(child_id: int, patch: SettingsPatch):
     ensure_child_defaults(child_id)
     changes = patch.model_dump(exclude_unset=True)
+    if patch.medication_presets is not None:
+        changes["medication_presets"] = [preset.model_dump() for preset in patch.medication_presets]
     with db() as connection:
         for key, value in changes.items():
             if isinstance(value, (list, dict)):

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { visiblePresets } from "../../utils/medicationPresets";
 import Modal, { FormField, FormSelect, FormInput, FormButton, FormError } from "../Modal";
 import DeleteButton from "../DeleteButton";
 import { colors } from "../../utils/colors";
@@ -41,6 +42,21 @@ export default function MedicationForm({ childId, entry, onDone, onClose }) {
   const [notes, setNotes] = useState(entry?.notes || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [presets, setPresets] = useState([]);
+
+  useEffect(() => {
+    if (isEdit || !childId) return undefined;
+    let cancelled = false;
+    api.getLocalSettings(childId)
+      .then((settings) => { if (!cancelled) setPresets(visiblePresets(settings?.medication_presets)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [childId, isEdit]);
+
+  const applyPreset = (preset) => {
+    setName(preset.name);
+    setDosageUnit(preset.unit || "");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,6 +106,24 @@ export default function MedicationForm({ childId, entry, onDone, onClose }) {
   return (
     <Modal title={isEdit ? t("medicationForm.editTitle") : t("medicationForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
+        {presets.length > 0 && (
+          <div className="medication-preset-picker" role="group" aria-label={t("plus.medicationList.pick")}>
+            <span>{t("plus.medicationList.pick")}</span>
+            <div>
+              {presets.map((preset) => (
+                <button
+                  type="button"
+                  key={preset.id}
+                  className={`medication-preset-chip${name.trim() === preset.name ? " active" : ""}`}
+                  aria-pressed={name.trim() === preset.name}
+                  onClick={() => applyPreset(preset)}
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <FormField label={t("form.medication")}>
           <FormInput
             type="text"

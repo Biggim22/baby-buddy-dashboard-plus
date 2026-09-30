@@ -9,7 +9,7 @@ import { getAge, formatElapsed, formatTime, toApiDatetime } from "./utils/format
 import { subscribeErrorLog, getErrorLog } from "./utils/errorLog";
 import { clickableProps } from "./utils/a11y";
 import { applyTheme } from "./utils/theme";
-import { useTranslation, getTimeFormat, setTimeFormat, subscribeTimeFormat } from "./locales";
+import { useTranslation, translate, getTimeFormat, setTimeFormat, subscribeTimeFormat } from "./locales";
 import OverviewTab from "./tabs/OverviewTab";
 import GrowthTab from "./tabs/GrowthTab";
 import NotesTab from "./tabs/NotesTab";
@@ -112,7 +112,7 @@ class TabErrorBoundary extends Component {
   static getDerivedStateFromError(error) { return { error }; }
   render() {
     if (!this.state.error) return this.props.children;
-    return <div className="tab-error"><strong>Diese Ansicht konnte nicht geladen werden.</strong><span>{this.state.error.message}</span><button onClick={this.props.onBack}>Zur Übersicht</button></div>;
+    return <div className="tab-error"><strong>{translate("common.viewLoadFailed")}</strong><span>{this.state.error.message}</span><button onClick={this.props.onBack}>{translate("common.backToOverview")}</button></div>;
   }
 }
 
@@ -334,8 +334,8 @@ export default function App() {
           activeTab === "analytics" ? [{ id: "summary", label: t("plus.analytics.summary") }, { id: "sleep", label: t("plus.analytics.rollingSleep") }, { id: "breast", label: t("plus.analytics.breastfeedingWeek") }, { id: "bottles", label: t("plus.analytics.bottlesWeek") }, { id: "diapers", label: t("plus.analytics.diapersWeek") }, { id: "temperature", label: t("plus.analytics.temperature") }, { id: "tummy", label: t("plus.analytics.tummyWeek") }, { id: "diaperCalculator", label: t("plus.diaperCalculator.title") }, { id: "pumping", label: t("plus.pumping.title") }]
           : activeTab === "growth" ? [{ id: "summary", label: t("plus.settings.measurementSummary") }, { id: "weight", label: t("growth.weightTrend") }, { id: "height", label: t("growth.heightTrend") }, { id: "head", label: t("growth.headCircumferenceTrend") }, { id: "bmi", label: t("growth.bmiTrend") }, { id: "paediatricReport", label: t("report.paediatricTitle") }]
           : activeTab === "care" ? [{ id: "summary", label: t("plus.settings.careSummary") }, { id: "history", label: t("plus.careHistory") }]
-          : activeTab === "tasks" ? [{ id: "tasks", label: t("plus.tasks") }, { id: "appointments", label: t("plus.appointments") }, { id: "calendar", label: t("plus.tasks.calendar") }]
-          : activeTab === "notes" ? [{ id: "medications", label: t("notes.medications") }, { id: "temperature", label: t("notes.temperature") }, { id: "notes", label: t("notes.notesTitle") }]
+          : activeTab === "tasks" ? [{ id: "tasks", label: t("plus.tasks.list") }, { id: "appointments", label: t("plus.tasks.appointments") }, { id: "calendar", label: t("plus.tasks.calendar") }]
+          : activeTab === "notes" ? [{ id: "medications", label: t("notes.medications") }, { id: "temperature", label: t("temperature.title") }, { id: "notes", label: t("notes.notesTitle") }]
           : [{ id: "feeding", label: t("plus.analytics.averageFeedings") }, { id: "sleep", label: t("plus.analytics.sleep") }, { id: "diaper", label: t("plus.analytics.averageDiapers") }, { id: "medication", label: t("notes.medications") }, { id: "tummy", label: t("plus.analytics.tummyTime") }, { id: "note", label: t("notes.notesTitle") }]
         } /></div>}
         <TabErrorBoundary key={activeTab} onBack={() => setActiveTab("overview")}>
@@ -414,7 +414,7 @@ export default function App() {
             onDataChanged={data.refetch}
           />
         )}
-        {activeTab === "care" && <CareTab childId={data.child?.id} hiddenCards={tabCardPreferences.hidden} cardOrder={tabCardPreferences.order} autoOpen={openCareForm} onAutoOpenHandled={() => setOpenCareForm(false)} />}
+        {activeTab === "care" && <CareTab childId={data.child?.id} hiddenCards={tabCardPreferences.hidden} cardOrder={tabCardPreferences.order} autoOpen={openCareForm} onAutoOpenHandled={() => setOpenCareForm(false)} onDataChanged={data.refetch} />}
         {activeTab === "tasks" && <TasksTab childId={data.child?.id} hiddenCards={tabCardPreferences.hidden} cardOrder={tabCardPreferences.order} />}
         </TabErrorBoundary>
       </main>

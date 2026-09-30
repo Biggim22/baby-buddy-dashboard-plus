@@ -24,7 +24,7 @@ function relativeTime(value, t) {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return t("time.hoursAgo", { h: hours, m: minutes % 60 ? ` ${minutes % 60}m` : "" });
   const days = Math.floor(hours / 24);
-  return t("plus.overview.daysAgo", { days });
+  return days === 1 ? t("plus.oneDayAgo") : t("plus.overview.daysAgo", { days });
 }
 
 function durationText(value) {

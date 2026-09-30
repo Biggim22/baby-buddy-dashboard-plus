@@ -36,6 +36,8 @@ export default {
     failedToLoad: "Failed to load: {error}",
     nap: "Nap",
     avg: "Avg",
+    viewLoadFailed: "This view could not be loaded.",
+    backToOverview: "Back to overview",
   },
 
   action: {
@@ -238,7 +240,7 @@ export default {
     milestoneOptional: "Milestone (optional)",
     milestonePlaceholder: "e.g., Lifted head",
     medication: "Medication",
-    medicationPlaceholder: "e.g., Paracetamol",
+    medicationPlaceholder: "Medication name",
     dosage: "Dosage",
     dosageUnit: "Dosage Unit",
     timeGiven: "Time Given",
@@ -344,8 +346,8 @@ export default {
     save: "Save Medication",
     update: "Update Medication",
     dosageUnits: {
-      mg: "MG",
-      ml: "ML",
+      mg: "mg",
+      ml: "ml",
       tablets: "Tablets",
       drops: "Drops",
     },
@@ -360,9 +362,11 @@ export default {
 
   plus: {
     pumping: { title: "Pumping – last seven days", add: "Log pumping", amount: "Amount (mL)", start: "Start", end: "End", weekly: "{count} pumping sessions", none: "No pumping session recorded yet.", invalidTime: "The end must be after the start." },
-    diaperCalculator: { title: "Diaper size and stock calculator", enable: "Show calculator at the end of Analytics", profile: "Size chart", custom: "Custom brand / custom ranges", overlap: "Choice in overlapping ranges", automatic: "Automatic from weight and body-build trend", smaller: "Prefer smaller fitting size", larger: "Prefer larger fitting size", size: "Size", minKg: "From kg", maxKg: "To kg", addSize: "Add size", recommended: "Currently recommended", sizeValue: "Size {size}", fitsAlso: "Weight-compatible sizes: {sizes}", minimum: "Lower bound", expected: "Expected", maximum: "Upper bound", projection: "Forecast from {days} completed days, {weights} usable weight measurements and {low}–{high} diapers/day.", moreData: "At least 7 recorded diaper days and 3 usable weight measurements are needed for a meaningful stock range. Current: {days} days, {weights} measurements.", fitNotice: "Weight and BMI are only guidance. Size up sooner for marks, a tight waistband or frequent leaks; gaps may mean the larger diaper is still too big.", missing: { weight: "A weight measurement is required for this recommendation.", range: "The current weight is outside the configured size ranges." } },
+    medicationList: { title: "My medication list", hint: "Your own entries for quick selection when logging a medication. An entry contains only a name and an optional preferred unit – no dosage, no intervals and no recommendations. The amount actually given is entered each time.", empty: "No entries yet. The list starts empty.", name: "Name", unit: "Preferred unit", visible: "In quick selection", remove: "Delete entry", add: "Add", newPlaceholder: "Name of the new entry", pick: "From my list", duplicate: "This name is already in the list." },
+    carawayMigration: { noticeTitle: "Caraway oil suppositories are now logged as medication", notice: "{count} older care entries can be transferred once to the medication history.", open: "Transfer …", title: "Transfer caraway oil suppositories", summary: "{count} care entries from {from} to {to} will be created as medication entries in Baby Buddy. Time and note are kept; no amount is added.", name: "Name in medication history", addToList: "Add this name to my medication list", warning: "Each care entry is deleted only after its medication entry has been saved. Entries that were not transferred remain in Care and can be transferred again.", confirm: "Transfer {count} entries", done: "{count} entries were transferred to the medication history.", partial: "{count} entries could not be transferred and remain in Care. Please try again later.", listFailed: "The name could not be added to the medication list. You can add it there manually.", failed: "The transfer could not be started. Nothing was changed." },
+    diaperCalculator: { title: "Diaper size and stock calculator", enable: "Show calculator at the end of Analytics", profile: "Size chart", custom: "Custom brand / custom ranges", overlap: "Choice in overlapping ranges", automatic: "Automatic from weight and body-build trend", smaller: "Prefer smaller fitting size", larger: "Prefer larger fitting size", size: "Size", minKg: "From kg", maxKg: "To kg", addSize: "Add size", recommended: "Currently recommended", sizeValue: "Size {size}", fitsAlso: "Weight-compatible sizes: {sizes}", minimum: "Lower bound", expected: "Expected", maximum: "Upper bound", projection: "Forecast from {days} completed days, {weights} usable weight measurements and {low}–{high} diapers/day.", moreData: "At least 7 recorded diaper days and 3 usable weight measurements are needed for a meaningful stock range. Current: {days} days, {weights} measurements.", fitNotice: "Weight and BMI are only guidance. Size up sooner for marks, a tight waistband or frequent leaks; gaps may mean the larger diaper is still too big.", alternative: "Alternative fitting size", previousSize: "Show smaller fitting size", nextSize: "Show larger fitting size", alternativeHint: "Forecast if size {size} is used from today instead of the recommended size {recommended}.", backToRecommended: "Back to recommendation", missing: { weight: "A weight measurement is required for this recommendation.", range: "The current weight is outside the configured size ranges." } },
     aboutPlus: "Extends the original with detailed analytics, a daily timeline, temperature and care tracking, tasks and appointments, editable entries, and configurable Home Assistant and voice notifications.",
-    displaySettings: { summary: "Averages", calendarSleep: "Sleep – calendar days", sleepPeriodMode: "Period display", rolling: "Rolling 24-hour windows", calendarDays: "Calendar days", cardsTitle: "Cards on this tab", cardsHint: "Choose which sections are shown on this tab.", measurementSummary: "Latest measurements", careSummary: "Latest care", appearanceSchedule: "Scheduled appearance", enableSchedule: "Use an alternative appearance during this period", from: "From", until: "Until", scheduledMode: "Mode during period", scheduledColor: "Colour scheme during period", chooseTargets: "Choose devices and services", voiceMethod: "Voice output method", testBuilder: "Test notification", testTitle: "Title", testMessage: "Message", testHint: "The test uses the selected targets and voice output method above.", sendTest: "Send test", testing: "Sending test …", noTestTarget: "No target selected." },
+    displaySettings: { summary: "Averages", calendarSleep: "Sleep – calendar days", sleepPeriodMode: "Period display", rolling: "Rolling 24-hour windows", calendarDays: "Calendar days", cardsTitle: "Cards on this tab", cardsHint: "Choose which sections are shown on this tab.", measurementSummary: "Latest measurements", careSummary: "Latest care", appearanceSchedule: "Scheduled appearance", enableSchedule: "Use an alternative appearance during this period", from: "From", until: "Until", scheduledMode: "Mode during period", scheduledColor: "Colour scheme during period", chooseTargets: "Choose devices and services", voiceMethod: "Voice output method", testBuilder: "Test notification", testTitle: "Title", testMessage: "Message", testHint: "The test uses the selected targets and voice output method above.", sendTest: "Send test", testing: "Sending test …", noTestTarget: "No target selected.", testDefaultMessage: "This is a test notification." },
     analyticsTab: "Analytics",
     tasksTab: "Tasks",
     overview: { noEntry: "No entry yet", daysAgo: "{days} days ago", leftBreast: "left breast", rightBreast: "right breast", bothBreasts: "both breasts", bottle: "bottle", feeding: "feeding", wetSolid: "wet and soiled", solid: "soiled", wet: "wet", hygieneChange: "hygiene change", nextDose: "Next dose after {time}", latestFeeding: "Latest feeding", latestSleep: "Latest sleep", latestDiaper: "Latest diaper change", latestMedication: "Latest medication", latestTummy: "Latest tummy time", lastSolid: "Last soiled diaper: {age} ({time})", noSolid: "No soiled diaper recorded yet", latestEvents: "Latest events", feedingHistory: "History · Feedings", sleepHistory: "History · Sleep", diaperHistory: "History · Diaper changes", medicationHistory: "History · Medications", tummyHistory: "History · Tummy time", noFeeding: "No feeding recorded yet", noSleep: "No sleep recorded yet", noDiaper: "No diaper change recorded yet", noMedication: "No medication recorded yet", noTummy: "No tummy time recorded yet", showTenMore: "Show 10 more", showAll: "Show all", showLess: "Show less", settings: "Overview settings" },
@@ -370,6 +374,7 @@ export default {
     careHeader: "Care header",
     careHeaderHint: "Choose which care activities show their latest entry at the top.",
     lastCare: "Last {category}",
+    oneDayAgo: "1 day ago",
     bathReminderAfter: "Reminder after {days} days",
     notRecorded: "Not recorded yet",
     basedOn: "Based on",

@@ -40,7 +40,7 @@ const DEFAULTS = {
   appearance_schedule_accent: "rose",
 };
 
-const CARE_HEADER_TYPES = ["bath", "full_wash", "quick_wash", "caraway_suppository", "caraway_oil", "nail_care", "skin_care"];
+const CARE_HEADER_TYPES = ["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care"];
 
 function humanDate(value, t) {
   if (!value) return t("plus.settings.noBath");
@@ -53,7 +53,7 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
   const [status, setStatus] = useState("");
   const [haTargets, setHaTargets] = useState({ notify: ["notify.notify"], media_players: [] });
   const [calendarTargets, setCalendarTargets] = useState([]);
-  const [test, setTest] = useState({ title: "Baby Buddy Dashboard Plus", message: "Dies ist eine Testbenachrichtigung." });
+  const [test, setTest] = useState(() => ({ title: "Baby Buddy Dashboard Plus", message: t("plus.displaySettings.testDefaultMessage") }));
   const [testStatus, setTestStatus] = useState("");
 
   const load = useCallback(async () => {
@@ -74,9 +74,10 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
       const next = { ...DEFAULTS, ...result, overview_sections: [...savedOrder, ...missing] };
       next.overview_show_charts = result.overview_show_charts === true || String(result.overview_show_charts).toLowerCase() === "true";
       next.appearance_schedule_enabled = result.appearance_schedule_enabled === true || String(result.appearance_schedule_enabled).toLowerCase() === "true";
-      next.care_header_types = Array.isArray(result.care_header_types) && result.care_header_types.length
-        ? result.care_header_types
-        : DEFAULTS.care_header_types;
+      const careHeader = Array.isArray(result.care_header_types)
+        ? result.care_header_types.filter((type) => CARE_HEADER_TYPES.includes(type))
+        : [];
+      next.care_header_types = careHeader.length ? careHeader : DEFAULTS.care_header_types;
       setSettings(next);
       applyAppearance(next);
       setStatus("");
