@@ -9,6 +9,11 @@ beforeEach(() => {
 });
 
 describe("SettingsModal connection status", () => {
+  it("displays the release version injected from the add-on manifest", () => {
+    render(<SettingsModal connected onRefresh={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByText(`Baby Buddy Dashboard Plus ${__APP_VERSION__}`)).toBeInTheDocument();
+    expect(screen.queryByText("Baby Buddy Dashboard Plus 2.3.1")).not.toBeInTheDocument();
+  });
   it("shows green Connected with the last sync time when healthy", () => {
     const lastSync = new Date("2026-07-20T10:30:00");
     render(<SettingsModal connected lastSync={lastSync} onRefresh={vi.fn()} onClose={vi.fn()} />);

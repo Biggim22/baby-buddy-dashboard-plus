@@ -12,6 +12,26 @@ def use_temp_database(monkeypatch, tmp_path):
     plus_local.init_database()
 
 
+async def test_oled_is_opt_in_and_saved_for_manual_and_scheduled_appearance(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    before = await plus_local.get_local_settings(1)
+    assert before["theme"] == "dark"
+    assert before["appearance_schedule_theme"] == "dark"
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(
+        theme="oled", appearance_schedule_theme="oled", appearance_schedule_enabled=True,
+        appearance_schedule_start="20:00", appearance_schedule_end="06:00",
+    ))
+    saved = await plus_local.get_local_settings(1)
+    assert saved["theme"] == saved["appearance_schedule_theme"] == "oled"
+    assert saved["appearance_schedule_start"] == "20:00"
+    assert (await plus_local.get_local_settings(2))["theme"] == "dark"
+
+
+@pytest.mark.parametrize("theme", ["dark", "light", "pastel", "nord", "dracula", "solarized"])
+def test_existing_appearance_modes_remain_valid(theme):
+    assert plus_local.SettingsPatch(theme=theme, appearance_schedule_theme=theme).theme == theme
+
+
 async def test_medication_list_starts_empty_and_keeps_family_order(monkeypatch, tmp_path):
     use_temp_database(monkeypatch, tmp_path)
     assert (await plus_local.get_local_settings(1))["medication_presets"] == []

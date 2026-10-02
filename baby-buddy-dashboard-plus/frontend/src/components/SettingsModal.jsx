@@ -199,7 +199,7 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
         <SettingsTab childId={childId} embedded scope="global" />
       </div>
       <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--border)", color: "var(--text-dim)", fontSize: 12, lineHeight: 1.5 }}>
-        <strong style={{ color: "var(--text)" }}>Baby Buddy Dashboard Plus 2.3.1</strong><br />
+        <strong style={{ color: "var(--text)" }}>Baby Buddy Dashboard Plus {__APP_VERSION__}</strong><br />
         <span>{t("plus.aboutPlus")}</span><br />
         {t("plus.basedOn")} <a href="https://github.com/mbentancour/baby-buddy-dashboard" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>Baby Buddy Dashboard 1.7.7</a>
       </div>

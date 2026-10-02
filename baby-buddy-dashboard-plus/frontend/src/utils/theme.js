@@ -15,7 +15,8 @@ function isComplete(mode) {
 
 function modeBlock(mode) {
   const declarations = KEYS.map((k) => `      ${VAR_NAMES[k]}: ${mode[k]};`).join("\n");
-  return `  :root {\n${declarations}\n  }`;
+  // OLED is a deliberate night appearance, not an OS light/dark preference.
+  return `  :root:where(:not([data-theme="oled"])) {\n${declarations}\n  }`;
 }
 
 /**

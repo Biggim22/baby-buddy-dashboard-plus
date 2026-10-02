@@ -81,13 +81,14 @@ Extend the same safety model to the existing task/routine model, without inventi
 - Task and measurement permissions default to disabled. Measurement retries use a request ledger without storing numeric values; uncertain writes are blocked for manual verification, not blindly replayed.
 - The add-on and HACS integration both require 2.4.7. The Alexa Skill implementation lives in the separate Alexa project.
 
-### OLED night mode — Planned
+### OLED night mode — Completed in 2.4.8
 
 - Add an optional OLED dark appearance with a true black (`#000000`) page background, rather than dark grey, to reduce visible screen glow during nighttime use on OLED phones.
 - Keep text, charts, cards and controls readable with restrained accents and accessible contrast; avoid bright full-screen panels and white modal backgrounds.
 - Offer it as a manually selectable mode and as a choice in the existing time-controlled appearance schedule. Existing themes and saved schedules must remain unchanged unless the user selects OLED mode.
 - True black does not control the phone's brightness and does not guarantee the same power-saving effect on LCD screens. No hardware-brightness or medical sleep claims.
-- Planning only: not implemented in 2.4.7.
+- Implemented in 2.4.8, with near-black cards/dialogs, dark native controls, visible keyboard focus and regression tests for overnight switching and text-token contrast.
+- Included settings polish: the displayed app version comes from the release manifest at build time, and the Home Assistant action section explains the HACS-first pairing order.
 
 ### Home Assistant calendar bridge — Completed in 2.4.1
 

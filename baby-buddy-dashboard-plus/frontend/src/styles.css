@@ -530,11 +530,30 @@ body { overflow-x: hidden; }
 :root[data-theme="nord"] { --bg: #2e3440; --card-bg: #3b4252; --border: #4c566a; --text: #eceff4; --text-muted: #d8dee9; --text-dim: #aeb8c8; --tooltip-bg: #3b4252ee; }
 :root[data-theme="dracula"] { --bg: #282a36; --card-bg: #343746; --border: #44475a; --text: #f8f8f2; --text-muted: #bd93f9; --text-dim: #8790a8; --tooltip-bg: #343746ee; }
 :root[data-theme="solarized"] { --bg: #fdf6e3; --card-bg: #eee8d5; --border: #d5cdb7; --text: #073642; --text-muted: #586e75; --text-dim: #839496; --tooltip-bg: #fdf6e3ee; }
+/* Opt-in OLED appearance: do not dim the entire page or its chart colours. */
+:root[data-theme="oled"] {
+  color-scheme: dark;
+  background: #000000;
+  --bg: #000000;
+  --card-bg: #080808;
+  --surface: #080808;
+  --border: #303030;
+  --text: #d6d6d6;
+  --text-muted: #a6a6a6;
+  --text-dim: #909090;
+  --tooltip-bg: #101010;
+}
 :root[data-accent="mint"] { --preview-accent: #5eead4; --accent: #5eead4; }
 :root[data-accent="blue"] { --preview-accent: #60a5fa; --accent: #60a5fa; }
 :root[data-accent="rose"] { --preview-accent: #fb7185; --accent: #fb7185; }
 :root[data-accent="violet"] { --preview-accent: #a78bfa; --accent: #a78bfa; }
 :root[data-accent="amber"], :root { --preview-accent: #f59e0b; }
+:root[data-theme="oled"][data-accent] {
+  --accent: color-mix(in srgb, var(--preview-accent) 80%, #909090);
+}
+:root[data-theme="oled"] .primary-inline { background: var(--accent); }
+:root[data-theme="oled"] .care-summary-card { background: var(--card-bg); }
+:root[data-theme="oled"] :is(button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 .tab-nav { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-inline: contain; -webkit-overflow-scrolling: touch; }
 .tab-nav::-webkit-scrollbar { display: none; }

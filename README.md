@@ -14,6 +14,12 @@
 
 ## Tour in screenshots
 
+### New in 2.4.8 / Neu in 2.4.8
+
+**Deutsch:** Unter **Einstellungen → Darstellung → Modus → OLED Schwarz** gibt es jetzt einen echten schwarzen Hintergrund mit dunklen Karten und Dialogen. Du kannst OLED auch in der **zeitgesteuerten Darstellung** auswählen, zum Beispiel von 20:00 bis 06:00 mit dem Farbspektrum Rose. Bisherige Einstellungen bleiben unverändert. Die Gerätehelligkeit wird nicht geregelt; bei LCD-Displays bleibt die Hintergrundbeleuchtung aktiv. Die Versionsanzeige in den Einstellungen wird künftig automatisch aus der App-Version erstellt.
+
+**English:** Select **Settings → Appearance → Mode → OLED Black** for a true-black background with dark cards and dialogs. OLED is also available in **Scheduled appearance**, for example from 20:00 to 06:00 with the Rose colour scheme. Existing settings remain unchanged. Device brightness is not controlled, and LCD backlights remain active. The settings version label is now generated automatically from the app's release version.
+
 All screenshots use the built-in Baby Buddy demo data. / Alle Screenshots verwenden die integrierten Baby-Buddy-Demodaten.
 
 ### Overview / Übersicht

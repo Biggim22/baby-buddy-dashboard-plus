@@ -22,6 +22,9 @@ const FULL_DARK = {
 };
 
 describe("buildThemeCss", () => {
+  it("excludes OLED from custom OS colour overrides without increasing selector specificity", () => {
+    expect(buildThemeCss({ light: FULL_LIGHT, dark: FULL_DARK })).toContain(':root:where(:not([data-theme="oled"]))');
+  });
   it("returns an empty string when nothing is configured", () => {
     expect(buildThemeCss()).toBe("");
     expect(buildThemeCss({})).toBe("");

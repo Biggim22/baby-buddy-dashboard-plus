@@ -471,7 +471,7 @@ class SettingsPatch(BaseModel):
     bath_reminder_days: int | None = Field(default=None, ge=1, le=60)
     bath_reminder_time: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     language: Literal["de", "en", "it"] | None = None
-    theme: Literal["dark", "light", "pastel", "nord", "dracula", "solarized"] | None = None
+    theme: Literal["dark", "light", "pastel", "nord", "dracula", "solarized", "oled"] | None = None
     accent: Literal["amber", "mint", "blue", "rose", "violet"] | None = None
     overview_sections: list[str] | None = None
     overview_hidden: list[str] | None = None
@@ -498,7 +498,7 @@ class SettingsPatch(BaseModel):
     appearance_schedule_enabled: bool | None = None
     appearance_schedule_start: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     appearance_schedule_end: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
-    appearance_schedule_theme: Literal["dark", "light", "pastel", "nord", "dracula", "solarized"] | None = None
+    appearance_schedule_theme: Literal["dark", "light", "pastel", "nord", "dracula", "solarized", "oled"] | None = None
     appearance_schedule_accent: Literal["amber", "mint", "blue", "rose", "violet"] | None = None
 
     @field_validator("medication_presets")

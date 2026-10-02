@@ -1,5 +1,7 @@
 # Release process
 
+The settings version label is injected by Vite from `baby-buddy-dashboard-plus/config.yaml`. Do not hard-code a separate version in JSX. Update the manifest **before** running the tests and production build; the tracked `frontend/dist` output must come from that version's build.
+
 This repository is a Home Assistant add-on repository. A normal GitHub push is enough for Home Assistant to discover an update; a separate GitHub Release is optional and not required for installation.
 
 ## Prepare the release

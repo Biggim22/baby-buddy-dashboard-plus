@@ -27,7 +27,7 @@ beforeEach(() => {
 
 it("requires explicit task opt-in and permits task-only pairing", async () => {
   render(<SettingsTab childId={2} embedded scope="care" />);
-  fireEvent.click(await screen.findByText("Log care from Home Assistant"));
+  fireEvent.click(await screen.findByText("Home Assistant actions"));
   const task = await screen.findByLabelText("Test task · ID 7");
   expect(task).not.toBeChecked();
   expect(screen.queryByText(/Inactive test/)).not.toBeInTheDocument();
@@ -45,7 +45,7 @@ it("requires explicit task opt-in and permits task-only pairing", async () => {
 
 it("starts measurement permissions disabled and saves only selected types", async () => {
   render(<SettingsTab childId={2} embedded scope="care" />);
-  fireEvent.click(await screen.findByText("Log care from Home Assistant"));
+  fireEvent.click(await screen.findByText("Home Assistant actions"));
   await screen.findByLabelText("Test task · ID 7");
   const weight = screen.getByLabelText("Weight");
   expect(weight).not.toBeChecked();
@@ -54,4 +54,17 @@ it("starts measurement permissions disabled and saves only selected types", asyn
   await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, {
     ha_care_allowed_types: [], ha_task_allowed_ids: [], ha_measurement_allowed_types: ["weight"],
   }));
+});
+
+it("offers OLED manually and in the schedule without changing existing defaults", async () => {
+  render(<SettingsTab childId={2} embedded scope="global" />);
+  const mode = await screen.findByLabelText("Mode");
+  const scheduledMode = screen.getByLabelText("Mode during period");
+  expect(mode).toHaveValue("dark");
+  expect(scheduledMode).toHaveValue("dark");
+  fireEvent.change(mode, { target: { value: "oled" } });
+  expect(document.documentElement.dataset.theme).toBe("oled");
+  fireEvent.change(scheduledMode, { target: { value: "oled" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
+  await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({ theme: "oled", appearance_schedule_theme: "oled" })));
 });

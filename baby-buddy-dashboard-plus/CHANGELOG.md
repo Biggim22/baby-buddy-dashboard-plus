@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.8 (OLED night appearance and settings polish)
+
+- Added optional OLED Black appearance with a true-black page background, near-black cards/dialogs, dark native controls, restrained interface accents and visible keyboard focus. Existing chart/category colours retain their meaning.
+- OLED is available both manually and in the existing appearance schedule, including periods spanning midnight. Existing themes, defaults and saved schedules remain unchanged unless selected explicitly.
+- Fixed the stale settings version label: the frontend now receives its version automatically from the add-on manifest at build time rather than maintaining a separate hard-coded number.
+- Renamed the Home Assistant settings section to cover Care, tasks and measurements and clarified the HACS-first pairing order in German, English and Italian.
+- Added regression coverage for persisted appearance settings, schedule boundaries, text-token contrast, version display and UI choices. This release changes no care/health records, YAML files or live automations. It does not control device brightness or promise power savings on LCD screens.
+
 ## 2.4.7 (Home Assistant tasks, measurements and Care queries)
 
 - Added opt-in `complete_task`, `log_measurement` and read-only `get_last_care` actions with optional response data. Update both the add-on and the HACS integration to use them.
