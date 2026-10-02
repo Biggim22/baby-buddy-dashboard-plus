@@ -57,6 +57,57 @@ async def test_care_list_can_be_filtered_by_type(monkeypatch, tmp_path):
     assert len(unfiltered["results"]) == 3
 
 
+async def test_home_assistant_care_entry_requires_token_type_opt_in_and_is_idempotent(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    monkeypatch.setenv("HOME_ASSISTANT_CARE_TOKEN", "private-test-token")
+    entry = plus_local.HomeAssistantCareEntryIn(
+        child_id=1,
+        care_type="bath",
+        notes="Recorded from a button",
+        request_id="automation-context-1",
+    )
+
+    with pytest.raises(plus_local.HTTPException) as denied:
+        await plus_local.create_care_from_home_assistant(entry, "Bearer private-test-token")
+    assert denied.value.status_code == 403
+
+    await plus_local.patch_local_settings(
+        1, plus_local.SettingsPatch(ha_care_allowed_types=["bath"])
+    )
+    first = await plus_local.create_care_from_home_assistant(entry, "Bearer private-test-token")
+    second = await plus_local.create_care_from_home_assistant(entry, "Bearer private-test-token")
+
+    assert first["duplicate"] is False
+    assert first["entry"]["care_type"] == "bath"
+    assert second["duplicate"] is True
+    assert second["entry"]["id"] == first["entry"]["id"]
+    assert len((await plus_local.list_care(1, limit=100, care_type=None))["results"]) == 1
+
+
+async def test_home_assistant_care_entry_rejects_missing_or_invalid_token(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    entry = plus_local.HomeAssistantCareEntryIn(child_id=1, care_type="bath", request_id="one")
+    with pytest.raises(plus_local.HTTPException) as disabled:
+        await plus_local.create_care_from_home_assistant(entry, None)
+    assert disabled.value.status_code == 503
+
+    monkeypatch.setenv("HOME_ASSISTANT_CARE_TOKEN", "private-test-token")
+    with pytest.raises(plus_local.HTTPException) as unauthorized:
+        await plus_local.create_care_from_home_assistant(entry, "Bearer wrong-token")
+    assert unauthorized.value.status_code == 401
+
+
+def test_home_assistant_care_payload_cannot_carry_arbitrary_fields_or_blank_custom_label():
+    with pytest.raises(ValidationError):
+        plus_local.HomeAssistantCareEntryIn(
+            child_id=1, care_type="custom", request_id="one", category_label="   "
+        )
+    with pytest.raises(ValidationError):
+        plus_local.HomeAssistantCareEntryIn(
+            child_id=1, care_type="bath", request_id="one", unexpected="value"
+        )
+
+
 async def test_bath_reminders_ignore_orphaned_local_child_records(monkeypatch, tmp_path):
     """A migration may retain child 1 locally after Baby Buddy now exposes child 2."""
     monkeypatch.setattr(plus_local, "DATA_DIR", tmp_path)

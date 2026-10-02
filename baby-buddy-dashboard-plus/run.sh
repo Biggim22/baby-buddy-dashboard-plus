@@ -7,6 +7,7 @@ export REFRESH_INTERVAL=$(bashio::config 'refresh_interval')
 export DEMO_MODE=$(bashio::config 'demo_mode')
 export UNIT_SYSTEM=$(bashio::config 'unit_system')
 export ENABLE_MEDICATION_ALERTS=$(bashio::config 'enable_medication_alerts')
+export HOME_ASSISTANT_CARE_TOKEN=$(bashio::config 'home_assistant_care_token' '')
 export CHILD_SEX=$(bashio::config 'child_sex' '')
 export COLOR_PRESET=$(bashio::config 'color_preset' '')
 export THEME_LIGHT_BG=$(bashio::config 'theme_light_bg' '')
@@ -24,7 +25,7 @@ export THEME_DARK_TEXT_MUTED=$(bashio::config 'theme_dark_text_muted' '')
 export THEME_DARK_TEXT_DIM=$(bashio::config 'theme_dark_text_dim' '')
 export THEME_DARK_ACCENT=$(bashio::config 'theme_dark_accent' '')
 
-bashio::log.info "Starting Baby Buddy Dashboard Plus 2.4.4..."
+bashio::log.info "Starting Baby Buddy Dashboard Plus 2.4.5..."
 bashio::log.info "Connecting to Baby Buddy at: ${BABY_BUDDY_URL}"
 
 cd /app

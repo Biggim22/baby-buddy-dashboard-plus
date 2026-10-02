@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.5 (Home Assistant care automation)
+
+- Added an opt-in, token-protected Home Assistant endpoint for creating local Care entries from automations such as Zigbee buttons, Alexa routines or dashboard controls.
+- Every child independently selects the narrow set of Care types that Home Assistant may record. The endpoint accepts only those enabled types, and custom entries require a category label.
+- Requests require an explicit idempotency ID. Replaying the same request returns the existing record instead of adding a duplicate.
+- Added a public setup guide with a `rest_command` example, a test payload and safety notes. The token is configured in the add-on options and should be stored in Home Assistant `secrets.yaml`.
+
 ## 2.4.4 (Personal medication list, caraway suppositories as medication, diaper size browsing)
 
 - Added an optional personal medication list in the display settings of Notes & medication. It is empty on first use; families add, rename, reorder, hide and delete their own entries.

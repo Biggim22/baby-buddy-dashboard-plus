@@ -63,16 +63,21 @@ Offer Care as an optional Overview section, so families can see the selected lat
 - Each displayed item links to its editable care entry; no duplicate local care data or separate summary state is created.
 - The compact section must remain useful on mobile and must not replace the existing Care history.
 
-### Home Assistant actions to log local care and routines — Planned after quick controls
+### Home Assistant care logging — Completed in 2.4.5
 
-Let Home Assistant automations, voice assistants and physical buttons create an explicit Plus care entry or mark a routine as completed. This supports workflows such as logging a full bath, trimmed nails or a Vitamin D dose from Alexa or a Zigbee button.
+Home Assistant automations, voice assistants and physical buttons can create an explicit local Plus Care entry using the documented `rest_command.baby_buddy_dashboard_plus_log_care` action.
 
-- Provide documented Home Assistant services with a deliberately narrow schema, for example `baby_buddy_dashboard_plus.log_care` and `baby_buddy_dashboard_plus.log_routine`.
-- Each service call requires an explicit child and a fixed, supported care/routine type; optional timestamp and note are validated. Free-form service calls cannot execute arbitrary code or arbitrary Home Assistant services.
-- The dashboard settings contain an allow-list: families opt in to every care type or routine that may be written from Home Assistant.
-- Calls are idempotency-aware so one button press or voice command cannot create duplicate entries through a retry. The resulting record identifies that it was created through Home Assistant and remains editable in Dashboard Plus.
-- Vitamin D remains a medication/routine completion rather than a care category. The implementation must map it to the existing Baby Buddy medication/task model without inventing a second medication history.
-- Documentation will include small Home Assistant automation examples for an Alexa-exposed helper and a Zigbee button, but never bundle credentials, personal entity IDs or a default automation.
+- The add-on endpoint is disabled without a private, user-configured token.
+- Each call contains an explicit child, a fixed supported care type, an optional timestamp/note and an idempotency ID. Arbitrary data and arbitrary service execution are not accepted.
+- The Care settings contain a per-child allow-list: families opt in to every care type that Home Assistant may record.
+- The setup guide includes an isolated REST command, test payload and a Zigbee-button example, but never ships credentials, personal entity IDs or a default automation.
+
+### Home Assistant routine completion — Planned
+
+Extend the same safety model to the existing task/routine model, without inventing a second medication history.
+
+- Vitamin D remains a medication/routine completion rather than a Care category.
+- A future action must use a separate fixed routine allow-list, child ID and idempotency ID, then mark only an existing local task/routine as completed.
 
 ### Home Assistant calendar bridge — Completed in 2.4.1
 

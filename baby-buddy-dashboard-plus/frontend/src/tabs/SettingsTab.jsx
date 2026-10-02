@@ -27,6 +27,7 @@ const DEFAULTS = {
   feeding_average_metric: "duration",
   time_format: "24h",
   care_header_types: ["bath", "full_wash", "quick_wash"],
+  ha_care_allowed_types: [],
   notification_targets: ["notify.notify"],
   media_player_targets: [],
   media_player_mode: "custom",
@@ -41,6 +42,7 @@ const DEFAULTS = {
 };
 
 const CARE_HEADER_TYPES = ["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care"];
+const HA_CARE_TYPES = [...CARE_HEADER_TYPES, "custom"];
 
 function humanDate(value, t) {
   if (!value) return t("plus.settings.noBath");
@@ -78,6 +80,9 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
         ? result.care_header_types.filter((type) => CARE_HEADER_TYPES.includes(type))
         : [];
       next.care_header_types = careHeader.length ? careHeader : DEFAULTS.care_header_types;
+      next.ha_care_allowed_types = Array.isArray(result.ha_care_allowed_types)
+        ? result.ha_care_allowed_types.filter((type) => HA_CARE_TYPES.includes(type))
+        : [];
       setSettings(next);
       applyAppearance(next);
       setStatus("");
@@ -119,6 +124,12 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
     update("care_header_types", CARE_HEADER_TYPES.filter((value) => selected.has(value)));
   };
 
+  const toggleHomeAssistantCareType = (type) => {
+    const selected = new Set(settings.ha_care_allowed_types || []);
+    selected.has(type) ? selected.delete(type) : selected.add(type);
+    update("ha_care_allowed_types", HA_CARE_TYPES.filter((value) => selected.has(value)));
+  };
+
   const toggleTarget = (key, value) => {
     const selected = new Set(settings[key] || []);
     selected.has(value) ? selected.delete(value) : selected.add(value);
@@ -140,6 +151,7 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
         feeding_average_metric: settings.feeding_average_metric,
         time_format: settings.time_format,
         care_header_types: settings.care_header_types,
+        ha_care_allowed_types: settings.ha_care_allowed_types,
         notification_targets: settings.notification_targets,
         media_player_targets: settings.media_player_targets,
         media_player_mode: settings.media_player_mode,
@@ -258,6 +270,12 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
         <div className="preview-list">
           {CARE_HEADER_TYPES.map((type) => <label className="preview-check" key={type}><input type="checkbox" checked={(settings.care_header_types || []).includes(type)} onChange={() => toggleCareHeader(type)} /> {t(`plus.careTypes.${type}`)}</label>)}
         </div>
+        <details className="settings-expander"><summary>{t("plus.settings.homeAssistantCare")}</summary><div className="settings-expander-body">
+          <p className="form-hint">{t("plus.settings.homeAssistantCareHint")}</p>
+          <div className="preview-list">
+            {HA_CARE_TYPES.map((type) => <label className="preview-check" key={type}><input type="checkbox" checked={(settings.ha_care_allowed_types || []).includes(type)} onChange={() => toggleHomeAssistantCareType(type)} /> {t(`plus.careTypes.${type}`)}</label>)}
+          </div>
+        </div></details>
       </SectionCard>}
 
       <div className="preview-save-row">

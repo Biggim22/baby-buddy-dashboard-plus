@@ -5,13 +5,14 @@ import json
 import logging
 import os
 import sqlite3
+from hmac import compare_digest
 from contextlib import contextmanager
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal
 from zoneinfo import ZoneInfo
 import httpx
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 router = APIRouter()
@@ -23,6 +24,10 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", "/data" if Path("/data").exists() els
 DB_PATH = DATA_DIR / "baby_buddy_dashboard_plus.db"
 DEFAULT_BATH_DAYS = 7
 DEFAULT_BATH_TIME = "10:00"
+# This is deliberately a small fixed vocabulary.  An external Home Assistant
+# automation may add a care record, but it must never turn the add-on into a
+# generic write endpoint for arbitrary local data.
+HA_CARE_TYPES = ("bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom")
 
 BATH_TEXTS = {
     "de": {
@@ -136,6 +141,14 @@ def init_database() -> None:
                 sent_date TEXT NOT NULL,
                 PRIMARY KEY(child_id, notification_type, sent_date)
             );
+
+            CREATE TABLE IF NOT EXISTS ha_care_requests (
+                child_id INTEGER NOT NULL,
+                request_id TEXT NOT NULL,
+                care_entry_id INTEGER NOT NULL REFERENCES care_entries(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(child_id, request_id)
+            );
             """
         )
         care_columns = {
@@ -243,6 +256,7 @@ def ensure_child_defaults(child_id: int) -> None:
             "appearance_schedule_end": "06:00",
             "appearance_schedule_theme": "dark",
             "appearance_schedule_accent": "rose",
+            "ha_care_allowed_types": json.dumps([]),
         }
         for key, value in defaults.items():
             connection.execute(
@@ -274,6 +288,26 @@ class CareEntryPatch(BaseModel):
     category_label: str | None = Field(default=None, max_length=120)
     time: datetime | None = None
     notes: str | None = None
+
+
+class HomeAssistantCareEntryIn(BaseModel):
+    """Narrow, idempotent payload accepted from a Home Assistant automation."""
+
+    model_config = ConfigDict(extra="forbid")
+    child_id: int = Field(ge=1)
+    care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]
+    category_label: str = Field(default="", max_length=120)
+    time: datetime | None = None
+    notes: str = Field(default="", max_length=2000)
+    request_id: str = Field(min_length=1, max_length=120, pattern=r"^[A-Za-z0-9_.:-]+$")
+
+    @field_validator("category_label")
+    @classmethod
+    def custom_category_needs_label(cls, value: str, info) -> str:
+        value = value.strip()
+        if info.data.get("care_type") == "custom" and not value:
+            raise ValueError("Custom care entries need a category label")
+        return value
 
 
 class TaskIn(BaseModel):
@@ -346,6 +380,7 @@ class SettingsPatch(BaseModel):
     feeding_average_metric: Literal["volume", "duration", "frequency"] | None = None
     time_format: Literal["12h", "24h"] | None = None
     care_header_types: list[str] | None = None
+    ha_care_allowed_types: list[Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]] | None = None
     notification_targets: list[str] | None = None
     media_player_targets: list[str] | None = None
     media_player_mode: Literal["custom", "alexa_tts", "alexa_announce"] | None = None
@@ -369,6 +404,13 @@ class SettingsPatch(BaseModel):
     def unique_preset_ids(cls, value: list[MedicationPreset] | None) -> list[MedicationPreset] | None:
         if value is not None and len({preset.id for preset in value}) != len(value):
             raise ValueError("Medication list entries need unique IDs")
+        return value
+
+    @field_validator("ha_care_allowed_types")
+    @classmethod
+    def unique_ha_care_types(cls, value: list[str] | None) -> list[str] | None:
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("Home Assistant care types must be unique")
         return value
 
 
@@ -693,6 +735,85 @@ async def create_care(entry: CareEntryIn):
     return row_dict(row)
 
 
+def require_home_assistant_care_token(authorization: str | None) -> None:
+    """Authenticate the opt-in internal endpoint without ever exposing its secret."""
+    configured = os.environ.get("HOME_ASSISTANT_CARE_TOKEN", "").strip()
+    # Some Supervisor versions surface an unset optional password as the text
+    # "null". Treat that as disabled, never as a token somebody could guess.
+    if configured == "null":
+        configured = ""
+    if not configured:
+        raise HTTPException(503, "Home Assistant care automation is not configured")
+    provided = authorization.removeprefix("Bearer ").strip() if authorization else ""
+    if not provided or not compare_digest(provided, configured):
+        raise HTTPException(401, "Invalid Home Assistant care token")
+
+
+@router.post("/api/ha/care", status_code=201)
+async def create_care_from_home_assistant(
+    entry: HomeAssistantCareEntryIn,
+    authorization: str | None = Header(default=None),
+):
+    """Record a narrowly allow-listed care action sent by a HA automation.
+
+    The endpoint is disabled until the add-on owner configures a token.  Each
+    child separately opts in to the individual types, and ``request_id`` makes
+    a retried automation safe: it returns the original row rather than making
+    a second record.
+    """
+    require_home_assistant_care_token(authorization)
+    ensure_child_defaults(entry.child_id)
+    timestamp = entry.time or local_now()
+    timestamp = (
+        timestamp.replace(tzinfo=LOCAL_TIMEZONE)
+        if timestamp.tzinfo is None
+        else timestamp.astimezone(LOCAL_TIMEZONE)
+    )
+    with db() as connection:
+        try:
+            allowed_types = json.loads(
+                get_setting(connection, entry.child_id, "ha_care_allowed_types", "[]")
+            )
+        except (json.JSONDecodeError, TypeError):
+            allowed_types = []
+        if entry.care_type not in allowed_types:
+            raise HTTPException(403, "This care type is not enabled for Home Assistant")
+        previous = connection.execute(
+            """SELECT care_entries.* FROM ha_care_requests
+               JOIN care_entries ON care_entries.id = ha_care_requests.care_entry_id
+               WHERE ha_care_requests.child_id = ? AND ha_care_requests.request_id = ?""",
+            (entry.child_id, entry.request_id),
+        ).fetchone()
+        if previous is not None:
+            return {"entry": dict(previous), "duplicate": True}
+        cursor = connection.execute(
+            """INSERT INTO care_entries (child_id, care_type, category_label, time, notes)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                entry.child_id,
+                entry.care_type,
+                entry.category_label,
+                timestamp.isoformat(),
+                entry.notes.strip(),
+            ),
+        )
+        connection.execute(
+            """INSERT INTO ha_care_requests (child_id, request_id, care_entry_id)
+               VALUES (?, ?, ?)""",
+            (entry.child_id, entry.request_id, cursor.lastrowid),
+        )
+        row = connection.execute(
+            "SELECT * FROM care_entries WHERE id = ?", (cursor.lastrowid,)
+        ).fetchone()
+    logger.info(
+        "Created Home Assistant care entry child_id=%s care_type=%s request_id=%s",
+        entry.child_id,
+        entry.care_type,
+        entry.request_id,
+    )
+    return {"entry": row_dict(row), "duplicate": False}
+
+
 @router.patch("/api/local/care/{entry_id}")
 async def patch_care(entry_id: int, patch: CareEntryPatch):
     changes = patch.model_dump(exclude_unset=True)
@@ -879,7 +1000,7 @@ async def get_local_settings(child_id: int):
         due_date = due.isoformat()
         warning = local_now().date() >= due - timedelta(days=1)
     settings = {row["key"]: row["value"] for row in setting_rows}
-    for key in ("overview_sections", "overview_hidden", "care_header_types", "notification_targets", "media_player_targets", "calendar_entities", "medication_presets"):
+    for key in ("overview_sections", "overview_hidden", "care_header_types", "ha_care_allowed_types", "notification_targets", "media_player_targets", "calendar_entities", "medication_presets"):
         try:
             settings[key] = json.loads(settings.get(key, "[]"))
         except (json.JSONDecodeError, TypeError):

@@ -1,5 +1,5 @@
 name: "Baby Buddy Dashboard Plus"
-version: "2.4.4"
+version: "2.4.5"
 slug: "baby-buddy-dashboard-plus"
 description: >-
   A comprehensive Home Assistant dashboard for Baby Buddy. In addition to the
@@ -37,6 +37,7 @@ options:
   demo_mode: false
   unit_system: metric
   enable_medication_alerts: false
+  home_assistant_care_token: ""
 schema:
   baby_buddy_url: url
   baby_buddy_api_key: password
@@ -44,6 +45,7 @@ schema:
   demo_mode: bool
   unit_system: "list(metric|imperial)"
   enable_medication_alerts: bool
+  home_assistant_care_token: password?
   child_sex: "list(male|female)?"
   color_preset: "list(teal_terracotta)?"
   theme_light_bg: "str?"
