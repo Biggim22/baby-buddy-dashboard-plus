@@ -10,12 +10,13 @@ import sqlite3
 from hmac import compare_digest
 from contextlib import contextmanager
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal
 from zoneinfo import ZoneInfo
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 def require_dashboard_ingress(request: Request) -> None:
     """Local administration must come from Supervisor, not another container.
@@ -43,6 +44,15 @@ DEFAULT_BATH_TIME = "10:00"
 HA_CARE_TYPES = ("bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom")
 PAIRING_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 PAIRING_CODE_LIFETIME = timedelta(minutes=10)
+measurement_client: httpx.AsyncClient | None = None
+measurement_unit_system: str | None = None
+measurement_demo_mode = False
+
+
+def configure_measurement_api(client, unit_system: str, demo_mode: bool = False) -> None:
+    """Reuse the configured Baby Buddy client; never allocate another data store."""
+    global measurement_client, measurement_unit_system, measurement_demo_mode
+    measurement_client, measurement_unit_system, measurement_demo_mode = client, unit_system, demo_mode
 
 BATH_TEXTS = {
     "de": {
@@ -162,6 +172,14 @@ def init_database() -> None:
                 request_id TEXT NOT NULL,
                 care_entry_id INTEGER NOT NULL REFERENCES care_entries(id) ON DELETE CASCADE,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(child_id, request_id)
+            );
+            CREATE TABLE IF NOT EXISTS ha_measurement_requests (
+                child_id INTEGER NOT NULL,
+                request_id TEXT NOT NULL,
+                payload_hash TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('pending', 'saved')),
+                record_id INTEGER,
                 PRIMARY KEY(child_id, request_id)
             );
 
@@ -285,6 +303,8 @@ def ensure_child_defaults(child_id: int) -> None:
             "appearance_schedule_theme": "dark",
             "appearance_schedule_accent": "rose",
             "ha_care_allowed_types": json.dumps([]),
+            "ha_task_allowed_ids": json.dumps([]),
+            "ha_measurement_allowed_types": json.dumps([]),
         }
         for key, value in defaults.items():
             connection.execute(
@@ -348,6 +368,46 @@ class HomeAssistantPairingIn(BaseModel):
         if len(value) != 8 or any(char not in PAIRING_CODE_ALPHABET for char in value):
             raise ValueError("Invalid pairing code")
         return value
+
+
+class HomeAssistantTaskCompleteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    task_id: int = Field(gt=0, strict=True)
+    due_date: date | None = None
+
+
+class HomeAssistantCareQueryIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]
+    category_label: str = Field(default="", max_length=120)
+
+    @model_validator(mode="after")
+    def explicit_custom_category(self):
+        self.category_label = self.category_label.strip()
+        if self.care_type == "custom" and not self.category_label:
+            raise ValueError("Select an explicit custom category")
+        return self
+
+
+class HomeAssistantMeasurementIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    measurement_type: Literal["temperature", "height", "weight"]
+    value: float = Field(gt=0, allow_inf_nan=False, strict=True)
+    unit: Literal["C", "cm", "kg", "g"]
+    time: datetime | None = None
+    request_id: str = Field(min_length=1, max_length=120, pattern=r"^[A-Za-z0-9_.:-]+$")
+
+    @model_validator(mode="after")
+    def validate_measurement(self):
+        expected = {"temperature": {"C"}, "height": {"cm"}, "weight": {"kg", "g"}}
+        if self.unit not in expected[self.measurement_type]:
+            raise ValueError("Unit does not match measurement type")
+        metric = self.value / 1000 if self.unit == "g" else self.value
+        # Same input limits as existing dashboard forms, not a health assessment.
+        low, high = {"temperature": (30, 45), "height": (0, 200), "weight": (0, 30)}[self.measurement_type]
+        if metric < low or metric > high:
+            raise ValueError("Value is outside the dashboard's input limits")
+        return self
 
 
 class TaskIn(BaseModel):
@@ -421,6 +481,8 @@ class SettingsPatch(BaseModel):
     time_format: Literal["12h", "24h"] | None = None
     care_header_types: list[str] | None = None
     ha_care_allowed_types: list[Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]] | None = None
+    ha_task_allowed_ids: list[int] | None = Field(default=None, max_length=100)
+    ha_measurement_allowed_types: list[Literal["temperature", "height", "weight"]] | None = None
     notification_targets: list[str] | None = None
     media_player_targets: list[str] | None = None
     media_player_mode: Literal["custom", "alexa_tts", "alexa_announce"] | None = None
@@ -451,6 +513,20 @@ class SettingsPatch(BaseModel):
     def unique_ha_care_types(cls, value: list[str] | None) -> list[str] | None:
         if value is not None and len(set(value)) != len(value):
             raise ValueError("Home Assistant care types must be unique")
+        return value
+
+    @field_validator("ha_task_allowed_ids", mode="before")
+    @classmethod
+    def task_ids_are_explicit(cls, value):
+        if value is not None and (not isinstance(value, list) or any(type(v) is not int or v <= 0 for v in value) or len(set(value)) != len(value)):
+            raise ValueError("Select unique positive task IDs")
+        return value
+
+    @field_validator("ha_measurement_allowed_types")
+    @classmethod
+    def measurement_types_are_unique(cls, value):
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("Select unique measurement types")
         return value
 
 
@@ -796,6 +872,14 @@ def read_allowed_care_types(connection: sqlite3.Connection, child_id: int) -> li
     return [item for item in value if item in HA_CARE_TYPES] if isinstance(value, list) else []
 
 
+def read_allowed_setting(connection, child_id, key):
+    try:
+        value = json.loads(get_setting(connection, child_id, key, "[]"))
+    except (json.JSONDecodeError, TypeError):
+        return []
+    return value if isinstance(value, list) else []
+
+
 @router.post("/api/local/care-pairing/{child_id}")
 async def create_home_assistant_pairing(child_id: int):
     """Create a one-time code shown only through the authenticated dashboard."""
@@ -803,8 +887,10 @@ async def create_home_assistant_pairing(child_id: int):
     code = make_pairing_code()
     expires_at = local_now() + PAIRING_CODE_LIFETIME
     with db() as connection:
-        if not read_allowed_care_types(connection, child_id):
-            raise HTTPException(409, "Select at least one Care type for Home Assistant first")
+        if not (read_allowed_care_types(connection, child_id)
+                or read_allowed_setting(connection, child_id, "ha_task_allowed_ids")
+                or read_allowed_setting(connection, child_id, "ha_measurement_allowed_types")):
+            raise HTTPException(409, "Enable at least one Home Assistant action first")
         connection.execute(
             """INSERT OR REPLACE INTO ha_care_pairings (child_id, code_hash, expires_at)
                VALUES (?, ?, ?)""",
@@ -853,6 +939,120 @@ def paired_child_for_token(token: str | None) -> int:
         if compare_digest(row["token_hash"], secret_hash(token)):
             return row["child_id"]
     raise HTTPException(401, "Invalid Home Assistant integration credential")
+
+
+@router.post("/api/ha/integration/tasks/complete")
+async def complete_task_from_home_assistant(
+    entry: HomeAssistantTaskCompleteIn,
+    x_baby_buddy_integration_token: str | None = Header(default=None),
+):
+    child_id = paired_child_for_token(x_baby_buddy_integration_token)
+    now = local_now()
+    due = entry.due_date or now.date()
+    if due > now.date():
+        raise HTTPException(422, "task_not_due")
+    with db() as connection:
+        task = connection.execute("SELECT * FROM task_definitions WHERE id = ? AND child_id = ?", (entry.task_id, child_id)).fetchone()
+        if task is None:
+            raise HTTPException(404, "task_not_found")
+        if entry.task_id not in read_allowed_setting(connection, child_id, "ha_task_allowed_ids"):
+            raise HTTPException(403, "task_not_allowed")
+        if not task["active"] or task["task_kind"] != "task" or not task_due(dict(task), due):
+            raise HTTPException(422, "task_not_due")
+        inserted = connection.execute(
+            "INSERT OR IGNORE INTO task_completions(task_id, due_date, completed_at) VALUES (?, ?, ?)",
+            (entry.task_id, due.isoformat(), now.isoformat()),
+        ).rowcount
+        row = connection.execute("SELECT completed_at FROM task_completions WHERE task_id = ? AND due_date = ?", (entry.task_id, due.isoformat())).fetchone()
+    return {"status": "saved" if inserted else "already_saved", "message": "Task completed" if inserted else "Task was already completed",
+            "task_id": entry.task_id, "due_date": due.isoformat(), "completed": True, "completed_at": row["completed_at"]}
+
+
+@router.post("/api/ha/integration/care/last")
+async def last_care_from_home_assistant(
+    entry: HomeAssistantCareQueryIn,
+    x_baby_buddy_integration_token: str | None = Header(default=None),
+):
+    child_id = paired_child_for_token(x_baby_buddy_integration_token)
+    with db() as connection:
+        if entry.care_type not in read_allowed_care_types(connection, child_id):
+            raise HTTPException(403, "care_not_allowed")
+        row = connection.execute(
+            "SELECT time FROM care_entries WHERE child_id = ? AND care_type = ? AND (? = '' OR category_label = ?) ORDER BY julianday(time) DESC, id DESC LIMIT 1",
+            (child_id, entry.care_type, entry.category_label, entry.category_label),
+        ).fetchone()
+        language = get_setting(connection, child_id, "language", "de")
+    last_at = row["time"] if row else None
+    text = {
+        "de": ("Noch kein Eintrag für diese Pflegeart erfasst.", "Letzter Eintrag für diese Pflegeart: {time}."),
+        "en": ("No entry recorded for this care type yet.", "Last entry for this care type: {time}."),
+        "it": ("Nessuna voce registrata per questo tipo di cura.", "Ultima voce per questo tipo di cura: {time}."),
+    }.get(language, ("No entry recorded for this care type yet.", "Last entry for this care type: {time}."))
+    return {"status": "answer", "message": text[1].format(time=last_at) if last_at else text[0], "last_at": last_at, "care_type": entry.care_type}
+
+
+def measurement_payload(entry, child_id):
+    timestamp = entry.time or local_now()
+    timestamp = timestamp.replace(tzinfo=LOCAL_TIMEZONE) if timestamp.tzinfo is None else timestamp.astimezone(LOCAL_TIMEZONE)
+    value = Decimal(str(entry.value)) / (1000 if entry.unit == "g" else 1)
+    if measurement_unit_system == "imperial":
+        value = {"temperature": lambda v: v * 9 / 5 + 32, "height": lambda v: v / Decimal("2.54"),
+                 "weight": lambda v: v / Decimal("0.45359237")}[entry.measurement_type](value)
+    elif measurement_unit_system != "metric":
+        raise HTTPException(503, "measurement_configuration_missing")
+    value = value.quantize(Decimal("0.01"))
+    if value <= 0:
+        raise HTTPException(422, "Value cannot be represented at Baby Buddy precision")
+    return {"child": child_id, entry.measurement_type: str(value),
+            **({"time": timestamp.isoformat()} if entry.measurement_type == "temperature" else {"date": timestamp.date().isoformat()})}
+
+
+@router.post("/api/ha/integration/measurements")
+async def log_measurement_from_home_assistant(
+    entry: HomeAssistantMeasurementIn,
+    x_baby_buddy_integration_token: str | None = Header(default=None),
+):
+    child_id = paired_child_for_token(x_baby_buddy_integration_token)
+    with db() as connection:
+        if entry.measurement_type not in read_allowed_setting(connection, child_id, "ha_measurement_allowed_types"):
+            raise HTTPException(403, "measurement_not_allowed")
+    if measurement_client is None or measurement_demo_mode:
+        raise HTTPException(503, "measurement_api_unavailable")
+    payload = measurement_payload(entry, child_id)
+    fingerprint = secret_hash(json.dumps(entry.model_dump(mode="json", exclude={"request_id"}), sort_keys=True))
+    with db() as connection:
+        inserted = connection.execute(
+            "INSERT OR IGNORE INTO ha_measurement_requests(child_id, request_id, payload_hash, status) VALUES (?, ?, ?, 'pending')",
+            (child_id, entry.request_id, fingerprint),
+        ).rowcount
+        previous = connection.execute("SELECT * FROM ha_measurement_requests WHERE child_id = ? AND request_id = ?", (child_id, entry.request_id)).fetchone()
+    if not inserted:
+        if previous["payload_hash"] != fingerprint:
+            raise HTTPException(409, "request_conflict")
+        if previous["status"] == "saved":
+            return {"status": "already_saved", "message": "Measurement was already saved", "record_id": previous["record_id"]}
+        raise HTTPException(409, "measurement_pending")
+    # Pending is committed before the outbound write. Never automatically replay
+    # an uncertain write: Baby Buddy POST has no native idempotency key.
+    try:
+        response = await measurement_client.post(f"/api/{entry.measurement_type}/", json=payload)
+    except httpx.RequestError:
+        raise HTTPException(409, "measurement_pending") from None
+    if 400 <= response.status_code < 500:
+        with db() as connection:
+            connection.execute("DELETE FROM ha_measurement_requests WHERE child_id = ? AND request_id = ?", (child_id, entry.request_id))
+        raise HTTPException(422, "measurement_rejected")
+    if response.status_code != 201:
+        raise HTTPException(409, "measurement_pending")
+    try:
+        record_id = response.json()["id"]
+        if type(record_id) is not int or record_id <= 0:
+            raise ValueError()
+    except (ValueError, KeyError, TypeError):
+        raise HTTPException(409, "measurement_pending") from None
+    with db() as connection:
+        connection.execute("UPDATE ha_measurement_requests SET status = 'saved', record_id = ? WHERE child_id = ? AND request_id = ?", (record_id, child_id, entry.request_id))
+    return {"status": "saved", "message": "Measurement saved in Baby Buddy", "record_id": record_id}
 
 
 def record_home_assistant_care(child_id: int, entry: HomeAssistantCareEntryIn) -> dict[str, Any]:
@@ -1067,7 +1267,7 @@ async def toggle_task(task_id: int, toggle: ToggleIn):
             raise HTTPException(404, "Task not found")
         if toggle.completed:
             connection.execute(
-                """INSERT OR REPLACE INTO task_completions(task_id, due_date, completed_at)
+                """INSERT OR IGNORE INTO task_completions(task_id, due_date, completed_at)
                    VALUES (?, ?, ?)""",
                 (task_id, toggle.due_date.isoformat(), local_now().isoformat()),
             )
@@ -1109,7 +1309,7 @@ async def get_local_settings(child_id: int):
         due_date = due.isoformat()
         warning = local_now().date() >= due - timedelta(days=1)
     settings = {row["key"]: row["value"] for row in setting_rows}
-    for key in ("overview_sections", "overview_hidden", "care_header_types", "ha_care_allowed_types", "notification_targets", "media_player_targets", "calendar_entities", "medication_presets"):
+    for key in ("overview_sections", "overview_hidden", "care_header_types", "ha_care_allowed_types", "ha_task_allowed_ids", "ha_measurement_allowed_types", "notification_targets", "media_player_targets", "calendar_entities", "medication_presets"):
         try:
             settings[key] = json.loads(settings.get(key, "[]"))
         except (json.JSONDecodeError, TypeError):
@@ -1331,6 +1531,10 @@ async def patch_local_settings(child_id: int, patch: SettingsPatch):
     if patch.medication_presets is not None:
         changes["medication_presets"] = [preset.model_dump() for preset in patch.medication_presets]
     with db() as connection:
+        if patch.ha_task_allowed_ids:
+            eligible = {row["id"] for row in connection.execute("SELECT id FROM task_definitions WHERE child_id = ? AND active = 1 AND task_kind = 'task'", (child_id,))}
+            if not set(patch.ha_task_allowed_ids).issubset(eligible):
+                raise HTTPException(422, "Select active tasks belonging to this child")
         for key, value in changes.items():
             if isinstance(value, (list, dict)):
                 value = json.dumps(value)

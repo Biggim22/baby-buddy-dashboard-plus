@@ -164,6 +164,8 @@ Keine Änderungen an `configuration.yaml` oder `secrets.yaml` und kein manuell v
 
 App-Updates kommen über den Home-Assistant-App-Store; Updates der zusätzlichen Integration über HACS. Beide Komponenten werden getrennt aktualisiert.
 
+Ab **2.4.7** können zusätzlich ausdrücklich freigegebene Aufgaben über `baby_buddy_dashboard_plus.complete_task` abgehakt werden, beispielsweise eine selbst ausgewählte Vitamin-D-Aufgabe. Dabei entsteht kein Medikamenteneintrag und es wird keine Dosierung abgeleitet. `log_measurement` speichert gemessene Temperatur, Körpergröße oder Gewicht mit expliziter Einheit direkt in Baby Buddy; `get_last_care` fragt den letzten Zeitpunkt einer freigegebenen Pflegeart ab. Alle drei Aktionen liefern Rückgabedaten für Automationen. Dafür **App und HACS-Integration auf 2.4.7 aktualisieren**, dann die gewünschten Aufgaben und Messwerttypen in den Pflege-Einstellungen freigeben. Grenzen, Einheiten und sichere Wiederholungen stehen in der [Automationsanleitung](HOME_ASSISTANT_CARE_AUTOMATION.md#tasks-measurements-and-care-queries-247). Ein Alexa Skill ist eine separate Anbindung und wird dadurch nicht automatisch installiert.
+
 ### Entwicklung und Lokaler Start
 
 ```bash
@@ -289,6 +291,8 @@ Prerequisites: Plus app 2.4.6 or newer running on the same Home Assistant instal
 No edits to `configuration.yaml` or `secrets.yaml`, and no manually managed token are required. This initial integration pairs **one child** with **one Plus app on the same HA installation**; the dashboard itself can still switch between multiple children. See the [Care automation guide](HOME_ASSISTANT_CARE_AUTOMATION.md) for details, limitations and troubleshooting.
 
 App updates come through the Home Assistant App Store; updates to the additional integration come through HACS. Update the two components separately.
+
+From **2.4.7**, explicitly enabled tasks can also be checked off with `baby_buddy_dashboard_plus.complete_task`, such as a user-selected Vitamin D checklist task. This creates no medication record and infers no dosage. `log_measurement` saves measured temperature, height or weight with an explicit unit directly in Baby Buddy; `get_last_care` reads the last timestamp of an enabled Care type. All three actions support response data for automations. **Update both the app and HACS integration to 2.4.7**, then enable the intended tasks and measurement types in Care settings. See the [automation guide](HOME_ASSISTANT_CARE_AUTOMATION.md#tasks-measurements-and-care-queries-247) for limits, units and retry safety. An Alexa Skill is a separate connection and is not installed automatically.
 
 ### Development and local run
 

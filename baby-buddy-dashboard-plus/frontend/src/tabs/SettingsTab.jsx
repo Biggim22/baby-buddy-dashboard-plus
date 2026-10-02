@@ -28,6 +28,8 @@ const DEFAULTS = {
   time_format: "24h",
   care_header_types: ["bath", "full_wash", "quick_wash"],
   ha_care_allowed_types: [],
+  ha_task_allowed_ids: [],
+  ha_measurement_allowed_types: [],
   notification_targets: ["notify.notify"],
   media_player_targets: [],
   media_player_mode: "custom",
@@ -59,16 +61,19 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
   const [testStatus, setTestStatus] = useState("");
   const [pairing, setPairing] = useState(null);
   const [pairingStatus, setPairingStatus] = useState("");
+  const [haTasks, setHaTasks] = useState([]);
 
   const load = useCallback(async () => {
     if (!childId) return;
     try {
       await api.bootstrapLocal(childId);
-      const [result, targets, calendars] = await Promise.all([
+      const [result, targets, calendars, tasks] = await Promise.all([
         api.getLocalSettings(childId),
         api.getHaTargets().catch(() => ({ notify: ["notify.notify"], media_players: [] })),
         api.getCalendarTargets().catch(() => ({ calendars: [] })),
+        api.getTasks(childId).catch(() => ({ results: [] })),
       ]);
+      setHaTasks((tasks.results || []).filter((task) => task.active && task.task_kind === "task"));
       setHaTargets(targets);
       setCalendarTargets(calendars.calendars || []);
       const savedOrder = Array.isArray(result.overview_sections)
@@ -85,6 +90,8 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
       next.ha_care_allowed_types = Array.isArray(result.ha_care_allowed_types)
         ? result.ha_care_allowed_types.filter((type) => HA_CARE_TYPES.includes(type))
         : [];
+      next.ha_task_allowed_ids = Array.isArray(result.ha_task_allowed_ids) ? result.ha_task_allowed_ids : [];
+      next.ha_measurement_allowed_types = Array.isArray(result.ha_measurement_allowed_types) ? result.ha_measurement_allowed_types : [];
       setSettings(next);
       applyAppearance(next);
       setStatus("");
@@ -93,7 +100,7 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
     }
   }, [childId]);
 
-  useEffect(() => void load(), [load]);
+  useEffect(() => { setPairing(null); setHaTasks([]); void load(); }, [load]);
 
   const update = (key, value) => {
     const next = { ...settings, [key]: value };
@@ -154,6 +161,8 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
         time_format: settings.time_format,
         care_header_types: settings.care_header_types,
         ha_care_allowed_types: settings.ha_care_allowed_types,
+        ha_task_allowed_ids: settings.ha_task_allowed_ids.filter((id) => haTasks.some((task) => task.id === id)),
+        ha_measurement_allowed_types: settings.ha_measurement_allowed_types,
         notification_targets: settings.notification_targets,
         media_player_targets: settings.media_player_targets,
         media_player_mode: settings.media_player_mode,
@@ -198,7 +207,11 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
     setPairing(null);
     setPairingStatus(t("plus.settings.pairingCreating"));
     try {
-      await api.updateLocalSettings(childId, { ha_care_allowed_types: settings.ha_care_allowed_types });
+      await api.updateLocalSettings(childId, {
+        ha_care_allowed_types: settings.ha_care_allowed_types,
+        ha_task_allowed_ids: settings.ha_task_allowed_ids.filter((id) => haTasks.some((task) => task.id === id)),
+        ha_measurement_allowed_types: settings.ha_measurement_allowed_types,
+      });
       const result = await api.createCarePairing(childId);
       setPairing(result);
       setPairingStatus("");
@@ -291,8 +304,17 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
             {HA_CARE_TYPES.map((type) => <label className="preview-check" key={type}><input type="checkbox" checked={(settings.ha_care_allowed_types || []).includes(type)} onChange={() => toggleHomeAssistantCareType(type)} /> {t(`plus.careTypes.${type}`)}</label>)}
           </div>
           <div className="settings-subheading">{t("plus.settings.homeAssistantPairing")}</div>
+          <p className="form-hint">{t("plus.haActions.taskHint")}</p>
+          <div className="preview-list">
+            {haTasks.map((task) => <label className="preview-check" key={task.id}><input type="checkbox" checked={settings.ha_task_allowed_ids.includes(task.id)} onChange={() => toggleTarget("ha_task_allowed_ids", task.id)} /> {task.title} · ID {task.id}</label>)}
+          </div>
+          {!haTasks.length && <p className="form-hint">{t("plus.haActions.noTasks")}</p>}
+          <p className="form-hint">{t("plus.haActions.measurementHint")}</p>
+          <div className="preview-list">
+            {["temperature", "height", "weight"].map((type) => <label className="preview-check" key={type}><input type="checkbox" checked={settings.ha_measurement_allowed_types.includes(type)} onChange={() => toggleTarget("ha_measurement_allowed_types", type)} /> {t(`plus.haActions.types.${type}`)}</label>)}
+          </div>
           <p className="form-hint">{t("plus.settings.homeAssistantPairingHint")}</p>
-          <button className="secondary-inline" type="button" disabled={!(settings.ha_care_allowed_types || []).length} onClick={createPairing}>{t("plus.settings.createPairingCode")}</button>
+          <button className="secondary-inline" type="button" disabled={!settings.ha_care_allowed_types.length && !settings.ha_task_allowed_ids.length && !settings.ha_measurement_allowed_types.length} onClick={createPairing}>{t("plus.settings.createPairingCode")}</button>
           {pairing && <div className="notification-test-result"><strong>{t("plus.settings.pairingCode")}: {pairing.pairing_code}</strong><br /><small>{t("plus.settings.pairingExpires")}: {new Date(pairing.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small></div>}
           {pairingStatus && <div className="notification-test-result">{pairingStatus}</div>}
         </div></details>

@@ -41,7 +41,9 @@ git diff --check
 git status
 ```
 
-For a release that changes data storage, create a Home Assistant backup first and document the migration. Version 2.3.2 changes neither the schema nor existing stored records.
+For a release that changes data storage, create a Home Assistant backup first and document the migration. Version 2.4.7 adds the `ha_measurement_requests` idempotency metadata table; existing care, tasks, settings and completions are retained. Its request ledger does not contain numeric measurements.
+
+For releases that change the native integration, update `custom_components/baby_buddy_dashboard_plus/manifest.json` too. The add-on and HACS integration are separate installations; 2.4.7 requires both to be updated. A GitHub tag/release provides a named integration version for HACS; the add-on still discovers the version from `config.yaml`.
 
 ## Commit and publish
 
@@ -60,7 +62,7 @@ Use a concise message matching the actual version. Review the staged diff before
 3. Start the app and confirm the start log shows the expected version.
 4. Check the dashboard's version information, then perform a focused smoke test for the release.
 
-For 2.3.2, enter a disposable measurement such as `3,25` (or `3.25`) and verify that it is accepted and displayed correctly. Create or edit a test record with the current local time and verify it is neither shifted by hours nor rejected as future-dated. Remove the test record afterwards if it should not remain in Baby Buddy.
+For 2.4.7, verify the integration version and registration of `complete_task`, `log_measurement` and `get_last_care`, and confirm the add-on health endpoint and idempotency table exist. Permission and missing-field checks can be exercised without creating health records. Do not create family Care, task or measurement entries as a deployment test without specific approval. Use synthetic fixtures for positive-write regression tests.
 
 If an update fails during image build, open the Home Assistant Supervisor log. The most useful lines are the first actual `ERROR`, `failed`, or `exit code` line before the generic “unknown error occurred while trying to build the image” message.
 

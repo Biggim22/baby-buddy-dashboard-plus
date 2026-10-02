@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.7 (Home Assistant tasks, measurements and Care queries)
+
+- Added opt-in `complete_task`, `log_measurement` and read-only `get_last_care` actions with optional response data. Update both the add-on and the HACS integration to use them.
+- Task completion is bound to the paired child and explicitly selected task, validates activity and due date, and preserves the first completion timestamp on repeats. It never creates a medication record.
+- Temperature, height and weight are written to the existing Baby Buddy API, with explicit values/units and request IDs. Ambiguous remote writes remain blocked against automatic replay; only request hashes and remote IDs are retained locally.
+- Added per-child task/measurement permissions and synthetic regression tests. No live family data, automatic update or Alexa cloud deployment is included. The upgrade adds an idempotency metadata table without rewriting existing records.
+
 ## 2.4.6 (Native Home Assistant Care action)
 
 - Completion checks: protected local administration through Supervisor ingress, corrected setup order, validated missing custom labels and pairing responses, and distinguished timeout, authentication and validation errors.

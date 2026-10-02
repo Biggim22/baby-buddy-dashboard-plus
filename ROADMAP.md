@@ -72,12 +72,22 @@ Home Assistant automations, voice assistants and physical buttons can create an 
 - The Care settings contain a per-child allow-list: families opt in to every care type that Home Assistant may record.
 - The setup guide covers HACS installation, UI pairing and a native action example, without YAML setup, credentials, personal entity IDs or a default automation. The initial integration supports one paired child on the same Home Assistant installation.
 
-### Home Assistant routine completion — Planned
+### Home Assistant routine completion — Completed in 2.4.7
 
 Extend the same safety model to the existing task/routine model, without inventing a second medication history.
 
-- Vitamin D remains a medication/routine completion rather than a Care category.
-- A future action must use a separate fixed routine allow-list, child ID and idempotency ID, then mark only an existing local task/routine as completed.
+- `complete_task` confirms an existing, explicitly enabled task for the paired child and due date. Repeating it preserves the initial confirmation timestamp; Vitamin D is a selected checklist task, never a new Care category or inferred medication record.
+- The same release adds opt-in `log_measurement` for temperature, height and weight through Baby Buddy's existing API, plus `get_last_care` for narrowly scoped, read-only Care timestamps.
+- Task and measurement permissions default to disabled. Measurement retries use a request ledger without storing numeric values; uncertain writes are blocked for manual verification, not blindly replayed.
+- The add-on and HACS integration both require 2.4.7. The Alexa Skill implementation lives in the separate Alexa project.
+
+### OLED night mode — Planned
+
+- Add an optional OLED dark appearance with a true black (`#000000`) page background, rather than dark grey, to reduce visible screen glow during nighttime use on OLED phones.
+- Keep text, charts, cards and controls readable with restrained accents and accessible contrast; avoid bright full-screen panels and white modal backgrounds.
+- Offer it as a manually selectable mode and as a choice in the existing time-controlled appearance schedule. Existing themes and saved schedules must remain unchanged unless the user selects OLED mode.
+- True black does not control the phone's brightness and does not guarantee the same power-saving effect on LCD screens. No hardware-brightness or medical sleep claims.
+- Planning only: not implemented in 2.4.7.
 
 ### Home Assistant calendar bridge — Completed in 2.4.1
 

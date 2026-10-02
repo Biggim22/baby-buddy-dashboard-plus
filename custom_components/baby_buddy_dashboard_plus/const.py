@@ -4,6 +4,12 @@ from typing import Final
 
 DOMAIN: Final = "baby_buddy_dashboard_plus"
 SERVICE_LOG_CARE: Final = "log_care"
+SERVICE_COMPLETE_TASK: Final = "complete_task"
+SERVICE_LOG_MEASUREMENT: Final = "log_measurement"
+TASK_COMPLETE_PATH: Final = "/api/ha/integration/tasks/complete"
+MEASUREMENT_PATH: Final = "/api/ha/integration/measurements"
+SERVICE_GET_LAST_CARE: Final = "get_last_care"
+LAST_CARE_PATH: Final = "/api/ha/integration/care/last"
 ATTR_CARE_TYPE: Final = "care_type"
 ATTR_CATEGORY_LABEL: Final = "category_label"
 ATTR_NOTES: Final = "notes"

@@ -1,7 +1,7 @@
 """Exercise integration behavior with small HA API doubles, not a live HA install."""
 import importlib.util
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
@@ -49,7 +49,7 @@ def integration(monkeypatch):
     registered = {}
     entry = SimpleNamespace(state=loaded, data={"addon_url": "http://addon:8099", "integration_token": "test-token"})
     hass = SimpleNamespace(
-        services=SimpleNamespace(has_service=lambda *a: False, async_register=lambda domain, name, handler, **kw: registered.update(handler=handler, schema=kw["schema"])),
+        services=SimpleNamespace(has_service=lambda *a: False, async_register=lambda domain, name, handler, **kw: (registered.update({name: {"handler": handler, **kw}}), registered.update(handler=handler, schema=kw["schema"]) if name == "log_care" else None)),
         config_entries=SimpleNamespace(async_entries=lambda domain: [entry]),
     )
     class Flow:
@@ -70,10 +70,10 @@ def integration(monkeypatch):
     modules = {
         "homeassistant": {"config_entries": SimpleNamespace(ConfigFlow=Flow)},
         "homeassistant.config_entries": {"ConfigEntryState": SimpleNamespace(LOADED=loaded)},
-        "homeassistant.core": {"HomeAssistant": object, "ServiceCall": object},
+        "homeassistant.core": {"HomeAssistant": object, "ServiceCall": object, "SupportsResponse": SimpleNamespace(NONE="none", OPTIONAL="optional")},
         "homeassistant.exceptions": {"ServiceValidationError": ValidationError},
         "homeassistant.helpers": {},
-        "homeassistant.helpers.config_validation": {"string": str, "datetime": lambda v: v if isinstance(v, datetime) else datetime.fromisoformat(v)},
+        "homeassistant.helpers.config_validation": {"string": str, "datetime": lambda v: v if isinstance(v, datetime) else datetime.fromisoformat(v), "date": lambda v: v if isinstance(v, date) else date.fromisoformat(v)},
         "homeassistant.helpers.aiohttp_client": {"async_get_clientsession": lambda hass: session},
         "homeassistant.helpers.typing": {"ConfigType": dict},
     }
@@ -163,3 +163,40 @@ async def test_pairing_creates_entry_without_user_managed_token(integration):
     assert result["type"] == "create_entry"
     assert result["data"]["integration_token"] == "internal-test-token"
     assert i.session.calls[0][1]["json"] == {"pairing_code": "ABCD2345"}
+
+
+@pytest.mark.parametrize("name,data,path", [
+    ("complete_task", {"task_id": 7, "due_date": "2026-10-02"}, "/api/ha/integration/tasks/complete"),
+    ("log_measurement", {"measurement_type": "weight", "value": 5750, "unit": "g", "request_id": "test-7"}, "/api/ha/integration/measurements"),
+    ("get_last_care", {"care_type": "bath"}, "/api/ha/integration/care/last"),
+])
+async def test_new_actions_return_response_data(integration, name, data, path):
+    i = integration
+    await i.module.async_setup(i.hass, {})
+    action = i.registered[name]
+    assert action["supports_response"] == "optional"
+    i.session.response = Response(200, {"status": "answer" if name == "get_last_care" else "saved", "message": "Test response"})
+    result = await action["handler"](SimpleNamespace(data=action["schema"](data)))
+    assert result["message"] == "Test response"
+    assert i.session.calls[0][0].endswith(path)
+    assert "child_id" not in i.session.calls[0][1]["json"]
+
+
+@pytest.mark.parametrize("status,detail", [(403, "task_not_allowed"), (404, "task_not_found"), (422, "task_not_due"), (409, "measurement_pending"), (409, "request_conflict"), (422, "measurement_rejected")])
+async def test_new_action_errors_are_usable_by_dispatcher(integration, status, detail):
+    i = integration
+    await i.module.async_setup(i.hass, {})
+    i.session.response = Response(status, {"detail": detail})
+    action = i.registered["complete_task"]
+    with pytest.raises(ValidationError) as err:
+        await action["handler"](SimpleNamespace(data=action["schema"]({"task_id": 7})))
+    assert err.value.key == detail
+
+
+async def test_measurement_action_has_no_silent_value_or_unit_default(integration):
+    i = integration
+    await i.module.async_setup(i.hass, {})
+    schema = i.registered["log_measurement"]["schema"]
+    for data in ({"measurement_type": "weight", "request_id": "one"}, {"measurement_type": "weight", "value": 0, "unit": "kg", "request_id": "one"}):
+        with pytest.raises(vol.Invalid):
+            schema(data)

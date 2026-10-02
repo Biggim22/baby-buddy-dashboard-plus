@@ -19,6 +19,9 @@
     }
   },
   "services": {
+    "get_last_care": {"name": "Letzte Pflege abfragen", "description": "Nur den letzten Zeitpunkt einer freigegebenen Pflegeart für das gekoppelte Kind lesen.", "fields": {"care_type": {"name": "Pflegeart"}, "category_label": {"name": "Eigene Kategorie", "description": "Bei eigener Pflegeart erforderlich."}}},
+    "complete_task": {"name": "Aufgabe erledigen", "description": "Eine freigegebene Aufgabe für das gekoppelte Kind ausdrücklich abhaken; erzeugt keinen Medikamenteneintrag.", "fields": {"task_id": {"name": "Aufgaben-ID", "description": "ID aus den Dashboard-Plus-Einstellungen."}, "due_date": {"name": "Fälligkeitsdatum", "description": "Optional; ohne Angabe gilt heute in der App-Zeitzone."}}},
+    "log_measurement": {"name": "Messwert erfassen", "description": "Einen freigegebenen Messwert direkt in Baby Buddy speichern.", "fields": {"measurement_type": {"name": "Messwerttyp"}, "value": {"name": "Gemessener Wert"}, "unit": {"name": "Einheit", "description": "C, cm, kg oder g; muss zum Messwerttyp passen."}, "request_id": {"name": "Anfrage-ID", "description": "Eindeutige ID; nur für Wiederholungen dieselbe ID mit unveränderten Eingaben verwenden."}, "time": {"name": "Messzeitpunkt"}}},
     "log_care": {
       "name": "Pflege eintragen",
       "description": "Erfasst einen ausdrücklich freigegebenen Pflegeeintrag in Baby Buddy Dashboard Plus.",
@@ -31,6 +34,17 @@
     }
   },
   "exceptions": {
+    "measurement_api_unavailable": {"message": "Die Baby-Buddy-Messwert-API ist nicht verfügbar oder externe Schreibzugriffe sind im Demomodus gesperrt."},
+    "measurement_configuration_missing": {"message": "Konfiguriere passende metrische oder imperiale Einheiten in Dashboard Plus, bevor du Messwerte erfasst."},
+    "task_not_allowed": {"message": "Diese Aufgabe ist nicht für Home Assistant freigegeben."},
+    "task_not_found": {"message": "Diese Aufgabe existiert nicht für das gekoppelte Kind."},
+    "task_not_due": {"message": "Die Aufgabe ist inaktiv, ein Termin, nicht fällig oder liegt in der Zukunft."},
+    "measurement_not_allowed": {"message": "Dieser Messwerttyp ist nicht für Home Assistant freigegeben."},
+    "measurement_pending": {"message": "Das Speicherergebnis ist unklar oder die Anfrage läuft noch. Prüfe Baby Buddy, bevor du erneut erfasst. Nicht mit einer neuen Anfrage-ID wiederholen."},
+    "request_conflict": {"message": "Diese Anfrage-ID wurde mit anderen Eingaben verwendet. Jede neue Messung benötigt eine eindeutige ID."},
+    "measurement_rejected": {"message": "Baby Buddy hat den Messwert abgelehnt. Prüfe Eingaben, Baby-Buddy-Verbindung und Berechtigungen."},
+    "invalid_action": {"message": "Ungültige Eingaben. Prüfe Aufgabe, Wert, Einheit, Datum und Anfrage-ID."},
+    "action_not_allowed": {"message": "Diese Aktion ist in Dashboard Plus nicht freigegeben."},
     "invalid_auth": {"message": "Die Kopplung ist nicht mehr gültig. Entferne die Integration und kopple sie mit einem neuen Code erneut."},
     "invalid_care": {"message": "Ungültiger Pflegeeintrag. Für eigene Pflege ist eine Kategorie erforderlich; prüfe auch Textlänge und Zeitpunkt."},
     "not_paired": {"message": "Baby Buddy Dashboard Plus ist noch nicht gekoppelt."},

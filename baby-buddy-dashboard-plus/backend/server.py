@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 import httpx
 
 from backend.medication_alerts import run_medication_alert_loop
-from backend.plus_local import database_health, init_database, reminder_loop, router as plus_router
+from backend.plus_local import configure_measurement_api, database_health, init_database, reminder_loop, router as plus_router
 
 logger = logging.getLogger(__name__)
 
@@ -219,6 +219,7 @@ async def lifespan(app: FastAPI):
         limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
     )
 
+    configure_measurement_api(http_client, UNIT_SYSTEM, DEMO_MODE)
     if ENABLE_MEDICATION_ALERTS and not DEMO_MODE and SUPERVISOR_TOKEN and BABY_BUDDY_URL:
         medication_alert_task = asyncio.create_task(
             run_medication_alert_loop(http_client, SUPERVISOR_TOKEN)
@@ -247,6 +248,7 @@ async def lifespan(app: FastAPI):
             await medication_alert_task
         except asyncio.CancelledError:
             pass
+    configure_measurement_api(None, UNIT_SYSTEM, DEMO_MODE)
     await http_client.aclose()
 
 

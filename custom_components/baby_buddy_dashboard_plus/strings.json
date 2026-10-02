@@ -19,6 +19,9 @@
     }
   },
   "services": {
+    "get_last_care": {"name": "Get last care", "description": "Read only the last timestamp of an enabled Care type for the paired child.", "fields": {"care_type": {"name": "Care type"}, "category_label": {"name": "Custom category", "description": "Required for custom Care."}}},
+    "complete_task": {"name": "Complete task", "description": "Explicitly complete an enabled task for the paired child; no medication record is created.", "fields": {"task_id": {"name": "Task ID", "description": "ID shown in Dashboard Plus settings."}, "due_date": {"name": "Due date", "description": "Optional; defaults to today in the add-on timezone."}}},
+    "log_measurement": {"name": "Log measurement", "description": "Save an enabled measurement directly in Baby Buddy.", "fields": {"measurement_type": {"name": "Measurement type"}, "value": {"name": "Measured value"}, "unit": {"name": "Unit", "description": "C, cm, kg or g; must match the measurement type."}, "request_id": {"name": "Request ID", "description": "Unique ID; reuse the exact ID and input only for retries."}, "time": {"name": "Measurement time"}}},
     "log_care": {
       "name": "Log care",
       "description": "Record an explicitly enabled Care entry in Baby Buddy Dashboard Plus.",
@@ -31,6 +34,17 @@
     }
   },
   "exceptions": {
+    "measurement_api_unavailable": {"message": "The Baby Buddy measurement API is unavailable or outbound writes are disabled in demo mode."},
+    "measurement_configuration_missing": {"message": "Configure matching metric or imperial units in Dashboard Plus before recording measurements."},
+    "task_not_allowed": {"message": "This task is not enabled for Home Assistant."},
+    "task_not_found": {"message": "The task does not exist for the paired child."},
+    "task_not_due": {"message": "The task is inactive, an appointment, not due or scheduled in the future."},
+    "measurement_not_allowed": {"message": "This measurement type is not enabled for Home Assistant."},
+    "measurement_pending": {"message": "The write result is uncertain or still pending. Check Baby Buddy before recording again. Do not retry with a new request ID."},
+    "request_conflict": {"message": "This request ID was used with different input. Use a unique ID for each new measurement."},
+    "measurement_rejected": {"message": "Baby Buddy rejected the measurement. Check the input and the Baby Buddy connection and permissions."},
+    "invalid_action": {"message": "Invalid action input. Check the task, value, unit, date and request ID."},
+    "action_not_allowed": {"message": "This action is not enabled in Dashboard Plus."},
     "invalid_auth": {"message": "The pairing is no longer valid. Remove the integration and pair again using a new code."},
     "invalid_care": {"message": "Invalid Care entry. Custom Care requires a category label; check the input length and timestamp."},
     "not_paired": {"message": "Baby Buddy Dashboard Plus has not been paired yet."},

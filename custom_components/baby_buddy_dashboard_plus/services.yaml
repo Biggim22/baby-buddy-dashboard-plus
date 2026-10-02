@@ -1,3 +1,72 @@
+get_last_care:
+  name: Get last care
+  description: Return the latest entry of an enabled Care type for the paired child; no medication or measurement data is exposed.
+  fields:
+    care_type:
+      name: Care type
+      required: true
+      selector:
+        select:
+          options: [bath, full_wash, quick_wash, caraway_oil, nail_care, skin_care, custom]
+    category_label:
+      name: Custom category
+      description: Required for custom Care.
+      selector:
+        text:
+complete_task:
+  name: Complete task
+  description: Explicitly complete an enabled task for the paired child, without creating a medication entry.
+  fields:
+    task_id:
+      name: Task ID
+      description: ID displayed next to the enabled task in Dashboard Plus settings.
+      required: true
+      selector:
+        number:
+          min: 1
+          mode: box
+          step: 1
+    due_date:
+      name: Due date
+      description: Optional; defaults to today in the add-on timezone. Future dates are rejected.
+      selector:
+        date:
+log_measurement:
+  name: Log measurement
+  description: Record an explicitly enabled measurement directly in Baby Buddy for the paired child.
+  fields:
+    measurement_type:
+      name: Measurement type
+      required: true
+      selector:
+        select:
+          options: [temperature, height, weight]
+    value:
+      name: Measured value
+      required: true
+      selector:
+        number:
+          min: 0
+          step: 0.01
+          mode: box
+    unit:
+      name: Unit
+      description: C for temperature, cm for height, kg or g for weight.
+      required: true
+      selector:
+        select:
+          options: [C, cm, kg, g]
+    request_id:
+      name: Request ID
+      description: Unique ID for this measurement. Reuse the same ID and input when retrying; use a new ID for a new measurement.
+      required: true
+      selector:
+        text:
+    time:
+      name: Measurement time
+      description: Optional; defaults to now. Height and weight use the date in the add-on timezone.
+      selector:
+        datetime:
 log_care:
   name: Log care
   description: Record an explicitly enabled Care entry in Baby Buddy Dashboard Plus.
