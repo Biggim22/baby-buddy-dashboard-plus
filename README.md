@@ -1,6 +1,6 @@
 # Baby Buddy Dashboard Plus
 
-[Deutsch](#deutsch) · [English](#english) · [Screenshots](#tour-in-screenshots) · [Installation](#installation-via-home-assistant) · [Care automation](HOME_ASSISTANT_CARE_AUTOMATION.md) · [Roadmap](ROADMAP.md) · [Development](DEVELOPMENT.md) · [Release process](RELEASING.md)
+[Deutsch](#deutsch) · [English](#english) · [Screenshots](#tour-in-screenshots) · [Installation](#installation-via-home-assistant) · [HACS (DE)](#optionale-home-assistant-integration-via-hacs) · [HACS (EN)](#optional-home-assistant-integration-through-hacs) · [Care automation](HOME_ASSISTANT_CARE_AUTOMATION.md) · [Roadmap](ROADMAP.md) · [Development](DEVELOPMENT.md) · [Release process](RELEASING.md)
 
 > An independent community fork that turns [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard) into a more complete everyday companion for Home Assistant and [Baby Buddy](https://github.com/babybuddy/babybuddy).
 
@@ -140,6 +140,30 @@ Die ursprüngliche MIT-Lizenz und die Urheberhinweise bleiben erhalten. Baby Bud
 
 Die App benötigt Home Assistant ab der in [`config.yaml`](baby-buddy-dashboard-plus/config.yaml) angegebenen Version und eine erreichbare Baby-Buddy-Instanz mit API-Schlüssel. Die App speichert die Zugangsdaten nicht im Browser-Bundle; lokale Einstellungen, Aufgaben, Termine und Pflegeeinträge werden im geschützten App-Datenverzeichnis von Home Assistant abgelegt. Bitte behandle Sicherungen dieses Verzeichnisses trotzdem wie persönliche Familiendaten.
 
+### Optionale Home-Assistant-Integration via HACS
+
+**App und Integration sind zwei getrennte Installationen.** Die App aus dem App-Store stellt das Dashboard bereit. Die zusätzliche Integration ab Version **2.4.6** stellt die Aktion `baby_buddy_dashboard_plus.log_care` in Home Assistant bereit, damit etwa ein Zigbee-Button oder eine Automation einen Pflegeeintrag erfassen kann. Für die normale Nutzung des Dashboards ist HACS nicht erforderlich.
+
+Voraussetzungen: Die Plus-App ab 2.4.6 läuft auf derselben Home-Assistant-Installation, und [HACS](https://www.hacs.xyz/docs/use/) ist bereits eingerichtet.
+
+1. In **HACS → ⋮ → Benutzerdefinierte Repositories** diese URL hinzufügen:
+
+   ```text
+   https://github.com/Biggim22/baby-buddy-dashboard-plus
+   ```
+
+2. Als Typ **Integration** wählen und das Repository hinzufügen.
+3. In HACS nach **Baby Buddy Dashboard Plus** suchen und herunterladen. Das Hinzufügen des Repositorys allein installiert die Integration noch nicht.
+4. **Home Assistant neu starten** – nicht nur die Dashboard-App.
+5. Das Dashboard über die HA-Seitenleiste öffnen, das gewünschte Kind auswählen und unter **Pflege → Einstellungen → Pflege aus Home Assistant erfassen** die erlaubten Pflegearten auswählen und speichern.
+6. **Erst jetzt den einmaligen Kopplungscode erzeugen.** Er ist zehn Minuten gültig.
+7. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** nach **Baby Buddy Dashboard Plus** suchen und den Code eingeben.
+8. Im Automationseditor die Aktion `baby_buddy_dashboard_plus.log_care` auswählen und eine freigegebene Pflegeart festlegen. Für eine eigene Pflegeart ist zusätzlich eine Kategorie erforderlich.
+
+Keine Änderungen an `configuration.yaml` oder `secrets.yaml` und kein manuell verwalteter Token sind nötig. Die erste Integrationsversion koppelt **ein Kind** mit **einer Plus-App auf derselben HA-Installation**; das Dashboard selbst kann weiterhin zwischen mehreren Kindern wechseln. Details, Grenzen und Fehlerhilfe stehen in der [Anleitung für Pflege-Automationen](HOME_ASSISTANT_CARE_AUTOMATION.md).
+
+App-Updates kommen über den Home-Assistant-App-Store; Updates der zusätzlichen Integration über HACS. Beide Komponenten werden getrennt aktualisiert.
+
 ### Entwicklung und Lokaler Start
 
 ```bash
@@ -241,6 +265,30 @@ The original MIT licence and attribution are retained. Baby Buddy Dashboard Plus
 5. After first launch, configure language, time format, appearance, notifications and page-specific options from inside the dashboard.
 
 The app requires the Home Assistant version declared in [`config.yaml`](baby-buddy-dashboard-plus/config.yaml) and a reachable Baby Buddy instance with an API key. Credentials are not embedded in the browser bundle. Local settings, tasks, appointments and care records live in Home Assistant’s protected app-data directory; backups of that directory should still be treated as personal family data.
+
+### Optional Home Assistant integration through HACS
+
+**The app and integration are separate installations.** The App Store app provides the dashboard. The additional integration, available from **2.4.6**, provides the Home Assistant action `baby_buddy_dashboard_plus.log_care`, allowing a Zigbee button or automation to record Care entries. HACS is not required for normal dashboard use.
+
+Prerequisites: Plus app 2.4.6 or newer running on the same Home Assistant installation, and [HACS](https://www.hacs.xyz/docs/use/) already set up.
+
+1. Open **HACS → ⋮ → Custom repositories** and add:
+
+   ```text
+   https://github.com/Biggim22/baby-buddy-dashboard-plus
+   ```
+
+2. Select **Integration** as the repository type and add it.
+3. Find **Baby Buddy Dashboard Plus** in HACS and download it. Adding the repository alone does not install the integration.
+4. **Restart Home Assistant**, not just the dashboard app.
+5. Open the dashboard through the HA sidebar, select the intended child, and enable and save the allowed Care types under **Care → Settings → Log care from Home Assistant**.
+6. **Generate the one-time pairing code only now.** It expires after ten minutes.
+7. Open **Settings → Devices & services → Add integration**, search for **Baby Buddy Dashboard Plus**, and enter the code.
+8. In the automation editor, select `baby_buddy_dashboard_plus.log_care` and an enabled Care type. Custom Care also requires a category label.
+
+No edits to `configuration.yaml` or `secrets.yaml`, and no manually managed token are required. This initial integration pairs **one child** with **one Plus app on the same HA installation**; the dashboard itself can still switch between multiple children. See the [Care automation guide](HOME_ASSISTANT_CARE_AUTOMATION.md) for details, limitations and troubleshooting.
+
+App updates come through the Home Assistant App Store; updates to the additional integration come through HACS. Update the two components separately.
 
 ### Development and local run
 

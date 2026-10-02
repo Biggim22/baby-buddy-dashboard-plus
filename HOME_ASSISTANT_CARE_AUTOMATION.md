@@ -56,3 +56,4 @@ This initial integration pairs one child with one Dashboard Plus add-on on the s
 - **Care type is rejected:** enable that type in **Care → Settings → Log care from Home Assistant** and save before using the action.
 - **Pairing code expired:** generate a new code. The old code cannot be reused.
 - **Legacy 2.4.5 REST command:** remove any experimental `rest_command` and related secret from Home Assistant. They are not required by 2.4.6.
+- **Missing integration icon:** the integration includes the Plus icon and logo in its own `brand/` directory, supported by Home Assistant 2026.3 and newer. If you installed a revision without these files, download the latest integration revision through HACS and restart Home Assistant. If necessary, refresh the browser. Updating only the app does not update the integration's images. See [Home Assistant's local brand-image documentation](https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api/).
