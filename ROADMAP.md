@@ -70,7 +70,7 @@ Home Assistant automations, voice assistants and physical buttons can create an 
 - The pairing code is generated in Care settings, expires after ten minutes and is exchanged for an internal integration credential. Families do not edit YAML or handle a permanent token.
 - Each call uses the paired child, a fixed supported care type, an optional timestamp/note and Home Assistant's idempotency ID. Arbitrary data and arbitrary service execution are not accepted.
 - The Care settings contain a per-child allow-list: families opt in to every care type that Home Assistant may record.
-- The setup guide includes an isolated REST command, test payload and a Zigbee-button example, but never ships credentials, personal entity IDs or a default automation.
+- The setup guide covers HACS installation, UI pairing and a native action example, without YAML setup, credentials, personal entity IDs or a default automation. The initial integration supports one paired child on the same Home Assistant installation.
 
 ### Home Assistant routine completion — Planned
 

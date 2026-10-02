@@ -31,6 +31,8 @@
     }
   },
   "exceptions": {
+    "invalid_auth": {"message": "The pairing is no longer valid. Remove the integration and pair again using a new code."},
+    "invalid_care": {"message": "Invalid Care entry. Custom Care requires a category label; check the input length and timestamp."},
     "not_paired": {"message": "Baby Buddy Dashboard Plus has not been paired yet."},
     "not_available": {"message": "Baby Buddy Dashboard Plus is not available."},
     "care_not_allowed": {"message": "This Care type is not enabled for Home Assistant in Dashboard Plus."},

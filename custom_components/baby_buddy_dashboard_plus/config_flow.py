@@ -30,12 +30,17 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     json={CONF_PAIRING_CODE: code},
                     timeout=aiohttp.ClientTimeout(total=10),
                 ) as response:
-                    if response.status == 401:
+                    if response.status in (401, 422):
                         errors["base"] = "invalid_pairing_code"
                     elif response.status >= 400:
                         errors["base"] = "cannot_connect"
                     else:
                         payload = await response.json()
+                        if (not isinstance(payload, dict)
+                            or not isinstance(payload.get("child_id"), int)
+                            or not isinstance(payload.get("integration_token"), str)
+                            or not payload["integration_token"]):
+                            raise ValueError("Invalid pairing response")
                         await self.async_set_unique_id(f"{DOMAIN}-{payload['child_id']}")
                         self._abort_if_unique_id_configured()
                         return self.async_create_entry(
@@ -45,7 +50,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 CONF_INTEGRATION_TOKEN: payload["integration_token"],
                             },
                         )
-            except (aiohttp.ClientError, TimeoutError):
+            except (aiohttp.ClientError, TimeoutError, ValueError):
                 errors["base"] = "cannot_connect"
         return self.async_show_form(
             step_id="user",

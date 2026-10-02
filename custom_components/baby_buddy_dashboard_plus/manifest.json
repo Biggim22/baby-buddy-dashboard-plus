@@ -3,6 +3,8 @@
   "name": "Baby Buddy Dashboard Plus",
   "codeowners": ["@Biggim22"],
   "config_flow": true,
+  "documentation": "https://github.com/Biggim22/baby-buddy-dashboard-plus/blob/main/HOME_ASSISTANT_CARE_AUTOMATION.md",
+  "issue_tracker": "https://github.com/Biggim22/baby-buddy-dashboard-plus/issues",
   "integration_type": "service",
   "iot_class": "local_push",
   "version": "2.4.6"

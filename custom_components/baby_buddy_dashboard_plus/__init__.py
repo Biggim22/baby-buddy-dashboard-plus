@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from uuid import uuid4
 from datetime import datetime
 from typing import Any
 
@@ -65,7 +66,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             ATTR_CARE_TYPE: call.data[ATTR_CARE_TYPE],
             ATTR_CATEGORY_LABEL: call.data[ATTR_CATEGORY_LABEL].strip(),
             ATTR_NOTES: call.data[ATTR_NOTES].strip(),
-            "request_id": call.context.id,
+            # Several actions in one automation share a context. Each service
+            # call must remain distinct; transport retries reuse this payload.
+            "request_id": uuid4().hex,
         }
         if value := call.data.get(ATTR_TIME):
             payload[ATTR_TIME] = value.isoformat() if isinstance(value, datetime) else str(value)
@@ -80,12 +83,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             ) as response:
                 if response.status >= 400:
                     _LOGGER.warning("Dashboard Plus rejected a Care action: HTTP %s", response.status)
-                    raise ServiceValidationError(
-                        "The selected Care type is not enabled in Dashboard Plus",
-                        translation_domain=DOMAIN,
-                        translation_key="care_not_allowed",
-                    )
-        except aiohttp.ClientError as err:
+                    key = {
+                        401: "invalid_auth",
+                        403: "care_not_allowed",
+                        422: "invalid_care",
+                    }.get(response.status, "cannot_connect")
+                    raise ServiceValidationError(translation_domain=DOMAIN, translation_key=key)
+        except (aiohttp.ClientError, TimeoutError) as err:
             raise ServiceValidationError(
                 "Cannot reach Baby Buddy Dashboard Plus",
                 translation_domain=DOMAIN,

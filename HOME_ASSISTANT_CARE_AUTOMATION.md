@@ -15,11 +15,11 @@ It can be selected from the normal automation editor and used by a Zigbee button
 ## One-time setup
 
 1. Update Baby Buddy Dashboard Plus to 2.4.6 or newer.
-2. In Dashboard Plus, open **Care → Settings → Log care from Home Assistant**.
-3. Enable only the Care types that Home Assistant may record for the current child and save the Care settings.
-4. Select **Create one-time pairing code**. The code is valid for ten minutes and is not a permanent secret.
-5. In HACS, add this repository as an **Integration** custom repository if it is not already available there, then download **Baby Buddy Dashboard Plus**.
-6. Restart Home Assistant when HACS requests it.
+2. In HACS, add `https://github.com/Biggim22/baby-buddy-dashboard-plus` as an **Integration** custom repository, then download **Baby Buddy Dashboard Plus**. HACS is a separate, one-time prerequisite; installing the add-on alone does not install this integration.
+3. Restart Home Assistant when HACS requests it.
+4. In Dashboard Plus, open **Care → Settings → Log care from Home Assistant** through Home Assistant's sidebar.
+5. Enable only the Care types that Home Assistant may record for the current child and save the Care settings.
+6. Select **Create one-time pairing code**. The code is valid for ten minutes and is not a permanent secret. Generate it after installation and restart, not before.
 7. Go to **Settings → Devices & services → Add integration**, choose **Baby Buddy Dashboard Plus**, and enter the displayed pairing code.
 
 Home Assistant receives an internal credential during this short pairing step. It is not shown in the dashboard, is not stored in YAML, and is not entered into automations.
@@ -38,7 +38,9 @@ actions:
       notes: Recorded by the bathroom button
 ```
 
-Each invocation automatically carries Home Assistant's context ID. If Home Assistant retries the same automation action, Dashboard Plus keeps a single Care entry instead of creating duplicates.
+Each service invocation receives its own request ID, including multiple actions in the same automation. Replaying the exact API payload keeps a single Care entry. Running an automation again intentionally creates a new entry; it is not treated as a transport retry.
+
+This initial integration pairs one child with one Dashboard Plus add-on on the same Home Assistant installation. Select that child before generating the code. Multiple children, remote standalone servers and simultaneous local/GitHub add-on pairings are not supported by this integration yet.
 
 ## Safety boundaries
 
@@ -46,6 +48,7 @@ Each invocation automatically carries Home Assistant's context ID. If Home Assis
 - The integration accepts only the documented Care types, optional timestamp, optional note and custom-category label.
 - The native action records only local Plus Care data. It cannot run arbitrary Home Assistant services, execute code, or change Baby Buddy medication records.
 - Pairing codes expire after ten minutes and are invalidated as soon as pairing succeeds. Creating a new pairing rotates the previous integration credential for that child.
+- In Supervisor mode, local settings and code creation accept only the actual ingress proxy peer. The integration endpoints remain reachable internally but require a one-time code or the paired credential. Standalone development requires a trusted network; it is not a public authenticated server.
 
 ## Troubleshooting
 

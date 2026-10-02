@@ -104,6 +104,10 @@ async def test_home_assistant_pairing_and_care_reject_invalid_or_expired_credent
 
 def test_home_assistant_care_payload_cannot_carry_arbitrary_fields_or_blank_custom_label():
     with pytest.raises(ValidationError):
+        plus_local.HomeAssistantCareEntryIn(care_type="custom", request_id="one")
+    with pytest.raises(ValidationError):
+        plus_local.HomeAssistantCareEntryIn(care_type="custom", request_id="one", category_label="   ")
+    with pytest.raises(ValidationError):
         plus_local.HomeAssistantCareEntryIn(
             child_id=1, care_type="custom", request_id="one", category_label="   "
         )
@@ -111,6 +115,61 @@ def test_home_assistant_care_payload_cannot_carry_arbitrary_fields_or_blank_cust
         plus_local.HomeAssistantCareEntryIn(
             child_id=1, care_type="bath", request_id="one", unexpected="value"
         )
+
+
+async def test_pairing_expiry_single_use_rotation_and_allowlist(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(ha_care_allowed_types=["bath"]))
+    now = plus_local.local_now()
+    monkeypatch.setattr(plus_local, "local_now", lambda: now)
+    code = await plus_local.create_home_assistant_pairing(1)
+    monkeypatch.setattr(plus_local, "local_now", lambda: now + plus_local.PAIRING_CODE_LIFETIME)
+    with pytest.raises(plus_local.HTTPException) as expired:
+        await plus_local.pair_home_assistant_integration(plus_local.HomeAssistantPairingIn(**{"pairing_code": code["pairing_code"]}))
+    assert expired.value.status_code == 401
+    code = await plus_local.create_home_assistant_pairing(1)
+    payload = plus_local.HomeAssistantPairingIn(pairing_code=code["pairing_code"])
+    paired = await plus_local.pair_home_assistant_integration(payload)
+    with pytest.raises(plus_local.HTTPException):
+        await plus_local.pair_home_assistant_integration(payload)
+    second_code = await plus_local.create_home_assistant_pairing(1)
+    await plus_local.pair_home_assistant_integration(plus_local.HomeAssistantPairingIn(pairing_code=second_code["pairing_code"]))
+    with pytest.raises(plus_local.HTTPException):
+        plus_local.paired_child_for_token(paired["integration_token"])
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(ha_care_allowed_types=[]))
+    with pytest.raises(plus_local.HTTPException) as disabled:
+        plus_local.record_home_assistant_care(1, plus_local.HomeAssistantCareEntryIn(care_type="bath", request_id="new"))
+    assert disabled.value.status_code == 403
+
+
+async def test_conflicting_request_id_is_rejected_without_losing_data(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(ha_care_allowed_types=["bath", "nail_care"]))
+    first = plus_local.record_home_assistant_care(1, plus_local.HomeAssistantCareEntryIn(care_type="bath", request_id="same"))
+    with pytest.raises(plus_local.HTTPException) as conflict:
+        plus_local.record_home_assistant_care(1, plus_local.HomeAssistantCareEntryIn(care_type="nail_care", request_id="same"))
+    assert conflict.value.status_code == 409
+    assert len((await plus_local.list_care(1, limit=100, care_type=None))["results"]) == 1
+    assert first["entry"]["care_type"] == "bath"
+
+
+@pytest.mark.parametrize("peer,allowed", [("172.30.32.2", True), ("172.30.32.1", False)])
+async def test_supervisor_local_admin_requires_real_ingress_peer(monkeypatch, tmp_path, peer, allowed):
+    from fastapi import FastAPI
+    import httpx
+
+    use_temp_database(monkeypatch, tmp_path)
+    monkeypatch.setenv("SUPERVISOR_TOKEN", "test-only")
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(ha_care_allowed_types=["bath"]))
+    app = FastAPI()
+    app.include_router(plus_local.router)
+    transport = httpx.ASGITransport(app=app, client=(peer, 1234))
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post("/api/local/care-pairing/1", headers={"X-Forwarded-For": "172.30.32.2", "X-Ingress-Path": "/fake"})
+        assert response.status_code == (200 if allowed else 403)
+        # Native endpoints must stay reachable without ingress, but not without credentials.
+        response = await client.post("/api/ha/integration/care", json={"care_type": "bath", "request_id": "test"})
+        assert response.status_code == 401
 
 
 async def test_bath_reminders_ignore_orphaned_local_child_records(monkeypatch, tmp_path):

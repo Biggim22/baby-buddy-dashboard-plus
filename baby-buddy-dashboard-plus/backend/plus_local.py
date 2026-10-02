@@ -14,10 +14,21 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal
 from zoneinfo import ZoneInfo
 import httpx
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-router = APIRouter()
+def require_dashboard_ingress(request: Request) -> None:
+    """Local administration must come from Supervisor, not another container.
+
+    Standalone development has no Supervisor authentication and must run on a
+    trusted network. Do not trust client-supplied X-Ingress/X-Forwarded headers.
+    """
+    if os.environ.get("SUPERVISOR_TOKEN") and request.url.path.startswith("/api/local/"):
+        if request.client is None or request.client.host != "172.30.32.2":
+            raise HTTPException(403, "Open Dashboard Plus through Home Assistant ingress")
+
+
+router = APIRouter(dependencies=[Depends(require_dashboard_ingress)])
 logger = logging.getLogger("baby-buddy-dashboard-plus")
 SUPERVISOR_TOKEN = os.environ.get("SUPERVISOR_TOKEN", "")
 NOTIFY_SERVICE = os.environ.get("NOTIFY_SERVICE", "notify.notify")
@@ -312,7 +323,7 @@ class HomeAssistantCareEntryIn(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]
-    category_label: str = Field(default="", max_length=120)
+    category_label: str = Field(default="", max_length=120, validate_default=True)
     time: datetime | None = None
     notes: str = Field(default="", max_length=2000)
     request_id: str = Field(min_length=1, max_length=120, pattern=r"^[A-Za-z0-9_.:-]+$")
@@ -867,6 +878,11 @@ def record_home_assistant_care(child_id: int, entry: HomeAssistantCareEntryIn) -
             (child_id, entry.request_id),
         ).fetchone()
         if previous is not None:
+            if (previous["care_type"] != entry.care_type
+                or previous["category_label"] != entry.category_label
+                or previous["notes"] != entry.notes.strip()
+                or (entry.time is not None and previous["time"] != timestamp.isoformat())):
+                raise HTTPException(409, "Request ID was already used for a different care entry")
             return {"entry": dict(previous), "duplicate": True}
         cursor = connection.execute(
             """INSERT INTO care_entries (child_id, care_type, category_label, time, notes)

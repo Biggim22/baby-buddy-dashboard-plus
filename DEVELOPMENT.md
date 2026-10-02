@@ -47,6 +47,20 @@ The backend has intentionally few dependencies. A useful syntax check is:
 python -m compileall baby-buddy-dashboard-plus/backend
 ```
 
+For backend and native Home Assistant integration regression tests:
+
+```bash
+cd baby-buddy-dashboard-plus/backend
+python -m pip install -r requirements-test.txt
+python -m pytest -p no:cacheprovider
+```
+
+`tests/test_ha_integration.py` imports the real integration with small Home Assistant API doubles. It covers service schema validation, independent calls in a shared automation context, HTTP error mapping, timeouts and the pairing config flow. It does not replace a real HACS installation or a live Home Assistant smoke test.
+
+In Supervisor mode, the local API checks the actual ingress peer (`172.30.32.2`). Keep `--no-proxy-headers` in `run.sh`: client-supplied forwarding headers must not bypass this check. Native integration routes authenticate separately with a pairing code or internal credential.
+
+Before publishing the native integration, verify installation through HACS, restart Core, pair through the UI, run a permitted Care action and confirm it appears for the paired child. Also verify a disabled Care type is rejected. Do not test by creating entries in a family's live database without permission.
+
 ## Form input contract
 
 ### Local date and time

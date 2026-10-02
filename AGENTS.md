@@ -20,7 +20,7 @@ A commit link under this repository's GitHub URL can also belong to the original
 
 | Last reviewed upstream commit | Reviewed | Decision |
 | --- | --- | --- |
-| `8f53981` Added CI to push images to DockerHub automatically | 2026-09-30 | Not adopted: targets upstream paths and image. Idea planned for Plus in ROADMAP 3.0 (standalone self-hosting). |
+| `8f53981` Added CI to push images to DockerHub automatically | 2026-10-02 | Rechecked: no newer upstream commits. Not adopted: targets upstream paths and image. Idea planned for Plus in ROADMAP 3.0 (standalone self-hosting). |
 
 ## Product rules
 

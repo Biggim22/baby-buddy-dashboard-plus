@@ -31,6 +31,8 @@
     }
   },
   "exceptions": {
+    "invalid_auth": {"message": "Die Kopplung ist nicht mehr gültig. Entferne die Integration und kopple sie mit einem neuen Code erneut."},
+    "invalid_care": {"message": "Ungültiger Pflegeeintrag. Für eigene Pflege ist eine Kategorie erforderlich; prüfe auch Textlänge und Zeitpunkt."},
     "not_paired": {"message": "Baby Buddy Dashboard Plus ist noch nicht gekoppelt."},
     "not_available": {"message": "Baby Buddy Dashboard Plus ist nicht verfügbar."},
     "care_not_allowed": {"message": "Diese Pflegeart ist in Dashboard Plus nicht für Home Assistant freigegeben."},

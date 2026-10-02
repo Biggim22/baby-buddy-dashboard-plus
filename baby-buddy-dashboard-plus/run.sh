@@ -31,5 +31,6 @@ cd /app
 exec python3 -m uvicorn backend.server:app \
     --host 0.0.0.0 \
     --port 8099 \
+    --no-proxy-headers \
     --log-level info \
     --no-server-header
