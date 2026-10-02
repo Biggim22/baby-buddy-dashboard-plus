@@ -1,0 +1,39 @@
+{
+  "title": "Baby Buddy Dashboard Plus",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Pair Baby Buddy Dashboard Plus",
+        "description": "In Dashboard Plus, open Care > Settings and create a one-time pairing code. Enter it here within 10 minutes.",
+        "data": {
+          "pairing_code": "Pairing code"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Dashboard Plus could not be reached. Make sure the add-on is installed and running.",
+      "invalid_pairing_code": "This pairing code is invalid or has expired. Create a new code in Dashboard Plus."
+    },
+    "abort": {
+      "already_configured": "Baby Buddy Dashboard Plus is already paired."
+    }
+  },
+  "services": {
+    "log_care": {
+      "name": "Log care",
+      "description": "Record an explicitly enabled Care entry in Baby Buddy Dashboard Plus.",
+      "fields": {
+        "care_type": {"name": "Care type", "description": "A Care type enabled in Dashboard Plus."},
+        "category_label": {"name": "Custom category", "description": "Required when Care type is custom."},
+        "notes": {"name": "Note", "description": "Optional note."},
+        "time": {"name": "Time", "description": "Optional; uses the current time when empty."}
+      }
+    }
+  },
+  "exceptions": {
+    "not_paired": {"message": "Baby Buddy Dashboard Plus has not been paired yet."},
+    "not_available": {"message": "Baby Buddy Dashboard Plus is not available."},
+    "care_not_allowed": {"message": "This Care type is not enabled for Home Assistant in Dashboard Plus."},
+    "cannot_connect": {"message": "Baby Buddy Dashboard Plus cannot be reached."}
+  }
+}

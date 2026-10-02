@@ -1,86 +1,55 @@
-# Home Assistant care automations
+# Home Assistant care actions
 
-Baby Buddy Dashboard Plus 2.4.5 can record an allow-listed local Care entry from a Home Assistant automation. This is intended for deliberately configured actions such as an Alexa routine, a Zigbee button or a dashboard button. It does not create a general write API and it does not change Baby Buddy records.
+Starting with Baby Buddy Dashboard Plus 2.4.6, Care entries can be recorded through a native Home Assistant action. The setup uses Home Assistant's UI: no `configuration.yaml`, `secrets.yaml`, Docker hostname or user-managed token is required.
 
-## Safety model
+## What this enables
 
-- The endpoint is off until a secret token is configured in the add-on options.
-- Each child separately enables the specific Care types that may be recorded.
-- The accepted types are `bath`, `full_wash`, `quick_wash`, `caraway_oil`, `nail_care`, `skin_care` and `custom`.
-- A `custom` entry requires `category_label`.
-- Every request has a `request_id`. Sending the same ID again returns the original entry instead of recording a duplicate.
-- The token is never returned by the dashboard API and should be stored in Home Assistant `secrets.yaml`, not in an automation editor or a public export.
+Once paired, Home Assistant provides the action:
+
+```text
+baby_buddy_dashboard_plus.log_care
+```
+
+It can be selected from the normal automation editor and used by a Zigbee button, a dashboard button, an Alexa-triggered helper or any other Home Assistant automation. The action offers a fixed Care-type selection, optional note and optional timestamp.
 
 ## One-time setup
 
-1. Update the add-on to 2.4.5 or newer.
-2. In the add-on **Configuration**, set `home_assistant_care_token` to a newly generated, high-entropy secret. Keep this value private.
-3. Restart the add-on after saving the option.
-4. Open **Care → Settings → Log care from Home Assistant** and select only the Care types that an automation may create for the active child. Save the Care settings.
-5. Add the same token to Home Assistant's `secrets.yaml`:
+1. Update Baby Buddy Dashboard Plus to 2.4.6 or newer.
+2. In Dashboard Plus, open **Care → Settings → Log care from Home Assistant**.
+3. Enable only the Care types that Home Assistant may record for the current child and save the Care settings.
+4. Select **Create one-time pairing code**. The code is valid for ten minutes and is not a permanent secret.
+5. In HACS, add this repository as an **Integration** custom repository if it is not already available there, then download **Baby Buddy Dashboard Plus**.
+6. Restart Home Assistant when HACS requests it.
+7. Go to **Settings → Devices & services → Add integration**, choose **Baby Buddy Dashboard Plus**, and enter the displayed pairing code.
 
-   ```yaml
-   baby_buddy_dashboard_plus_care_authorization: "Bearer replace-with-your-private-token"
-   ```
+Home Assistant receives an internal credential during this short pairing step. It is not shown in the dashboard, is not stored in YAML, and is not entered into automations.
 
-6. Add the REST command below to `configuration.yaml`, then restart Home Assistant or reload REST commands.
+## Create an automation
 
-`ADDON_HOSTNAME` is the internal hostname of this installed add-on. It varies by repository installation and is normally visible in the Supervisor/Docker add-on identifier. Do not copy this placeholder unchanged. The command can be tested from **Developer tools → Actions** after loading it.
+In an automation, add the action **Baby Buddy Dashboard Plus: Log care**. Choose a Care type that was enabled in Dashboard Plus. For `custom`, enter a custom category as well. Leave Time empty to use the current time.
 
-```yaml
-rest_command:
-  baby_buddy_dashboard_plus_log_care:
-    url: "http://ADDON_HOSTNAME:8099/api/ha/care"
-    method: POST
-    headers:
-      authorization: !secret baby_buddy_dashboard_plus_care_authorization
-    content_type: "application/json"
-    payload: >-
-      {{ {
-        "child_id": child_id | int,
-        "care_type": care_type,
-        "category_label": category_label | default("", true),
-        "notes": notes | default("", true),
-        "time": time | default(now().isoformat(), true),
-        "request_id": request_id | default(context.id, true)
-      } | to_json }}
-```
-
-Home Assistant's built-in `rest_command` integration exposes this as the action `rest_command.baby_buddy_dashboard_plus_log_care`, supports request headers and templated JSON payloads. See the official [RESTful Command documentation](https://www.home-assistant.io/integrations/rest_command/) for general configuration and reload details.
-
-## Example automation
-
-This is a starting point for a Zigbee button. Replace the trigger with the actual event or device trigger from your own installation and set the real Baby Buddy child ID. A Home Assistant automation context ID is used as the idempotency ID, so retrying this action does not create a second entry.
+Example YAML shown by Home Assistant's automation editor:
 
 ```yaml
-alias: Baby care – record a full bath
-triggers:
-  - trigger: event
-    event_type: zha_event
-    event_data:
-      command: "on"
-conditions: []
 actions:
-  - action: rest_command.baby_buddy_dashboard_plus_log_care
+  - action: baby_buddy_dashboard_plus.log_care
     data:
-      child_id: 1
       care_type: bath
-      notes: "Recorded by the bathroom button"
-      request_id: "{{ context.id }}"
-mode: single
+      notes: Recorded by the bathroom button
 ```
 
-For an Alexa routine, make the routine trigger a Home Assistant helper, webhook or exposed script and have that automation call the same action. Keep the care type fixed in the automation rather than passing arbitrary spoken text into the request.
+Each invocation automatically carries Home Assistant's context ID. If Home Assistant retries the same automation action, Dashboard Plus keeps a single Care entry instead of creating duplicates.
 
-## Test payload
+## Safety boundaries
 
-After enabling `bath` for the intended child, call the REST action from Developer Tools with:
+- The Dashboard Plus Care settings are the allow-list. Disabled types are rejected even when an automation requests them.
+- The integration accepts only the documented Care types, optional timestamp, optional note and custom-category label.
+- The native action records only local Plus Care data. It cannot run arbitrary Home Assistant services, execute code, or change Baby Buddy medication records.
+- Pairing codes expire after ten minutes and are invalidated as soon as pairing succeeds. Creating a new pairing rotates the previous integration credential for that child.
 
-```yaml
-child_id: 1
-care_type: bath
-notes: "Disposable integration test"
-request_id: "manual-test-2026-10-02"
-```
+## Troubleshooting
 
-The response is HTTP 201 for a new record and includes `duplicate: false`. Calling it again with the same request ID returns the same entry with `duplicate: true`. Remove the disposable test entry through the Care edit dialog if you do not want to keep it.
+- **Integration cannot be reached:** ensure that the Baby Buddy Dashboard Plus add-on is installed and running, then create a new pairing code.
+- **Care type is rejected:** enable that type in **Care → Settings → Log care from Home Assistant** and save before using the action.
+- **Pairing code expired:** generate a new code. The old code cannot be reused.
+- **Legacy 2.4.5 REST command:** remove any experimental `rest_command` and related secret from Home Assistant. They are not required by 2.4.6.

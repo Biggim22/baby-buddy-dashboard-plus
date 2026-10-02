@@ -194,6 +194,7 @@ export const api = {
   createCare: (data) => localRequest("care", { method: "POST", body: JSON.stringify(data) }),
   updateCare: (id, data) => localRequest(`care/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteCare: (id) => localRequest(`care/${id}`, { method: "DELETE" }),
+  createCarePairing: (childId) => localRequest(`care-pairing/${childId}`, { method: "POST" }),
   getTasks: (childId, includeAll = true, dueDate = new Date().toLocaleDateString("sv-SE")) =>
     localRequest(`tasks?child_id=${childId}&due_date=${dueDate}&include_all=${includeAll}`),
   createTask: (data) => localRequest("tasks", { method: "POST", body: JSON.stringify(data) }),

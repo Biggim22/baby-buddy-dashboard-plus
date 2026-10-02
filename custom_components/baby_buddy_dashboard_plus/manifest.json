@@ -1,0 +1,9 @@
+{
+  "domain": "baby_buddy_dashboard_plus",
+  "name": "Baby Buddy Dashboard Plus",
+  "codeowners": ["@Biggim22"],
+  "config_flow": true,
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "version": "2.4.6"
+}

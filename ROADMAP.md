@@ -63,12 +63,12 @@ Offer Care as an optional Overview section, so families can see the selected lat
 - Each displayed item links to its editable care entry; no duplicate local care data or separate summary state is created.
 - The compact section must remain useful on mobile and must not replace the existing Care history.
 
-### Home Assistant care logging — Completed in 2.4.5
+### Home Assistant care logging — Completed in 2.4.6
 
-Home Assistant automations, voice assistants and physical buttons can create an explicit local Plus Care entry using the documented `rest_command.baby_buddy_dashboard_plus_log_care` action.
+Home Assistant automations, voice assistants and physical buttons can create an explicit local Plus Care entry using the native `baby_buddy_dashboard_plus.log_care` action after a one-time UI pairing.
 
-- The add-on endpoint is disabled without a private, user-configured token.
-- Each call contains an explicit child, a fixed supported care type, an optional timestamp/note and an idempotency ID. Arbitrary data and arbitrary service execution are not accepted.
+- The pairing code is generated in Care settings, expires after ten minutes and is exchanged for an internal integration credential. Families do not edit YAML or handle a permanent token.
+- Each call uses the paired child, a fixed supported care type, an optional timestamp/note and Home Assistant's idempotency ID. Arbitrary data and arbitrary service execution are not accepted.
 - The Care settings contain a per-child allow-list: families opt in to every care type that Home Assistant may record.
 - The setup guide includes an isolated REST command, test payload and a Zigbee-button example, but never ships credentials, personal entity IDs or a default automation.
 

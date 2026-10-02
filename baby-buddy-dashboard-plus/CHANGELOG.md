@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.6 (Native Home Assistant Care action)
+
+- Replaced the experimental YAML `rest_command` setup from 2.4.5 with a native Home Assistant integration and the action `baby_buddy_dashboard_plus.log_care`.
+- The integration pairs through Home Assistant's UI with a short-lived code generated in Care settings. Families no longer configure `configuration.yaml`, `secrets.yaml`, an add-on hostname or a token.
+- The permanent credential is generated and stored internally during pairing; it is neither displayed in Dashboard Plus nor added to automations. Re-pairing rotates it.
+- Kept the per-child Care-type allow-list, fixed input schema and retry-safe idempotency. Added a HACS-compatible custom integration, config-flow translations and action description.
+
 ## 2.4.5 (Home Assistant care automation)
 
 - Added an opt-in, token-protected Home Assistant endpoint for creating local Care entries from automations such as Zigbee buttons, Alexa routines or dashboard controls.

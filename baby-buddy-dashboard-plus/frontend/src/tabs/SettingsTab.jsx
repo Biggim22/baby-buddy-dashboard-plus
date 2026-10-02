@@ -57,6 +57,8 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
   const [calendarTargets, setCalendarTargets] = useState([]);
   const [test, setTest] = useState(() => ({ title: "Baby Buddy Dashboard Plus", message: t("plus.displaySettings.testDefaultMessage") }));
   const [testStatus, setTestStatus] = useState("");
+  const [pairing, setPairing] = useState(null);
+  const [pairingStatus, setPairingStatus] = useState("");
 
   const load = useCallback(async () => {
     if (!childId) return;
@@ -192,6 +194,19 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
     }
   };
 
+  const createPairing = async () => {
+    setPairing(null);
+    setPairingStatus(t("plus.settings.pairingCreating"));
+    try {
+      await api.updateLocalSettings(childId, { ha_care_allowed_types: settings.ha_care_allowed_types });
+      const result = await api.createCarePairing(childId);
+      setPairing(result);
+      setPairingStatus("");
+    } catch (err) {
+      setPairingStatus(err.message);
+    }
+  };
+
   return (
     <div className={`${embedded ? "" : "fade-in "}settings-preview-layout`}>
       {(scope === "global") && <SectionCard title={t("plus.settings.appearance")} icon={<Icons.Activity />} color="#F59E0B">
@@ -275,6 +290,11 @@ export default function SettingsTab({ childId, embedded = false, scope = "global
           <div className="preview-list">
             {HA_CARE_TYPES.map((type) => <label className="preview-check" key={type}><input type="checkbox" checked={(settings.ha_care_allowed_types || []).includes(type)} onChange={() => toggleHomeAssistantCareType(type)} /> {t(`plus.careTypes.${type}`)}</label>)}
           </div>
+          <div className="settings-subheading">{t("plus.settings.homeAssistantPairing")}</div>
+          <p className="form-hint">{t("plus.settings.homeAssistantPairingHint")}</p>
+          <button className="secondary-inline" type="button" disabled={!(settings.ha_care_allowed_types || []).length} onClick={createPairing}>{t("plus.settings.createPairingCode")}</button>
+          {pairing && <div className="notification-test-result"><strong>{t("plus.settings.pairingCode")}: {pairing.pairing_code}</strong><br /><small>{t("plus.settings.pairingExpires")}: {new Date(pairing.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small></div>}
+          {pairingStatus && <div className="notification-test-result">{pairingStatus}</div>}
         </div></details>
       </SectionCard>}
 

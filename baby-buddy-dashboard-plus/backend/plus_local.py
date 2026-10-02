@@ -1,9 +1,11 @@
 """Local Plus features layered on top of the upstream Baby Buddy dashboard."""
 from __future__ import annotations
 import asyncio
+import hashlib
 import json
 import logging
 import os
+import secrets
 import sqlite3
 from hmac import compare_digest
 from contextlib import contextmanager
@@ -28,6 +30,8 @@ DEFAULT_BATH_TIME = "10:00"
 # automation may add a care record, but it must never turn the add-on into a
 # generic write endpoint for arbitrary local data.
 HA_CARE_TYPES = ("bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom")
+PAIRING_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+PAIRING_CODE_LIFETIME = timedelta(minutes=10)
 
 BATH_TEXTS = {
     "de": {
@@ -148,6 +152,19 @@ def init_database() -> None:
                 care_entry_id INTEGER NOT NULL REFERENCES care_entries(id) ON DELETE CASCADE,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY(child_id, request_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS ha_care_pairings (
+                child_id INTEGER PRIMARY KEY,
+                code_hash TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS ha_care_integrations (
+                child_id INTEGER PRIMARY KEY,
+                token_hash TEXT NOT NULL,
+                paired_at TEXT NOT NULL
             );
             """
         )
@@ -291,10 +308,9 @@ class CareEntryPatch(BaseModel):
 
 
 class HomeAssistantCareEntryIn(BaseModel):
-    """Narrow, idempotent payload accepted from a Home Assistant automation."""
+    """Narrow, idempotent payload accepted from the paired HA integration."""
 
     model_config = ConfigDict(extra="forbid")
-    child_id: int = Field(ge=1)
     care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]
     category_label: str = Field(default="", max_length=120)
     time: datetime | None = None
@@ -307,6 +323,19 @@ class HomeAssistantCareEntryIn(BaseModel):
         value = value.strip()
         if info.data.get("care_type") == "custom" and not value:
             raise ValueError("Custom care entries need a category label")
+        return value
+
+
+class HomeAssistantPairingIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    pairing_code: str = Field(min_length=8, max_length=32)
+
+    @field_validator("pairing_code")
+    @classmethod
+    def normalized_code(cls, value: str) -> str:
+        value = "".join(value.upper().split())
+        if len(value) != 8 or any(char not in PAIRING_CODE_ALPHABET for char in value):
+            raise ValueError("Invalid pairing code")
         return value
 
 
@@ -735,34 +764,89 @@ async def create_care(entry: CareEntryIn):
     return row_dict(row)
 
 
-def require_home_assistant_care_token(authorization: str | None) -> None:
-    """Authenticate the opt-in internal endpoint without ever exposing its secret."""
-    configured = os.environ.get("HOME_ASSISTANT_CARE_TOKEN", "").strip()
-    # Some Supervisor versions surface an unset optional password as the text
-    # "null". Treat that as disabled, never as a token somebody could guess.
-    if configured == "null":
-        configured = ""
-    if not configured:
-        raise HTTPException(503, "Home Assistant care automation is not configured")
-    provided = authorization.removeprefix("Bearer ").strip() if authorization else ""
-    if not provided or not compare_digest(provided, configured):
-        raise HTTPException(401, "Invalid Home Assistant care token")
+def secret_hash(value: str) -> str:
+    """Hash short-lived pairing codes and integration tokens before persistence."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-@router.post("/api/ha/care", status_code=201)
-async def create_care_from_home_assistant(
-    entry: HomeAssistantCareEntryIn,
-    authorization: str | None = Header(default=None),
-):
-    """Record a narrowly allow-listed care action sent by a HA automation.
+def make_pairing_code() -> str:
+    return "".join(secrets.choice(PAIRING_CODE_ALPHABET) for _ in range(8))
 
-    The endpoint is disabled until the add-on owner configures a token.  Each
-    child separately opts in to the individual types, and ``request_id`` makes
-    a retried automation safe: it returns the original row rather than making
-    a second record.
-    """
-    require_home_assistant_care_token(authorization)
-    ensure_child_defaults(entry.child_id)
+
+def make_integration_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def read_allowed_care_types(connection: sqlite3.Connection, child_id: int) -> list[str]:
+    try:
+        value = json.loads(get_setting(connection, child_id, "ha_care_allowed_types", "[]"))
+    except (json.JSONDecodeError, TypeError):
+        return []
+    return [item for item in value if item in HA_CARE_TYPES] if isinstance(value, list) else []
+
+
+@router.post("/api/local/care-pairing/{child_id}")
+async def create_home_assistant_pairing(child_id: int):
+    """Create a one-time code shown only through the authenticated dashboard."""
+    ensure_child_defaults(child_id)
+    code = make_pairing_code()
+    expires_at = local_now() + PAIRING_CODE_LIFETIME
+    with db() as connection:
+        if not read_allowed_care_types(connection, child_id):
+            raise HTTPException(409, "Select at least one Care type for Home Assistant first")
+        connection.execute(
+            """INSERT OR REPLACE INTO ha_care_pairings (child_id, code_hash, expires_at)
+               VALUES (?, ?, ?)""",
+            (child_id, secret_hash(code), expires_at.isoformat()),
+        )
+    return {"pairing_code": code, "expires_at": expires_at.isoformat()}
+
+
+@router.post("/api/ha/integration/pair")
+async def pair_home_assistant_integration(pairing: HomeAssistantPairingIn):
+    """Exchange a short dashboard code for a hidden integration credential."""
+    now = local_now()
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT child_id, code_hash, expires_at FROM ha_care_pairings"
+        ).fetchall()
+        child_id = None
+        for row in rows:
+            try:
+                active = datetime.fromisoformat(row["expires_at"]) > now
+            except ValueError:
+                active = False
+            if active and compare_digest(row["code_hash"], secret_hash(pairing.pairing_code)):
+                child_id = row["child_id"]
+                break
+        if child_id is None:
+            raise HTTPException(401, "The pairing code is invalid or has expired")
+        token = make_integration_token()
+        connection.execute(
+            """INSERT OR REPLACE INTO ha_care_integrations (child_id, token_hash, paired_at)
+               VALUES (?, ?, ?)""",
+            (child_id, secret_hash(token), now.isoformat()),
+        )
+        connection.execute("DELETE FROM ha_care_pairings WHERE child_id = ?", (child_id,))
+    return {"integration_token": token, "child_id": child_id}
+
+
+def paired_child_for_token(token: str | None) -> int:
+    if not token:
+        raise HTTPException(401, "Missing Home Assistant integration credential")
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT child_id, token_hash FROM ha_care_integrations"
+        ).fetchall()
+    for row in rows:
+        if compare_digest(row["token_hash"], secret_hash(token)):
+            return row["child_id"]
+    raise HTTPException(401, "Invalid Home Assistant integration credential")
+
+
+def record_home_assistant_care(child_id: int, entry: HomeAssistantCareEntryIn) -> dict[str, Any]:
+    """Store a paired-integration entry after type allow-list and retry checks."""
+    ensure_child_defaults(child_id)
     timestamp = entry.time or local_now()
     timestamp = (
         timestamp.replace(tzinfo=LOCAL_TIMEZONE)
@@ -771,9 +855,7 @@ async def create_care_from_home_assistant(
     )
     with db() as connection:
         try:
-            allowed_types = json.loads(
-                get_setting(connection, entry.child_id, "ha_care_allowed_types", "[]")
-            )
+            allowed_types = read_allowed_care_types(connection, child_id)
         except (json.JSONDecodeError, TypeError):
             allowed_types = []
         if entry.care_type not in allowed_types:
@@ -782,7 +864,7 @@ async def create_care_from_home_assistant(
             """SELECT care_entries.* FROM ha_care_requests
                JOIN care_entries ON care_entries.id = ha_care_requests.care_entry_id
                WHERE ha_care_requests.child_id = ? AND ha_care_requests.request_id = ?""",
-            (entry.child_id, entry.request_id),
+            (child_id, entry.request_id),
         ).fetchone()
         if previous is not None:
             return {"entry": dict(previous), "duplicate": True}
@@ -790,7 +872,7 @@ async def create_care_from_home_assistant(
             """INSERT INTO care_entries (child_id, care_type, category_label, time, notes)
                VALUES (?, ?, ?, ?, ?)""",
             (
-                entry.child_id,
+                child_id,
                 entry.care_type,
                 entry.category_label,
                 timestamp.isoformat(),
@@ -800,18 +882,29 @@ async def create_care_from_home_assistant(
         connection.execute(
             """INSERT INTO ha_care_requests (child_id, request_id, care_entry_id)
                VALUES (?, ?, ?)""",
-            (entry.child_id, entry.request_id, cursor.lastrowid),
+            (child_id, entry.request_id, cursor.lastrowid),
         )
         row = connection.execute(
             "SELECT * FROM care_entries WHERE id = ?", (cursor.lastrowid,)
         ).fetchone()
+    return {"entry": row_dict(row), "duplicate": False}
+
+
+@router.post("/api/ha/integration/care", status_code=201)
+async def create_care_from_home_assistant(
+    entry: HomeAssistantCareEntryIn,
+    x_baby_buddy_integration_token: str | None = Header(default=None),
+):
+    """Record care from the paired native Home Assistant integration."""
+    child_id = paired_child_for_token(x_baby_buddy_integration_token)
+    result = record_home_assistant_care(child_id, entry)
     logger.info(
         "Created Home Assistant care entry child_id=%s care_type=%s request_id=%s",
-        entry.child_id,
+        child_id,
         entry.care_type,
         entry.request_id,
     )
-    return {"entry": row_dict(row), "duplicate": False}
+    return result
 
 
 @router.patch("/api/local/care/{entry_id}")

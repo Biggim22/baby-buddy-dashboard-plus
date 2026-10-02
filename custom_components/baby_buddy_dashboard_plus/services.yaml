@@ -1,0 +1,33 @@
+log_care:
+  name: Log care
+  description: Record an explicitly enabled Care entry in Baby Buddy Dashboard Plus.
+  fields:
+    care_type:
+      name: Care type
+      description: The Care type enabled in Dashboard Plus for Home Assistant actions.
+      required: true
+      selector:
+        select:
+          options:
+            - bath
+            - full_wash
+            - quick_wash
+            - caraway_oil
+            - nail_care
+            - skin_care
+            - custom
+    category_label:
+      name: Custom category
+      description: Required when Care type is custom.
+      selector:
+        text:
+    notes:
+      name: Note
+      selector:
+        text:
+          multiline: true
+    time:
+      name: Time
+      description: Optional; uses the current time when empty.
+      selector:
+        datetime:
