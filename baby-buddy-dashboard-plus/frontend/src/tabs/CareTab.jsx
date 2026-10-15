@@ -264,9 +264,9 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
         </div>
         <button className="secondary-inline" onClick={() => setShowMigration(true)}>{t("plus.carawayMigration.open")}</button>
       </div>}
-      {!hiddenCards.includes("summary") && <div className="care-summary-grid" style={{ order: orderOf("summary") }}>
-        {headerCards.map(({ type, entry }) => <div className="care-summary-card" key={type}>
-          <span>{t("plus.lastCare", { category: labels[type] || type })}</span>
+      {!hiddenCards.includes("summary") && <div className="care-summary-list" style={{ order: orderOf("summary") }}>
+        {headerCards.map(({ type, entry }) => <div className="care-summary-row" key={type}>
+          <span>{labels[type] || type}</span>
           <strong>{ago(entry?.time)}</strong>
           <small>{entry ? `${labels[entry.care_type] || entry.care_type} · ${new Date(entry.time).toLocaleString()}` : type === "bath" ? t("plus.bathReminderAfter", { days: settings.bath_reminder_days || 7 }) : t("plus.notRecorded")}</small>
         </div>)}

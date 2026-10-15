@@ -134,6 +134,7 @@ export default function OverviewTab({ childId, feedings, weeklyFeedings, sleepEn
   };
   const categoryOrder = order.filter((section) => section !== "latest" && latestCards[section] && visible(section));
   const showOverviewCharts = settings.overview_show_charts === true || String(settings.overview_show_charts).toLowerCase() === "true";
+  const showHistory = settings.overview_show_history === true || String(settings.overview_show_history).toLowerCase() === "true";
   const feedingChart = useMemo(() => aggregateByDayOfWeek(weeklyFeedings || [], "amount"), [weeklyFeedings]);
   const sleepChart = useMemo(() => aggregateSleepByDay(weeklySleep || []), [weeklySleep]);
   const diaperChart = useMemo(() => dailyDiaperTotals(changes || [], 7), [changes]);
@@ -185,7 +186,7 @@ export default function OverviewTab({ childId, feedings, weeklyFeedings, sleepEn
     <div className="overview-layout">
       {visible("tasks") && <div className="overview-tasks"><TaskOverview childId={childId} hideWhenEmpty /></div>}
       <div className="overview-categories">
-        {order.filter(visible).map((section) => sections[section])}
+        {order.filter(visible).filter((section) => section === "latest" || showHistory).map((section) => sections[section])}
       </div>
       <div className="overview-bottom" aria-hidden="true" />
     </div>

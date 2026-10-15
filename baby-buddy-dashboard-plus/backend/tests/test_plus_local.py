@@ -481,3 +481,15 @@ def test_calendar_service_events_normalizes_supervisor_response():
         "description": "",
         "location": "",
     }]
+
+
+async def test_overview_history_cards_are_opt_in_without_touching_existing_choices(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(overview_hidden=["sleep"]))
+    before = await plus_local.get_local_settings(1)
+    assert before["overview_show_history"] == "false"
+    assert before["overview_hidden"] == ["sleep"]
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(overview_show_history=True))
+    saved = await plus_local.get_local_settings(1)
+    assert saved["overview_show_history"].lower() == "true"
+    assert saved["overview_hidden"] == ["sleep"]

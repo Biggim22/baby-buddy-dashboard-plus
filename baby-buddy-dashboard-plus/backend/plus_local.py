@@ -281,6 +281,8 @@ def ensure_child_defaults(child_id: int) -> None:
             ),
             "overview_hidden": json.dumps([]),
             "overview_show_charts": "false",
+            # History cards duplicate the History tab; families can switch them back on.
+            "overview_show_history": "false",
             "feeding_daily_metric": "duration",
             "feeding_average_metric": "duration",
             "time_format": "24h",
@@ -476,6 +478,7 @@ class SettingsPatch(BaseModel):
     overview_sections: list[str] | None = None
     overview_hidden: list[str] | None = None
     overview_show_charts: bool | None = None
+    overview_show_history: bool | None = None
     feeding_daily_metric: Literal["volume", "duration", "frequency"] | None = None
     feeding_average_metric: Literal["volume", "duration", "frequency"] | None = None
     time_format: Literal["12h", "24h"] | None = None
