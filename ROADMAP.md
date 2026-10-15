@@ -44,12 +44,13 @@ Moved caraway-oil suppositories out of the local Care categories and into Baby B
 
 When several sizes fit the current weight, families can browse to each one and see its own stock forecast, for example to buy the next size ahead of time.
 
-### Flatter navigation — Step 1 completed in 2.4.9
+### Flatter navigation — Completed in 2.4.9 and 2.5.0
 
 Reduce nesting in the interface without changing stored data.
 
 - Completed in 2.4.9: one settings dialog without collapsible sections, no gear buttons inside tabs, and a single-level quick entry panel that includes timers.
-- Planned next step: consolidate the seven tabs into fewer areas (for example Today, History, Growth & analytics, Care & health) and remove duplicated history cards from Overview.
+- Completed in 2.5.0: five areas instead of seven tabs (Overview, History, Progress, Care & meds, Tasks), with related sections stacked on one page instead of sub-navigation.
+- Candidate: hide the Overview history cards by default for new installations, since History covers them. Existing preferences would stay unchanged.
 
 ### Home Assistant quick controls on Overview — Next
 

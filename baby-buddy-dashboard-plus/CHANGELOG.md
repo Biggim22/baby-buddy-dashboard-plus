@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.5.0 (Five areas instead of seven tabs)
+
+- Reduced the navigation from seven tabs to five: Overview, History, Progress, Care & meds and Tasks. Progress shows Growth followed by Analytics; Care & meds shows Care followed by Notes & medication. No sub-navigation was added.
+- On phones the five areas fit side by side with an icon above a short label, so the tab bar no longer scrolls sideways. History has its own clock icon.
+- Card visibility and order are still stored per original section (`growth`, `analytics`, `care`, `notes`), so existing preferences carry over unchanged; the settings list now names each section with its new area.
+- Quick entry's "Log care" opens Care & meds with the care form, as before.
+
 ## 2.4.9 (Flatter settings and quick entry)
 
 - Moved every setting into the single settings dialog behind the header gear: appearance, overview, cards per tab, care, medication list, diaper calculator, notifications, calendar and Home Assistant actions. Sections are always expanded, reachable through a jump bar and saved with one button.

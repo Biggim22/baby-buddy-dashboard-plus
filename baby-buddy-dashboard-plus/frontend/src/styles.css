@@ -657,6 +657,9 @@ body { overflow-x: hidden; }
 .overview-categories > * { min-width: 0; }
 .latest-events-section { grid-column: 1 / -1; min-width: 0; }
 .latest-events-section h2 { margin: 0 0 10px; color: var(--text-muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.tab-stack { display: flex; flex-direction: column; gap: 16px; }
+.tab-stack-heading { margin: 12px 0 -6px; color: var(--text-muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.tab-stack > .tab-stack-heading:first-child { margin-top: 0; }
 .latest-events-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
 .latest-event-card { appearance: none; display: flex; align-items: flex-start; gap: 12px; min-width: 0; padding: 15px; border: 1px solid color-mix(in srgb, var(--event-color) 32%, var(--border)); border-radius: 14px; background: var(--card-bg); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
 .latest-event-card:disabled { cursor: default; opacity: .75; }
@@ -719,4 +722,10 @@ body { overflow-x: hidden; }
   .diaper-recent-row { grid-template-columns: auto auto 1fr; }
   .diaper-recent-row small { grid-column: 2 / -1; }
   .care-summary-grid { grid-template-columns: 1fr; }
+}
+
+/* Five pages fit side by side on phones: icon above a short label, no sideways scrolling. */
+@media (max-width: 600px) {
+  .tab-btn { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 4px; padding: 7px 2px; font-size: 11px; line-height: 1.15; white-space: normal; text-align: center; }
+  .tab-btn svg { display: block; width: 18px; height: 18px; }
 }

@@ -385,6 +385,7 @@ export default {
     careToday: "Oggi",
     careDaysAgo: "{days} giorni fa",
     confirmCareDelete: "Eliminare «{title}»?",
+    nav: { progress: "Progressi", careHealth: "Cure e farmaci" },
     careSettings: "Impostazioni cure",
     addCare: "Registra cura",
     editCare: "Modifica cura",
