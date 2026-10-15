@@ -9,8 +9,6 @@ import { aggregateByDayOfWeek, aggregateSleepByDay, dailyDiaperTotals, formatTim
 import { useUnits } from "../utils/units";
 import { api } from "../api";
 import { TaskOverview } from "../components/TaskPanel";
-import Modal from "../components/Modal";
-import SettingsTab from "./SettingsTab";
 import { getLanguage, useTranslation } from "../locales";
 
 const COLLAPSED_COUNT = 3;
@@ -107,7 +105,6 @@ export default function OverviewTab({ childId, feedings, weeklyFeedings, sleepEn
   const units = useUnits();
   const [expanded, setExpanded] = useState({});
   const [settings, setSettings] = useState({ overview_sections: DEFAULT_ORDER, overview_hidden: [] });
-  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (!childId) return;
@@ -186,13 +183,11 @@ export default function OverviewTab({ childId, feedings, weeklyFeedings, sleepEn
 
   return (
     <div className="overview-layout">
-      <div className="tab-settings-row"><button className="tab-settings-button" onClick={() => setShowSettings(true)} aria-label={t("plus.overview.settings")} title={t("plus.overview.settings")}><Icons.Settings /></button></div>
       {visible("tasks") && <div className="overview-tasks"><TaskOverview childId={childId} hideWhenEmpty /></div>}
       <div className="overview-categories">
         {order.filter(visible).map((section) => sections[section])}
       </div>
       <div className="overview-bottom" aria-hidden="true" />
-      {showSettings && <Modal title={t("plus.overview.settings")} onClose={() => setShowSettings(false)}><SettingsTab childId={childId} scope="overview" /></Modal>}
     </div>
   );
 }

@@ -44,6 +44,13 @@ Moved caraway-oil suppositories out of the local Care categories and into Baby B
 
 When several sizes fit the current weight, families can browse to each one and see its own stock forecast, for example to buy the next size ahead of time.
 
+### Flatter navigation — Step 1 completed in 2.4.9
+
+Reduce nesting in the interface without changing stored data.
+
+- Completed in 2.4.9: one settings dialog without collapsible sections, no gear buttons inside tabs, and a single-level quick entry panel that includes timers.
+- Planned next step: consolidate the seven tabs into fewer areas (for example Today, History, Growth & analytics, Care & health) and remove duplicated history cards from Overview.
+
 ### Home Assistant quick controls on Overview — Next
 
 Allow an optional Overview card with a small, user-selected set of Home Assistant entities that are useful in a care routine, for example switching a night light on or off.

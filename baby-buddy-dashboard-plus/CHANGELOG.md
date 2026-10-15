@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.9 (Flatter settings and quick entry)
+
+- Moved every setting into the single settings dialog behind the header gear: appearance, overview, cards per tab, care, medication list, diaper calculator, notifications, calendar and Home Assistant actions. Sections are always expanded, reachable through a jump bar and saved with one button.
+- Removed the per-tab gear buttons, the Overview settings gear and the Care settings gear. Card visibility and order for every tab are now edited in one list and apply after saving.
+- Flattened quick entry: the + button opens one panel with all logging actions, measurements and timers; the separate Timer button and the collapsible action groups are gone.
+- The settings dialog fills the screen on phones. Home Assistant setup instructions now point to Settings → Home Assistant actions.
+- Settings keys, stored values and records are unchanged; no migration is needed.
+
 ## 2.4.8 (OLED night appearance and settings polish)
 
 - Added optional OLED Black appearance with a true-black page background, near-black cards/dialogs, dark native controls, restrained interface accents and visible keyboard focus. Existing chart/category colours retain their meaning.

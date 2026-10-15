@@ -36,7 +36,7 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
   };
 
   return (
-    <Modal title={t("settings.title")} onClose={onClose} maxWidth={760}>
+    <Modal title={t("settings.title")} onClose={onClose} maxWidth={760} className="modal-sheet">
       <div
         style={{
           display: "flex",
@@ -120,7 +120,9 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
         ))}
       </div>
 
-      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 10 }}>
+      <SettingsTab childId={childId} embedded />
+
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.03em", marginTop: 24, marginBottom: 10 }}>
         {t("settings.errorLog")}
       </div>
       {log.length === 0 ? (
@@ -194,9 +196,6 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
         >
           <Icons.Trash /> {t("settings.clear")}
         </button>
-      </div>
-      <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
-        <SettingsTab childId={childId} embedded scope="global" />
       </div>
       <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--border)", color: "var(--text-dim)", fontSize: 12, lineHeight: 1.5 }}>
         <strong style={{ color: "var(--text)" }}>Baby Buddy Dashboard Plus {__APP_VERSION__}</strong><br />

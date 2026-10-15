@@ -9,7 +9,6 @@ import Modal, {
   FormSelect,
 } from "../components/Modal";
 import SectionCard from "../components/SectionCard";
-import SettingsTab from "./SettingsTab";
 import DeleteButton from "../components/DeleteButton";
 import { useTranslation } from "../locales";
 import { toApiDatetime } from "../utils/formatters";
@@ -189,7 +188,6 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [settings, setSettings] = useState({});
-  const [showSettings, setShowSettings] = useState(false);
   const [carawayEntries, setCarawayEntries] = useState([]);
   const [showMigration, setShowMigration] = useState(false);
   const orderOf = (id) => { const index = cardOrder.indexOf(id); return index < 0 ? 99 : index; };
@@ -257,7 +255,7 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
           <strong>{t("plus.care")}</strong>
           <span>{t("plus.careDescription")}</span>
         </div>
-        <div style={{ display: "flex", gap: 8 }}><button className="tab-settings-button" onClick={() => setShowSettings(true)} aria-label={t("plus.careSettings")} title={t("plus.careSettings")}><Icons.Settings /></button><button className="primary-inline" onClick={() => setEditing(null)}>{t("plus.addCare")}</button></div>
+        <div style={{ display: "flex", gap: 8 }}><button className="primary-inline" onClick={() => setEditing(null)}>{t("plus.addCare")}</button></div>
       </div>
       {carawayEntries.length > 0 && <div className="care-migration-notice">
         <div>
@@ -300,7 +298,6 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
         onClose={() => setShowMigration(false)}
         onDone={async () => { await load(); onDataChanged?.(); }}
       />}
-      {showSettings && <Modal title={t("plus.careSettings")} onClose={() => setShowSettings(false)}><SettingsTab childId={childId} scope="care" /></Modal>}
     </div>
   );
 }

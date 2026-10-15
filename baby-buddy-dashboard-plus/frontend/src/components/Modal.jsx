@@ -2,10 +2,11 @@ import { Icons } from "./Icons";
 import { useTranslation } from "../locales";
 import { createPortal } from "react-dom";
 
-export default function Modal({ title, children, onClose, maxWidth = 400 }) {
+export default function Modal({ title, children, onClose, maxWidth = 400, className = "" }) {
   const t = useTranslation();
   return createPortal(
     <div
+      className={className || undefined}
       style={{
         position: "fixed",
         inset: 0,
@@ -15,7 +16,7 @@ export default function Modal({ title, children, onClose, maxWidth = 400 }) {
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        padding: 20,
+        padding: "var(--modal-overlay-padding, 20px)",
       }}
       onClick={onClose}
     >
@@ -23,10 +24,10 @@ export default function Modal({ title, children, onClose, maxWidth = 400 }) {
         style={{
           background: "var(--card-bg)",
           border: "1px solid var(--border)",
-          borderRadius: 16,
+          borderRadius: "var(--modal-radius, 16px)",
           width: "100%",
           maxWidth,
-          maxHeight: "90vh",
+          maxHeight: "var(--modal-max-height, 90vh)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -60,7 +61,7 @@ export default function Modal({ title, children, onClose, maxWidth = 400 }) {
             <Icons.X />
           </button>
         </div>
-        <div style={{ padding: "20px", overflowY: "auto" }}>{children}</div>
+        <div style={{ padding: "var(--modal-body-padding, 20px)", overflowY: "auto" }}>{children}</div>
       </div>
     </div>,
     document.body

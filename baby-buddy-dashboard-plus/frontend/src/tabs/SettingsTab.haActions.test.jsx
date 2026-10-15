@@ -26,8 +26,7 @@ beforeEach(() => {
 });
 
 it("requires explicit task opt-in and permits task-only pairing", async () => {
-  render(<SettingsTab childId={2} embedded scope="care" />);
-  fireEvent.click(await screen.findByText("Home Assistant actions"));
+  render(<SettingsTab childId={2} embedded />);
   const task = await screen.findByLabelText("Test task · ID 7");
   expect(task).not.toBeChecked();
   expect(screen.queryByText(/Inactive test/)).not.toBeInTheDocument();
@@ -44,8 +43,7 @@ it("requires explicit task opt-in and permits task-only pairing", async () => {
 });
 
 it("starts measurement permissions disabled and saves only selected types", async () => {
-  render(<SettingsTab childId={2} embedded scope="care" />);
-  fireEvent.click(await screen.findByText("Home Assistant actions"));
+  render(<SettingsTab childId={2} embedded />);
   await screen.findByLabelText("Test task · ID 7");
   const weight = screen.getByLabelText("Weight");
   expect(weight).not.toBeChecked();
@@ -57,7 +55,7 @@ it("starts measurement permissions disabled and saves only selected types", asyn
 });
 
 it("offers OLED manually and in the schedule without changing existing defaults", async () => {
-  render(<SettingsTab childId={2} embedded scope="global" />);
+  render(<SettingsTab childId={2} embedded />);
   const mode = await screen.findByLabelText("Mode");
   const scheduledMode = screen.getByLabelText("Mode during period");
   expect(mode).toHaveValue("dark");
@@ -67,4 +65,23 @@ it("offers OLED manually and in the schedule without changing existing defaults"
   fireEvent.change(scheduledMode, { target: { value: "oled" } });
   fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
   await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({ theme: "oled", appearance_schedule_theme: "oled" })));
+});
+
+it("keeps card layout, medication list and diaper calculator on the single settings page", async () => {
+  api.getLocalSettings.mockResolvedValue({ tab_hidden_cards: { growth: ["bmi"] }, tab_card_order: {}, medication_presets: [] });
+  render(<SettingsTab childId={2} embedded />);
+  expect(document.querySelector("details")).toBeNull();
+  const bmi = await screen.findByLabelText("Growth: BMI Trend");
+  expect(bmi).not.toBeChecked();
+  fireEvent.click(bmi);
+  fireEvent.click(screen.getByLabelText("Growth: Weight Trend"));
+  fireEvent.change(screen.getByPlaceholderText("Name of the new entry"), { target: { value: "Test medicine" } });
+  fireEvent.click(screen.getByRole("button", { name: "Add" }));
+  fireEvent.click(screen.getByLabelText("Show calculator at the end of Analytics"));
+  fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
+  await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({
+    tab_hidden_cards: { growth: ["weight"] },
+    medication_presets: [expect.objectContaining({ name: "Test medicine" })],
+    analytics_diaper_calculator_enabled: true,
+  })));
 });
