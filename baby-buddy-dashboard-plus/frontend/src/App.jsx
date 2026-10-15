@@ -30,6 +30,7 @@ import HeightForm from "./components/forms/HeightForm";
 import HeadCircumferenceForm from "./components/forms/HeadCircumferenceForm";
 import BmiForm from "./components/forms/BmiForm";
 import MedicationForm from "./components/forms/MedicationForm";
+import TimerButton from "./components/TimerButton";
 import SettingsModal from "./components/SettingsModal";
 import "./styles.css";
 
@@ -55,8 +56,6 @@ function getActionGroups(t) {
         { id: "tummy", label: t("action.tummy"), icon: <Icons.Sun />, color: colors.tummy },
         { id: "pumping", label: t("plus.pumping.action"), icon: <Icons.Bottle />, color: colors.pumping },
         { id: "care", label: t("plus.addCare"), icon: <Icons.Heart />, color: "#06B6D4" },
-        { id: "medication", label: t("action.medication"), icon: <Icons.Pill />, color: colors.medication },
-        { id: "note", label: t("action.note"), icon: <Icons.StickyNote />, color: colors.note },
       ],
     },
     {
@@ -67,6 +66,20 @@ function getActionGroups(t) {
         { id: "weight", label: t("action.weight"), icon: <Icons.Weight />, color: colors.growth },
         { id: "height", label: t("action.height"), icon: <Icons.Ruler />, color: colors.height },
         { id: "headCircumference", label: t("action.headCircumference"), icon: <Icons.HeadCircle />, color: colors.headCircumference },
+      ],
+    },
+    {
+      id: "medication",
+      label: t("group.medication"),
+      actions: [
+        { id: "medication", label: t("action.medication"), icon: <Icons.Pill />, color: colors.medication },
+      ],
+    },
+    {
+      id: "note",
+      label: t("group.note"),
+      actions: [
+        { id: "note", label: t("action.note"), icon: <Icons.StickyNote />, color: colors.note },
       ],
     },
   ];
@@ -143,6 +156,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("overview");
   const [modal, setModal] = useState(null);
   const [showActions, setShowActions] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState("track");
+  const [showTimerPicker, setShowTimerPicker] = useState(false);
   const [editingTimerId, setEditingTimerId] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [openCareForm, setOpenCareForm] = useState(false);
@@ -425,40 +440,83 @@ export default function App() {
       {/* Quick Action FAB */}
       <div className="fab-container">
         {showActions && (
-          <div className="fab-panel fade-in" role="menu">
-            {[...ACTION_GROUPS, { id: "timer", label: t("header.timer"), actions: QUICK_TIMER_TYPES.map((timerType) => ({ ...timerType, timer: true })) }].map((group) => (
-              <div key={group.id} className="fab-section">
-                <div className="fab-section-label">{group.label}</div>
-                <div className="fab-grid">
-                  {group.actions.map((action) => (
-                    <button
-                      key={`${group.id}-${action.id}`}
-                      className="fab-tile"
-                      role="menuitem"
-                      onClick={() => {
-                        if (action.timer) timer.startTimer(action.id);
-                        else if (action.id === "care") {
-                          setActiveTab("care");
-                          setOpenCareForm(true);
-                        } else setModal({ type: action.id });
-                        setShowActions(false);
-                      }}
-                    >
-                      <span className="fab-action-icon" style={{ background: `${action.color}18`, color: action.color }}>
-                        {action.icon}
-                      </span>
-                      <span className="fab-tile-label">{action.label}</span>
-                    </button>
-                  ))}
+          <div className="fab-menu fade-in">
+            {ACTION_GROUPS.map((group) => {
+              const isOpen = expandedGroup === group.id;
+              return (
+                <div key={group.id} className="fab-group">
+                  <button
+                    className={`fab-group-label${isOpen ? " fab-group-label-active" : ""}`}
+                    onClick={() => setExpandedGroup(isOpen ? null : group.id)}
+                  >
+                    {group.label}
+                  </button>
+                  {isOpen && (
+                    <div className="fab-group-items">
+                      {group.actions.map((action) => (
+                        <button
+                          key={action.id}
+                          className="fab-action"
+                          onClick={() => {
+                            if (action.id === "care") {
+                              setActiveTab("care");
+                              setOpenCareForm(true);
+                            } else setModal({ type: action.id });
+                            setShowActions(false);
+                          }}
+                        >
+                          <span
+                            className="fab-action-icon"
+                            style={{ background: `${action.color}18`, color: action.color }}
+                          >
+                            {action.icon}
+                          </span>
+                          <span className="fab-action-label">{action.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              );
+            })}
+          </div>
+        )}
+        {showTimerPicker && (
+          <div className="fab-menu fade-in" style={{ right: 76 }}>
+            {QUICK_TIMER_TYPES.map((timerType) => (
+              <button
+                key={timerType.id}
+                className="fab-action"
+                onClick={() => {
+                  timer.startTimer(timerType.id);
+                  setShowTimerPicker(false);
+                }}
+              >
+                <span
+                  className="fab-action-icon"
+                  style={{ background: `${timerType.color}18`, color: timerType.color }}
+                >
+                  {timerType.icon}
+                </span>
+                <span className="fab-action-label">{timerType.label}</span>
+              </button>
             ))}
           </div>
         )}
+        <TimerButton
+          label={t("header.timer")}
+          icon={<Icons.Timer />}
+          color={colors.feeding}
+          active={false}
+          onClick={() => {
+            setShowTimerPicker(!showTimerPicker);
+            setShowActions(false);
+          }}
+        />
         <button
           className="fab-btn"
           style={{ background: showActions ? "var(--text-muted)" : "var(--accent)" }}
-          onClick={() => setShowActions(!showActions)}
+          onClick={() => { setShowActions(!showActions); setShowTimerPicker(false); setExpandedGroup("track"); }}
           aria-label={showActions ? t("header.closeQuickActions") : t("header.openQuickActions")}
         >
           <span style={{ transform: showActions ? "rotate(45deg)" : "none", transition: "transform 0.2s", display: "flex" }}>
