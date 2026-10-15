@@ -48,7 +48,7 @@ When several sizes fit the current weight, families can browse to each one and s
 
 Reduce nesting in the interface without changing stored data.
 
-- Completed in 2.4.9: one settings dialog without collapsible sections, no gear buttons inside tabs, and a single-level quick entry panel that includes timers.
+- Completed in 2.4.9: one settings dialog without collapsible sections, no gear buttons inside tabs, and a single-level quick entry panel that includes timers (the quick entry panel was reverted in 2.5.2 after family feedback; the grouped menu and separate Timer button are back).
 - Completed in 2.5.0: five areas instead of seven tabs (Overview, History, Progress, Care & meds, Tasks), with related sections stacked on one page instead of sub-navigation.
 - Completed in 2.5.1: Overview history cards are off by default (switchable in settings), flatter cards without boxed rows, and a compact Care header.
 
