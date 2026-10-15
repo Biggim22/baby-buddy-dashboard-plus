@@ -5,6 +5,7 @@
 - Pumping can be timed: quick entry (+) has a new pumping timer next to feeding, sleep and tummy time. Saving the running timer opens the pumping form without start and end, exactly like a feeding timer.
 - The pumping form asks for the side (left, right or both, default both). Baby Buddy's pumping record has no side field, so the side is stored as one Baby Buddy tag (`pumping-left`, `pumping-right` or `pumping-both`); other tags on the entry are kept.
 - "Pumping" is now also a quick-entry action under Track.
+- The pumping action and timer appear in quick entry only while the pumping card is switched on (Settings → Cards per tab → Progress · Analytics). A timer that is already running stays visible.
 - Rows in the pumping card show the side and duration and open the entry for editing or deleting.
 - Running timers show their translated name in the timer bar.
 - Existing pumping entries are not changed; entries without a side tag simply show no side.
