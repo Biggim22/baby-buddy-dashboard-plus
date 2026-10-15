@@ -408,6 +408,7 @@ function emmaData() {
     monthlySleep: emmaMonthlySleep(),
     monthlyChanges: emmaMonthlyChanges(),
     monthlyTummyTimes: emmaMonthlyTummy(),
+    pumping: emmaPumping(),
     timers: [],
   };
 }
@@ -450,8 +451,23 @@ function liamData() {
     monthlySleep: liamMonthlySleep(),
     monthlyChanges: liamMonthlyChanges(),
     monthlyTummyTimes: [],
+    pumping: [],
     timers: [],
   };
+}
+
+// Emma: a few pumping sessions this week; the side lives in a Baby Buddy tag.
+function emmaPumping() {
+  const sides = ["pumping-both", "pumping-left", "pumping-right", "pumping-both", "pumping-left", "pumping-both"];
+  return sides.map((side, i) => {
+    const start = hoursAgo(5 + i * 21, 10);
+    const minutes = 12 + (i % 3) * 4;
+    return {
+      id: i + 1, child: 1, amount: 60 + ((i * 35) % 90),
+      start: isoLocal(start), end: isoLocal(new Date(start.getTime() + minutes * 60000)),
+      duration: duration(0, minutes), notes: "", tags: [side],
+    };
+  });
 }
 
 function dataForChild(childId) {

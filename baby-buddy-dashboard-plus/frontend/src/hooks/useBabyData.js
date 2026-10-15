@@ -236,6 +236,7 @@ export function useBabyData() {
       setMonthlyFeedings(mock.monthlyFeedings);
       setMonthlySleep(mock.monthlySleep);
       setMonthlyChanges(mock.monthlyChanges);
+      setWeeklyPumping(mock.pumping || []);
     },
     [children, child]
   );
