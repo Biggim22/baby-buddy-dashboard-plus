@@ -23,6 +23,7 @@ const DEFAULTS = {
   overview_sections: Object.keys(CATEGORY_LABELS),
   overview_hidden: [],
   overview_show_charts: false,
+  overview_show_history: false,
   bath_reminder_days: 7,
   bath_reminder_time: "10:00",
   feeding_daily_metric: "duration",
@@ -115,6 +116,7 @@ export default function SettingsTab({ childId, embedded = false }) {
       const missing = Object.keys(CATEGORY_LABELS).filter((section) => !savedOrder.includes(section));
       const next = { ...DEFAULTS, ...result, overview_sections: [...savedOrder, ...missing] };
       next.overview_show_charts = result.overview_show_charts === true || String(result.overview_show_charts).toLowerCase() === "true";
+      next.overview_show_history = isTrue(result.overview_show_history);
       next.appearance_schedule_enabled = result.appearance_schedule_enabled === true || String(result.appearance_schedule_enabled).toLowerCase() === "true";
       const careHeader = Array.isArray(result.care_header_types)
         ? result.care_header_types.filter((type) => CARE_HEADER_TYPES.includes(type))
@@ -228,6 +230,7 @@ export default function SettingsTab({ childId, embedded = false }) {
         overview_sections: settings.overview_sections,
         overview_hidden: settings.overview_hidden,
         overview_show_charts: Boolean(settings.overview_show_charts),
+        overview_show_history: Boolean(settings.overview_show_history),
         bath_reminder_days: Number(settings.bath_reminder_days),
         bath_reminder_time: settings.bath_reminder_time,
         feeding_daily_metric: settings.feeding_daily_metric,
@@ -333,6 +336,7 @@ export default function SettingsTab({ childId, embedded = false }) {
 
       {section("overview", t("plus.overview.settings"), <Icons.TrendUp />, "#8B5CF6", <>
         <label className="preview-check"><input type="checkbox" checked={!settings.overview_hidden.includes("tasks")} onChange={() => toggle("tasks")} /> {t("plus.settings.openTasksFirst")}</label>
+        <label className="preview-check"><input type="checkbox" checked={Boolean(settings.overview_show_history)} onChange={(event) => update("overview_show_history", event.target.checked)} /> {t("plus.settings.overviewHistory")}</label>
         <label className="preview-check"><input type="checkbox" checked={Boolean(settings.overview_show_charts)} onChange={(event) => update("overview_show_charts", event.target.checked)} /> {t("plus.settings.overviewCharts")}</label>
         <div className="preview-list">
           {settings.overview_sections.map((key, index) => (

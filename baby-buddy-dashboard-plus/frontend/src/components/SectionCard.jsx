@@ -11,11 +11,10 @@ export default function SectionCard({ title, icon, children, color, actions, sty
     >
       <div
         style={{
-          padding: "16px 20px",
+          padding: "14px 16px 4px",
           display: "flex",
           alignItems: "center",
           gap: 10,
-          borderBottom: "1px solid var(--border)",
         }}
       >
         <div
@@ -46,7 +45,7 @@ export default function SectionCard({ title, icon, children, color, actions, sty
         </span>
         {actions}
       </div>
-      <div style={{ padding: "16px 20px" }}>{children}</div>
+      <div style={{ padding: "8px 16px 14px" }}>{children}</div>
     </div>
   );
 }

@@ -85,3 +85,12 @@ it("keeps card layout, medication list and diaper calculator on the single setti
     analytics_diaper_calculator_enabled: true,
   })));
 });
+
+it("keeps overview history cards off until the family switches them on", async () => {
+  render(<SettingsTab childId={2} embedded />);
+  const history = await screen.findByLabelText(/Also show history cards on the overview/);
+  expect(history).not.toBeChecked();
+  fireEvent.click(history);
+  fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
+  await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({ overview_show_history: true })));
+});

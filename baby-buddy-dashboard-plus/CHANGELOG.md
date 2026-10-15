@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.5.1 (Shorter overview and flatter cards)
+
+- Overview now shows only the latest-event cards by default. The five history cards remain available in History and can be switched back on with the new `overview_show_history` setting (Settings → Overview settings). Existing visibility and order choices are kept.
+- Cards are flatter: no divider under the card header, less padding, and list rows separated by hairlines instead of sitting in boxes of their own.
+- The Care header is a compact three-row list instead of three large tiles.
+- No records are changed. The new setting is added for each child with the value off.
+
 ## 2.5.0 (Five areas instead of seven tabs)
 
 - Reduced the navigation from seven tabs to five: Overview, History, Progress, Care & meds and Tasks. Progress shows Growth followed by Analytics; Care & meds shows Care followed by Notes & medication. No sub-navigation was added.

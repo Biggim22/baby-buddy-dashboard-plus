@@ -14,11 +14,11 @@
 
 ## Tour in screenshots
 
-### New in 2.5.0 / Neu in 2.5.0
+### New in 2.5.1 / Neu in 2.5.1
 
-**Deutsch:** Statt sieben gibt es nur noch fünf Bereiche, die auch auf dem Handy nebeneinander passen: **Übersicht**, **Verlauf**, **Entwicklung** (Wachstum und Auswertung auf einer Seite), **Pflege & Medis** (Pflege, Medikamente, Temperatur und Notizen auf einer Seite) und **Aufgaben**. Es gibt keine neuen Unterebenen; zusammengehörige Inhalte stehen untereinander. Seit 2.4.9 liegen außerdem alle Einstellungen hinter dem Zahnrad oben rechts, und die Schnellerfassung (+) zeigt alle Aktionen und Timer auf einer Ebene. Bisherige Einstellungen, ausgeblendete Karten und Daten bleiben unverändert.
+**Deutsch:** Die Oberfläche ist deutlich flacher. Es gibt fünf Bereiche statt sieben Tabs (**Übersicht**, **Verlauf**, **Entwicklung**, **Pflege & Medis**, **Aufgaben**), alle Einstellungen liegen hinter dem Zahnrad oben rechts, und die Schnellerfassung (+) zeigt alle Aktionen und Timer auf einer Ebene. Neu in 2.5.1: Die Übersicht zeigt nur noch die letzten Ereignisse; die Verlaufskarten stehen im Bereich Verlauf und lassen sich unter **Einstellungen → Übersicht-Einstellungen** wieder einblenden. Karten haben keine Trennlinie im Kopf mehr, Einträge keine eigenen Rahmen, und der Pflege-Kopf ist eine kompakte Liste. Daten und übrige Einstellungen bleiben unverändert.
 
-**English:** Seven tabs are reduced to five areas that fit side by side on a phone: **Overview**, **History**, **Progress** (growth and analytics on one page), **Care & meds** (care, medication, temperature and notes on one page) and **Tasks**. No new sub-levels are added; related content is stacked on the same page. Since 2.4.9, all settings also live behind the gear at the top right, and quick entry (+) shows every action and timer on one level. Existing settings, hidden cards and data remain unchanged.
+**English:** The interface is much flatter. There are five areas instead of seven tabs (**Overview**, **History**, **Progress**, **Care & meds**, **Tasks**), all settings live behind the gear at the top right, and quick entry (+) shows every action and timer on one level. New in 2.5.1: Overview shows only the latest events; history cards live in History and can be switched back on under **Settings → Overview settings**. Cards no longer have a header divider, entries no longer have their own frames, and the Care header is a compact list. Data and other settings remain unchanged.
 
 All screenshots use the built-in Baby Buddy demo data. / Alle Screenshots verwenden die integrierten Baby-Buddy-Demodaten.
 
