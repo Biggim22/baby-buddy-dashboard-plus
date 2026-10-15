@@ -10,4 +10,5 @@ export const colors = {
   headCircumference: "#F43F5E",
   bmi: "#06B6D4",
   medication: "#A855F7",
+  pumping: "#22C55E",
 };

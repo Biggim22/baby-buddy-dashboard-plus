@@ -19,6 +19,7 @@ import CareTab from "./tabs/CareTab";
 import TasksTab from "./components/TaskPanel";
 import { applyAppearance } from "./utils/appearance";
 import FeedingForm from "./components/forms/FeedingForm";
+import PumpingForm from "./components/forms/PumpingForm";
 import SleepForm from "./components/forms/SleepForm";
 import DiaperForm from "./components/forms/DiaperForm";
 import TemperatureForm from "./components/forms/TemperatureForm";
@@ -52,6 +53,7 @@ function getActionGroups(t) {
         { id: "sleep", label: t("action.sleep"), icon: <Icons.Moon />, color: colors.sleep },
         { id: "diaper", label: t("action.diaper"), icon: <Icons.Droplet />, color: colors.diaper },
         { id: "tummy", label: t("action.tummy"), icon: <Icons.Sun />, color: colors.tummy },
+        { id: "pumping", label: t("plus.pumping.action"), icon: <Icons.Bottle />, color: colors.pumping },
         { id: "care", label: t("plus.addCare"), icon: <Icons.Heart />, color: "#06B6D4" },
         { id: "medication", label: t("action.medication"), icon: <Icons.Pill />, color: colors.medication },
         { id: "note", label: t("action.note"), icon: <Icons.StickyNote />, color: colors.note },
@@ -75,6 +77,7 @@ function getTimerTypes(t) {
     { id: "feeding", label: t("action.feeding"), icon: <Icons.Bottle />, color: colors.feeding },
     { id: "sleep", label: t("action.sleep"), icon: <Icons.Moon />, color: colors.sleep },
     { id: "tummy", label: t("action.tummyTime"), icon: <Icons.Sun />, color: colors.tummy },
+    { id: "pumping", label: t("plus.pumping.action"), icon: <Icons.Bottle />, color: colors.pumping },
   ];
 }
 
@@ -88,6 +91,7 @@ function timerNameToType(name) {
   const n = name.toLowerCase();
   if (n.includes("sleep")) return "sleep";
   if (n.includes("tummy")) return "tummy";
+  if (n.includes("pump")) return "pumping";
   return "feeding";
 }
 
@@ -257,7 +261,7 @@ export default function App() {
             <span className="timer-pulse" />
             <Icons.Timer />
             <span style={{ fontSize: 13, fontWeight: 500 }}>
-              {activeTimer.name}
+              {TIMER_TYPES.find((timerType) => timerType.id === activeTimer.name)?.label || activeTimer.name}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -462,6 +466,15 @@ export default function App() {
       {/* Modals */}
       {modal?.type === "feeding" && (
         <FeedingForm
+          childId={data.child?.id}
+          timerId={modal.timerId}
+          entry={modal.entry}
+          onDone={handleFormDone}
+          onClose={closeModal}
+        />
+      )}
+      {modal?.type === "pumping" && (
+        <PumpingForm
           childId={data.child?.id}
           timerId={modal.timerId}
           entry={modal.entry}

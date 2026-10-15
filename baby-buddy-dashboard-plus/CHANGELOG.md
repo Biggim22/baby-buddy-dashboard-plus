@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.5.2 (Pumping like breastfeeding)
+
+- Pumping can be timed: quick entry (+) has a new pumping timer next to feeding, sleep and tummy time. Saving the running timer opens the pumping form without start and end, exactly like a feeding timer.
+- The pumping form asks for the side (left, right or both, default both). Baby Buddy's pumping record has no side field, so the side is stored as one Baby Buddy tag (`pumping-left`, `pumping-right` or `pumping-both`); other tags on the entry are kept.
+- "Pumping" is now also a quick-entry action under Track.
+- Rows in the pumping card show the side and duration and open the entry for editing or deleting.
+- Running timers show their translated name in the timer bar.
+- Existing pumping entries are not changed; entries without a side tag simply show no side.
+
 ## 2.5.1 (Shorter overview and flatter cards)
 
 - Overview now shows only the latest-event cards by default. The five history cards remain available in History and can be switched back on with the new `overview_show_history` setting (Settings → Overview settings). Existing visibility and order choices are kept.

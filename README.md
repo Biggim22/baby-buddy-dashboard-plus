@@ -14,11 +14,11 @@
 
 ## Tour in screenshots
 
-### New in 2.5.1 / Neu in 2.5.1
+### New in 2.5.2 / Neu in 2.5.2
 
-**Deutsch:** Die Oberfläche ist deutlich flacher. Es gibt fünf Bereiche statt sieben Tabs (**Übersicht**, **Verlauf**, **Entwicklung**, **Pflege & Medis**, **Aufgaben**), alle Einstellungen liegen hinter dem Zahnrad oben rechts, und die Schnellerfassung (+) zeigt alle Aktionen und Timer auf einer Ebene. Neu in 2.5.1: Die Übersicht zeigt nur noch die letzten Ereignisse; die Verlaufskarten stehen im Bereich Verlauf und lassen sich unter **Einstellungen → Übersicht-Einstellungen** wieder einblenden. Karten haben keine Trennlinie im Kopf mehr, Einträge keine eigenen Rahmen, und der Pflege-Kopf ist eine kompakte Liste. Daten und übrige Einstellungen bleiben unverändert.
+**Deutsch:** Die Oberfläche ist deutlich flacher. Es gibt fünf Bereiche statt sieben Tabs (**Übersicht**, **Verlauf**, **Entwicklung**, **Pflege & Medis**, **Aufgaben**), alle Einstellungen liegen hinter dem Zahnrad oben rechts, und die Schnellerfassung (+) zeigt alle Aktionen und Timer auf einer Ebene. Neu in 2.5.2: Abpumpen funktioniert wie Stillen, mit eigenem Timer in der Schnellerfassung und der Seite (links, rechts, beidseitig), die als Baby-Buddy-Tag gespeichert wird. Einträge in der Abpumpen-Karte lassen sich bearbeiten und löschen. Daten und übrige Einstellungen bleiben unverändert.
 
-**English:** The interface is much flatter. There are five areas instead of seven tabs (**Overview**, **History**, **Progress**, **Care & meds**, **Tasks**), all settings live behind the gear at the top right, and quick entry (+) shows every action and timer on one level. New in 2.5.1: Overview shows only the latest events; history cards live in History and can be switched back on under **Settings → Overview settings**. Cards no longer have a header divider, entries no longer have their own frames, and the Care header is a compact list. Data and other settings remain unchanged.
+**English:** The interface is much flatter. There are five areas instead of seven tabs (**Overview**, **History**, **Progress**, **Care & meds**, **Tasks**), all settings live behind the gear at the top right, and quick entry (+) shows every action and timer on one level. New in 2.5.2: pumping works like breastfeeding, with its own timer in quick entry and the side (left, right, both) stored as a Baby Buddy tag. Entries in the pumping card can be edited and deleted. Data and other settings remain unchanged.
 
 All screenshots use the built-in Baby Buddy demo data. / Alle Screenshots verwenden die integrierten Baby-Buddy-Demodaten.
 
