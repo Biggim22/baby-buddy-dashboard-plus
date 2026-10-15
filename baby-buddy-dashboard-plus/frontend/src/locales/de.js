@@ -385,6 +385,7 @@ export default {
     careToday: "Heute",
     careDaysAgo: "vor {days} Tagen",
     confirmCareDelete: "„{title}“ wirklich löschen?",
+    nav: { progress: "Entwicklung", careHealth: "Pflege & Medis" },
     careSettings: "Pflege-Einstellungen",
     addCare: "Pflege eintragen",
     editCare: "Pflegeeintrag bearbeiten",

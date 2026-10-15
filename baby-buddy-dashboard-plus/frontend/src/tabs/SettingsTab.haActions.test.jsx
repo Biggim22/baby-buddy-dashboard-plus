@@ -71,10 +71,10 @@ it("keeps card layout, medication list and diaper calculator on the single setti
   api.getLocalSettings.mockResolvedValue({ tab_hidden_cards: { growth: ["bmi"] }, tab_card_order: {}, medication_presets: [] });
   render(<SettingsTab childId={2} embedded />);
   expect(document.querySelector("details")).toBeNull();
-  const bmi = await screen.findByLabelText("Growth: BMI Trend");
+  const bmi = await screen.findByLabelText("Progress · Growth: BMI Trend");
   expect(bmi).not.toBeChecked();
   fireEvent.click(bmi);
-  fireEvent.click(screen.getByLabelText("Growth: Weight Trend"));
+  fireEvent.click(screen.getByLabelText("Progress · Growth: Weight Trend"));
   fireEvent.change(screen.getByPlaceholderText("Name of the new entry"), { target: { value: "Test medicine" } });
   fireEvent.click(screen.getByRole("button", { name: "Add" }));
   fireEvent.click(screen.getByLabelText("Show calculator at the end of Analytics"));

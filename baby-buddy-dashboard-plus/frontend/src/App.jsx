@@ -35,12 +35,10 @@ import "./styles.css";
 function getTabs(t) {
   return [
     { id: "overview", label: t("tab.overview"), icon: <Icons.Activity /> },
-    { id: "analytics", label: t("plus.analyticsTab"), icon: <Icons.TrendUp /> },
-    { id: "timeline", label: t("plus.timeline.title"), icon: <Icons.Activity /> },
-    { id: "growth", label: t("tab.growth"), icon: <Icons.TrendUp /> },
-    { id: "care", label: t("plus.care"), icon: <Icons.Heart /> },
+    { id: "timeline", label: t("plus.timeline.title"), icon: <Icons.Clock /> },
+    { id: "analytics", label: t("plus.nav.progress"), icon: <Icons.TrendUp /> },
+    { id: "care", label: t("plus.nav.careHealth"), icon: <Icons.Heart /> },
     { id: "tasks", label: t("plus.tasksTab"), icon: <Icons.Clipboard /> },
-    { id: "notes", label: t("tab.notesAndMeds"), icon: <Icons.Clipboard /> },
   ];
 }
 
@@ -149,7 +147,8 @@ export default function App() {
   const TABS = getTabs(t);
   const ACTION_GROUPS = getActionGroups(t);
   const TIMER_TYPES = getTimerTypes(t);
-  const tabCardPreferences = { hidden: tabCardSettings.hidden[activeTab] || [], order: tabCardSettings.order[activeTab] || [] };
+  // Each page still stores card preferences under its original section id.
+  const cardPrefs = (sectionId) => ({ hidden: tabCardSettings.hidden[sectionId] || [], order: tabCardSettings.order[sectionId] || [] });
 
   useEffect(() => {
     const active = tabNavRef.current?.querySelector(".tab-active");
@@ -347,66 +346,71 @@ export default function App() {
           />
         )}
         {activeTab === "analytics" && (
-          <AnalyticsTab
-            childId={data.child?.id}
-            hiddenCards={tabCardPreferences.hidden}
-            cardOrder={tabCardPreferences.order}
-            weights={data.weights}
-            heights={data.heights}
-            bmis={data.bmis}
-            weeklyFeedings={data.weeklyFeedings}
-            weeklySleep={data.weeklySleep}
-            weeklyChanges={data.weeklyChanges || data.monthlyChanges}
-            weeklyTummyTimes={data.weeklyTummyTimes}
-            temperatures={data.temperatures}
-            monthlyFeedings={data.monthlyFeedings}
-            monthlySleep={data.monthlySleep}
-            monthlyChanges={data.monthlyChanges}
-            weeklyPumping={data.weeklyPumping}
-            onDataChanged={data.refetch}
-          />
+          <div className="tab-stack">
+            <h2 className="tab-stack-heading">{t("tab.growth")}</h2>
+            <GrowthTab
+              hiddenCards={cardPrefs("growth").hidden}
+              cardOrder={cardPrefs("growth").order}
+              childId={data.child?.id}
+              childName={data.child?.first_name}
+              demoMode={data.demoMode}
+              birthDate={data.child?.birth_date}
+              childSex={data.childSex || "male"}
+              weights={data.weights}
+              heights={data.heights}
+              headCircumferences={data.headCircumferences}
+              bmis={data.bmis}
+              monthlyFeedings={data.monthlyFeedings}
+              monthlySleep={data.monthlySleep}
+              monthlyChanges={data.monthlyChanges}
+              onEditEntry={(type, entry) => setModal({ type, entry })}
+            />
+            <h2 className="tab-stack-heading">{t("plus.analyticsTab")}</h2>
+            <AnalyticsTab
+              childId={data.child?.id}
+              hiddenCards={cardPrefs("analytics").hidden}
+              cardOrder={cardPrefs("analytics").order}
+              weights={data.weights}
+              heights={data.heights}
+              bmis={data.bmis}
+              weeklyFeedings={data.weeklyFeedings}
+              weeklySleep={data.weeklySleep}
+              weeklyChanges={data.weeklyChanges || data.monthlyChanges}
+              weeklyTummyTimes={data.weeklyTummyTimes}
+              temperatures={data.temperatures}
+              monthlyFeedings={data.monthlyFeedings}
+              monthlySleep={data.monthlySleep}
+              monthlyChanges={data.monthlyChanges}
+              weeklyPumping={data.weeklyPumping}
+              onDataChanged={data.refetch}
+            />
+          </div>
         )}
         {activeTab === "timeline" && (
           <TimelineTab
-            hiddenCards={tabCardPreferences.hidden}
+            hiddenCards={cardPrefs("timeline").hidden}
             childId={data.child?.id}
             childName={data.child?.first_name || t("header.defaultBabyName")}
             onEditEntry={(type, entry) => setModal({ type, entry })}
           />
         )}
-        {activeTab === "growth" && (
-          <GrowthTab
-            hiddenCards={tabCardPreferences.hidden}
-            cardOrder={tabCardPreferences.order}
-            childId={data.child?.id}
-            childName={data.child?.first_name}
-            demoMode={data.demoMode}
-            birthDate={data.child?.birth_date}
-            childSex={data.childSex || "male"}
-            weights={data.weights}
-            heights={data.heights}
-            headCircumferences={data.headCircumferences}
-            bmis={data.bmis}
-            monthlyFeedings={data.monthlyFeedings}
-            monthlySleep={data.monthlySleep}
-            monthlyChanges={data.monthlyChanges}
-            onEditEntry={(type, entry) => setModal({ type, entry })}
-          />
+        {activeTab === "care" && (
+          <div className="tab-stack">
+            <CareTab childId={data.child?.id} hiddenCards={cardPrefs("care").hidden} cardOrder={cardPrefs("care").order} autoOpen={openCareForm} onAutoOpenHandled={() => setOpenCareForm(false)} onDataChanged={data.refetch} />
+            <h2 className="tab-stack-heading">{t("tab.notesAndMeds")}</h2>
+            <NotesTab
+              hiddenCards={cardPrefs("notes").hidden}
+              cardOrder={cardPrefs("notes").order}
+              childId={data.child?.id}
+              demoMode={data.demoMode}
+              notes={data.notes}
+              medications={data.medications}
+              onEditEntry={(type, entry) => setModal({ type, entry })}
+              onDataChanged={data.refetch}
+            />
+          </div>
         )}
-        {activeTab === "notes" && (
-          <NotesTab
-            hiddenCards={tabCardPreferences.hidden}
-            cardOrder={tabCardPreferences.order}
-            childId={data.child?.id}
-            demoMode={data.demoMode}
-            notes={data.notes}
-            medications={data.medications}
-            onEditEntry={(type, entry) => setModal({ type, entry })}
-            onDataChanged={data.refetch}
-          />
-        )}
-        {activeTab === "care" && <CareTab childId={data.child?.id} hiddenCards={tabCardPreferences.hidden} cardOrder={tabCardPreferences.order} autoOpen={openCareForm} onAutoOpenHandled={() => setOpenCareForm(false)} onDataChanged={data.refetch} />}
-        {activeTab === "tasks" && <TasksTab childId={data.child?.id} hiddenCards={tabCardPreferences.hidden} cardOrder={tabCardPreferences.order} />}
+        {activeTab === "tasks" && <TasksTab childId={data.child?.id} hiddenCards={cardPrefs("tasks").hidden} cardOrder={cardPrefs("tasks").order} />}
         </TabErrorBoundary>
       </main>
 
