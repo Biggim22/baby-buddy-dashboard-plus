@@ -149,10 +149,14 @@ export default function App() {
   const [tabCardSettings, setTabCardSettings] = useState({ hidden: {}, order: {} });
   const tabNavRef = useRef(null);
   const TABS = getTabs(t);
-  const ACTION_GROUPS = getActionGroups(t);
   const TIMER_TYPES = getTimerTypes(t);
   // Each page still stores card preferences under its original section id.
   const cardPrefs = (sectionId) => ({ hidden: tabCardSettings.hidden[sectionId] || [], order: tabCardSettings.order[sectionId] || [] });
+  // Pumping is switched on and off with its card (Settings → cards per tab).
+  const pumpingEnabled = !cardPrefs("analytics").hidden.includes("pumping");
+  const withoutDisabled = (actions) => actions.filter((action) => pumpingEnabled || action.id !== "pumping");
+  const ACTION_GROUPS = getActionGroups(t).map((group) => ({ ...group, actions: withoutDisabled(group.actions) }));
+  const QUICK_TIMER_TYPES = withoutDisabled(TIMER_TYPES);
 
   useEffect(() => {
     const active = tabNavRef.current?.querySelector(".tab-active");
@@ -422,7 +426,7 @@ export default function App() {
       <div className="fab-container">
         {showActions && (
           <div className="fab-panel fade-in" role="menu">
-            {[...ACTION_GROUPS, { id: "timer", label: t("header.timer"), actions: TIMER_TYPES.map((timerType) => ({ ...timerType, timer: true })) }].map((group) => (
+            {[...ACTION_GROUPS, { id: "timer", label: t("header.timer"), actions: QUICK_TIMER_TYPES.map((timerType) => ({ ...timerType, timer: true })) }].map((group) => (
               <div key={group.id} className="fab-section">
                 <div className="fab-section-label">{group.label}</div>
                 <div className="fab-grid">
