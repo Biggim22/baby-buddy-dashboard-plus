@@ -17,7 +17,6 @@ import AnalyticsTab from "./tabs/AnalyticsTab";
 import TimelineTab from "./tabs/TimelineTab";
 import CareTab from "./tabs/CareTab";
 import TasksTab from "./components/TaskPanel";
-import TabDisplaySettings from "./components/TabDisplaySettings";
 import { applyAppearance } from "./utils/appearance";
 import FeedingForm from "./components/forms/FeedingForm";
 import SleepForm from "./components/forms/SleepForm";
@@ -30,7 +29,6 @@ import HeightForm from "./components/forms/HeightForm";
 import HeadCircumferenceForm from "./components/forms/HeadCircumferenceForm";
 import BmiForm from "./components/forms/BmiForm";
 import MedicationForm from "./components/forms/MedicationForm";
-import TimerButton from "./components/TimerButton";
 import SettingsModal from "./components/SettingsModal";
 import "./styles.css";
 
@@ -57,6 +55,8 @@ function getActionGroups(t) {
         { id: "diaper", label: t("action.diaper"), icon: <Icons.Droplet />, color: colors.diaper },
         { id: "tummy", label: t("action.tummy"), icon: <Icons.Sun />, color: colors.tummy },
         { id: "care", label: t("plus.addCare"), icon: <Icons.Heart />, color: "#06B6D4" },
+        { id: "medication", label: t("action.medication"), icon: <Icons.Pill />, color: colors.medication },
+        { id: "note", label: t("action.note"), icon: <Icons.StickyNote />, color: colors.note },
       ],
     },
     {
@@ -67,20 +67,6 @@ function getActionGroups(t) {
         { id: "weight", label: t("action.weight"), icon: <Icons.Weight />, color: colors.growth },
         { id: "height", label: t("action.height"), icon: <Icons.Ruler />, color: colors.height },
         { id: "headCircumference", label: t("action.headCircumference"), icon: <Icons.HeadCircle />, color: colors.headCircumference },
-      ],
-    },
-    {
-      id: "medication",
-      label: t("group.medication"),
-      actions: [
-        { id: "medication", label: t("action.medication"), icon: <Icons.Pill />, color: colors.medication },
-      ],
-    },
-    {
-      id: "note",
-      label: t("group.note"),
-      actions: [
-        { id: "note", label: t("action.note"), icon: <Icons.StickyNote />, color: colors.note },
       ],
     },
   ];
@@ -130,27 +116,40 @@ export default function App() {
     if (!data.child?.id) return;
     let currentSettings;
     const refreshAppearance = () => currentSettings && applyAppearance(currentSettings);
-    const loadSettings = () => api.getLocalSettings(data.child.id).then((settings) => { currentSettings = settings; setTimeFormat(settings.time_format); refreshAppearance(); }).catch(() => {});
+    const loadSettings = () => api.getLocalSettings(data.child.id).then((settings) => {
+      currentSettings = settings;
+      setTimeFormat(settings.time_format);
+      refreshAppearance();
+      const asObject = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
+      setTabCardSettings({ hidden: asObject(settings.tab_hidden_cards), order: asObject(settings.tab_card_order) });
+    }).catch(() => {});
     loadSettings();
     const interval = window.setInterval(refreshAppearance, 30000);
     window.addEventListener("baby-buddy-settings-updated", loadSettings);
     return () => { window.clearInterval(interval); window.removeEventListener("baby-buddy-settings-updated", loadSettings); };
   }, [data.child?.id]);
 
+  // Saved settings remount the visible tab so it re-reads its local settings.
+  const [settingsVersion, setSettingsVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setSettingsVersion((version) => version + 1);
+    window.addEventListener("baby-buddy-settings-updated", bump);
+    return () => window.removeEventListener("baby-buddy-settings-updated", bump);
+  }, []);
+
   const errorLog = useSyncExternalStore(subscribeErrorLog, getErrorLog);
   const [activeTab, setActiveTab] = useState("overview");
   const [modal, setModal] = useState(null);
   const [showActions, setShowActions] = useState(false);
-  const [expandedGroup, setExpandedGroup] = useState("track");
-  const [showTimerPicker, setShowTimerPicker] = useState(false);
   const [editingTimerId, setEditingTimerId] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [openCareForm, setOpenCareForm] = useState(false);
-  const [tabCardPreferences, setTabCardPreferences] = useState({ hidden: [], order: [] });
+  const [tabCardSettings, setTabCardSettings] = useState({ hidden: {}, order: {} });
   const tabNavRef = useRef(null);
   const TABS = getTabs(t);
   const ACTION_GROUPS = getActionGroups(t);
   const TIMER_TYPES = getTimerTypes(t);
+  const tabCardPreferences = { hidden: tabCardSettings.hidden[activeTab] || [], order: tabCardSettings.order[activeTab] || [] };
 
   useEffect(() => {
     const active = tabNavRef.current?.querySelector(".tab-active");
@@ -330,15 +329,7 @@ export default function App() {
 
       {/* Tab Content */}
       <main className="tab-content">
-        {activeTab !== "overview" && <div className="page-settings-row"><TabDisplaySettings childId={data.child?.id} tabId={activeTab} onChange={setTabCardPreferences} cards={
-          activeTab === "analytics" ? [{ id: "summary", label: t("plus.analytics.summary") }, { id: "sleep", label: t("plus.analytics.rollingSleep") }, { id: "breast", label: t("plus.analytics.breastfeedingWeek") }, { id: "bottles", label: t("plus.analytics.bottlesWeek") }, { id: "diapers", label: t("plus.analytics.diapersWeek") }, { id: "temperature", label: t("plus.analytics.temperature") }, { id: "tummy", label: t("plus.analytics.tummyWeek") }, { id: "diaperCalculator", label: t("plus.diaperCalculator.title") }, { id: "pumping", label: t("plus.pumping.title") }]
-          : activeTab === "growth" ? [{ id: "summary", label: t("plus.settings.measurementSummary") }, { id: "weight", label: t("growth.weightTrend") }, { id: "height", label: t("growth.heightTrend") }, { id: "head", label: t("growth.headCircumferenceTrend") }, { id: "bmi", label: t("growth.bmiTrend") }, { id: "paediatricReport", label: t("report.paediatricTitle") }]
-          : activeTab === "care" ? [{ id: "summary", label: t("plus.settings.careSummary") }, { id: "history", label: t("plus.careHistory") }]
-          : activeTab === "tasks" ? [{ id: "tasks", label: t("plus.tasks.list") }, { id: "appointments", label: t("plus.tasks.appointments") }, { id: "calendar", label: t("plus.tasks.calendar") }]
-          : activeTab === "notes" ? [{ id: "medications", label: t("notes.medications") }, { id: "temperature", label: t("temperature.title") }, { id: "notes", label: t("notes.notesTitle") }]
-          : [{ id: "feeding", label: t("plus.analytics.averageFeedings") }, { id: "sleep", label: t("plus.analytics.sleep") }, { id: "diaper", label: t("plus.analytics.averageDiapers") }, { id: "medication", label: t("notes.medications") }, { id: "tummy", label: t("plus.analytics.tummyTime") }, { id: "note", label: t("notes.notesTitle") }]
-        } /></div>}
-        <TabErrorBoundary key={activeTab} onBack={() => setActiveTab("overview")}>
+        <TabErrorBoundary key={`${activeTab}-${settingsVersion}`} onBack={() => setActiveTab("overview")}>
         {activeTab === "overview" && (
           <OverviewTab
             childId={data.child?.id}
@@ -422,83 +413,40 @@ export default function App() {
       {/* Quick Action FAB */}
       <div className="fab-container">
         {showActions && (
-          <div className="fab-menu fade-in">
-            {ACTION_GROUPS.map((group) => {
-              const isOpen = expandedGroup === group.id;
-              return (
-                <div key={group.id} className="fab-group">
-                  <button
-                    className={`fab-group-label${isOpen ? " fab-group-label-active" : ""}`}
-                    onClick={() => setExpandedGroup(isOpen ? null : group.id)}
-                  >
-                    {group.label}
-                  </button>
-                  {isOpen && (
-                    <div className="fab-group-items">
-                      {group.actions.map((action) => (
-                        <button
-                          key={action.id}
-                          className="fab-action"
-                          onClick={() => {
-                            if (action.id === "care") {
-                              setActiveTab("care");
-                              setOpenCareForm(true);
-                            } else setModal({ type: action.id });
-                            setShowActions(false);
-                          }}
-                        >
-                          <span
-                            className="fab-action-icon"
-                            style={{ background: `${action.color}18`, color: action.color }}
-                          >
-                            {action.icon}
-                          </span>
-                          <span className="fab-action-label">{action.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+          <div className="fab-panel fade-in" role="menu">
+            {[...ACTION_GROUPS, { id: "timer", label: t("header.timer"), actions: TIMER_TYPES.map((timerType) => ({ ...timerType, timer: true })) }].map((group) => (
+              <div key={group.id} className="fab-section">
+                <div className="fab-section-label">{group.label}</div>
+                <div className="fab-grid">
+                  {group.actions.map((action) => (
+                    <button
+                      key={`${group.id}-${action.id}`}
+                      className="fab-tile"
+                      role="menuitem"
+                      onClick={() => {
+                        if (action.timer) timer.startTimer(action.id);
+                        else if (action.id === "care") {
+                          setActiveTab("care");
+                          setOpenCareForm(true);
+                        } else setModal({ type: action.id });
+                        setShowActions(false);
+                      }}
+                    >
+                      <span className="fab-action-icon" style={{ background: `${action.color}18`, color: action.color }}>
+                        {action.icon}
+                      </span>
+                      <span className="fab-tile-label">{action.label}</span>
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-        )}
-        {showTimerPicker && (
-          <div className="fab-menu fade-in" style={{ right: 76 }}>
-            {TIMER_TYPES.map((timerType) => (
-              <button
-                key={timerType.id}
-                className="fab-action"
-                onClick={() => {
-                  timer.startTimer(timerType.id);
-                  setShowTimerPicker(false);
-                }}
-              >
-                <span
-                  className="fab-action-icon"
-                  style={{ background: `${timerType.color}18`, color: timerType.color }}
-                >
-                  {timerType.icon}
-                </span>
-                <span className="fab-action-label">{timerType.label}</span>
-              </button>
+              </div>
             ))}
           </div>
         )}
-        <TimerButton
-          label={t("header.timer")}
-          icon={<Icons.Timer />}
-          color={colors.feeding}
-          active={false}
-          onClick={() => {
-            setShowTimerPicker(!showTimerPicker);
-            setShowActions(false);
-          }}
-        />
         <button
           className="fab-btn"
           style={{ background: showActions ? "var(--text-muted)" : "var(--accent)" }}
-          onClick={() => { setShowActions(!showActions); setShowTimerPicker(false); setExpandedGroup("track"); }}
+          onClick={() => setShowActions(!showActions)}
           aria-label={showActions ? t("header.closeQuickActions") : t("header.openQuickActions")}
         >
           <span style={{ transform: showActions ? "rotate(45deg)" : "none", transition: "transform 0.2s", display: "flex" }}>

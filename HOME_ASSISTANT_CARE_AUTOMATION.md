@@ -17,8 +17,8 @@ It can be selected from the normal automation editor and used by a Zigbee button
 1. Update Baby Buddy Dashboard Plus to 2.4.6 or newer.
 2. In HACS, add `https://github.com/Biggim22/baby-buddy-dashboard-plus` as an **Integration** custom repository, then download **Baby Buddy Dashboard Plus**. HACS is a separate, one-time prerequisite; installing the add-on alone does not install this integration.
 3. Restart Home Assistant when HACS requests it.
-4. In Dashboard Plus, open **Care → Settings → Log care from Home Assistant** through Home Assistant's sidebar.
-5. Enable only the Care types that Home Assistant may record for the current child and save the Care settings.
+4. In Dashboard Plus, open **Settings (gear, top right) → Home Assistant actions** through Home Assistant's sidebar.
+5. Enable only the Care types that Home Assistant may record for the current child and save the settings.
 6. Select **Create one-time pairing code**. The code is valid for ten minutes and is not a permanent secret. Generate it after installation and restart, not before.
 7. Go to **Settings → Devices & services → Add integration**, choose **Baby Buddy Dashboard Plus**, and enter the displayed pairing code.
 
@@ -44,7 +44,7 @@ This initial integration pairs one child with one Dashboard Plus add-on on the s
 
 ## Safety boundaries
 
-- The Dashboard Plus Care settings are the allow-list. Disabled types are rejected even when an automation requests them.
+- The Home Assistant actions section in the Dashboard Plus settings is the allow-list. Disabled types are rejected even when an automation requests them.
 - The integration accepts only the documented Care types, optional timestamp, optional note and custom-category label.
 - The native action records only local Plus Care data. It cannot run arbitrary Home Assistant services, execute code, or change Baby Buddy medication records.
 - Pairing codes expire after ten minutes and are invalidated as soon as pairing succeeds. Creating a new pairing rotates the previous integration credential for that child.
@@ -54,7 +54,7 @@ This initial integration pairs one child with one Dashboard Plus add-on on the s
 
 The following actions require **both the add-on and HACS integration at 2.4.7 or newer**. Updating only one component is not sufficient. The actions do not install or activate an Alexa Skill by themselves.
 
-Permissions are selected for the intended child under **Care → Settings → Log care from Home Assistant**. Care types remain a fixed allow-list. Active ordinary tasks are listed by title and ID and must be explicitly selected; appointments are not eligible. Measurement types default to disabled. Existing pairing credentials remain bound to their original child and can use only the permissions enabled for that child. Pairing also works when only a task or measurement type is enabled.
+Permissions are selected for the intended child under **Settings (gear, top right) → Home Assistant actions**. Care types remain a fixed allow-list. Active ordinary tasks are listed by title and ID and must be explicitly selected; appointments are not eligible. Measurement types default to disabled. Existing pairing credentials remain bound to their original child and can use only the permissions enabled for that child. Pairing also works when only a task or measurement type is enabled.
 
 | Home Assistant action | Input | Success response |
 | --- | --- | --- |
@@ -91,7 +91,7 @@ The local Alexa Skill/dispatcher project owns speech parsing, user confirmation,
 ## Troubleshooting (published 2.4.6)
 
 - **Integration cannot be reached:** ensure that the Baby Buddy Dashboard Plus add-on is installed and running, then create a new pairing code.
-- **Care type is rejected:** enable that type in **Care → Settings → Log care from Home Assistant** and save before using the action.
+- **Care type is rejected:** enable that type in **Settings (gear, top right) → Home Assistant actions** and save before using the action.
 - **Pairing code expired:** generate a new code. The old code cannot be reused.
 - **Legacy 2.4.5 REST command:** remove any experimental `rest_command` and related secret from Home Assistant. They are not required by 2.4.6.
 - **Missing integration icon:** the integration includes the Plus icon and logo in its own `brand/` directory, supported by Home Assistant 2026.3 and newer. If you installed a revision without these files, download the latest integration revision through HACS and restart Home Assistant. If necessary, refresh the browser. Updating only the app does not update the integration's images. See [Home Assistant's local brand-image documentation](https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api/).

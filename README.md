@@ -14,11 +14,11 @@
 
 ## Tour in screenshots
 
-### New in 2.4.8 / Neu in 2.4.8
+### New in 2.4.9 / Neu in 2.4.9
 
-**Deutsch:** Unter **Einstellungen → Darstellung → Modus → OLED Schwarz** gibt es jetzt einen echten schwarzen Hintergrund mit dunklen Karten und Dialogen. Du kannst OLED auch in der **zeitgesteuerten Darstellung** auswählen, zum Beispiel von 20:00 bis 06:00 mit dem Farbspektrum Rose. Bisherige Einstellungen bleiben unverändert. Die Gerätehelligkeit wird nicht geregelt; bei LCD-Displays bleibt die Hintergrundbeleuchtung aktiv. Die Versionsanzeige in den Einstellungen wird künftig automatisch aus der App-Version erstellt.
+**Deutsch:** Die Oberfläche ist flacher. Alle Einstellungen liegen jetzt an einem Ort, dem Zahnrad oben rechts: Darstellung, Übersicht, Karten je Tab, Pflege, Medikamentenliste, Windelrechner, Benachrichtigungen, Kalender und Home-Assistant-Aktionen stehen untereinander, ohne Aufklapper, mit Sprungleiste und einem gemeinsamen Speichern-Knopf. Die zusätzlichen Zahnräder in den einzelnen Tabs entfallen. Die Schnellerfassung (+) zeigt alle Aktionen und Timer direkt auf einer Ebene. Bisherige Einstellungen und Daten bleiben unverändert.
 
-**English:** Select **Settings → Appearance → Mode → OLED Black** for a true-black background with dark cards and dialogs. OLED is also available in **Scheduled appearance**, for example from 20:00 to 06:00 with the Rose colour scheme. Existing settings remain unchanged. Device brightness is not controlled, and LCD backlights remain active. The settings version label is now generated automatically from the app's release version.
+**English:** The interface is flatter. All settings now live in one place, the gear at the top right: appearance, overview, cards per tab, care, medication list, diaper calculator, notifications, calendar and Home Assistant actions are listed one after another, without collapsible sections, with a jump bar and a single save button. The extra gear buttons inside individual tabs are gone. Quick entry (+) shows every action and timer on a single level. Existing settings and data remain unchanged.
 
 All screenshots use the built-in Baby Buddy demo data. / Alle Screenshots verwenden die integrierten Baby-Buddy-Demodaten.
 
@@ -124,7 +124,7 @@ Die ursprüngliche MIT-Lizenz und die Urheberhinweise bleiben erhalten. Baby Bud
 - **Schlafanalyse:** Neben Kalendertagen steht ein Vergleich gleich langer, nicht überlappender Zeitfenster zur Verfügung. Damit bedeutet beispielsweise „vor 24–48 h“ tatsächlich die 24 Stunden vor dem aktuellsten Fenster und nicht eine aufsummierte 48-Stunden-Zahl.
 - **Wachstum und Gesundheit:** Gewicht, Größe, Kopfumfang, BMI und Körpertemperatur werden in verständlichen Kurven dargestellt. Die BMI-Berechnung berücksichtigt auch Messungen, die am selben oder an einem nahe gelegenen Tag erfasst wurden. WHO-Referenzkurven können optional eingeblendet werden.
 - **Pflege-Tracker:** Vollbad, Ganzkörperwäsche und Katzenwäsche sind hierarchisch eingeordnet: Ein Vollbad zählt auch als Ganzkörper- und Katzenwäsche, ohne dass die Anzeige widersprüchlich wird. Zusätzlich sind etwa Nägel schneiden, Kümmelöl und frei benannte Pflegearten möglich. Einträge lassen sich im selben Dialog bearbeiten oder löschen. Für feste, ausdrücklich freigegebene Pflegearten können Home-Assistant-Automationen (etwa Zigbee-Taster oder Alexa-Routinen) über eine native, einmalig gekoppelte Home-Assistant-Aktion einen lokalen Eintrag erfassen — ohne YAML-Dateien oder manuell verwaltete Tokens. Einrichtung und Sicherheitsgrenzen stehen in der [Automationsanleitung](HOME_ASSISTANT_CARE_AUTOMATION.md).
-- **Badeerinnerung:** Intervall und Uhrzeit für die Erinnerung an ein überfälliges Vollbad werden direkt in den Pflege-Einstellungen festgelegt.
+- **Badeerinnerung:** Intervall und Uhrzeit für die Erinnerung an ein überfälliges Vollbad werden in den Einstellungen im Abschnitt Pflege-Einstellungen festgelegt.
 - **Aufgaben und Termine:** Tägliche bzw. datumsbezogene Aufgaben können in der Übersicht erscheinen und nach dem Abhaken verschwinden. Einmalige Termine – etwa U-Untersuchungen oder Impfungen – besitzen einen eigenen Bereich, Terminzeit und eine Erinnerung am Termin- oder Vortag.
 - **Medikamente und Notizen:** Regelmäßige Medikamente bleiben von Alltagsroutinen getrennt. Dosierung und nächstmögliche Gabe lassen sich erfassen; Notizen und Medikamentenverlauf bleiben übersichtlich und paginiert.
 - **Benachrichtigungs-Test:** In den globalen Einstellungen können Notify-Dienste und optionale Media-Player ausgewählt, auf- und zugeklappt sowie mit einer frei zusammengesetzten Testmeldung geprüft werden. Die Uhrzeit wird unabhängig von der gewählten Sprache im 12- oder 24-Stunden-Format dargestellt.
@@ -161,7 +161,7 @@ Voraussetzungen: Die Plus-App ab 2.4.6 läuft auf derselben Home-Assistant-Insta
 2. Als Typ **Integration** wählen und das Repository hinzufügen.
 3. In HACS nach **Baby Buddy Dashboard Plus** suchen und herunterladen. Das Hinzufügen des Repositorys allein installiert die Integration noch nicht.
 4. **Home Assistant neu starten** – nicht nur die Dashboard-App.
-5. Das Dashboard über die HA-Seitenleiste öffnen, das gewünschte Kind auswählen und unter **Pflege → Einstellungen → Pflege aus Home Assistant erfassen** die erlaubten Pflegearten auswählen und speichern.
+5. Das Dashboard über die HA-Seitenleiste öffnen, das gewünschte Kind auswählen und unter **Einstellungen (Zahnrad oben rechts) → Home-Assistant-Aktionen** die erlaubten Pflegearten auswählen und speichern.
 6. **Erst jetzt den einmaligen Kopplungscode erzeugen.** Er ist zehn Minuten gültig.
 7. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** nach **Baby Buddy Dashboard Plus** suchen und den Code eingeben.
 8. Im Automationseditor die Aktion `baby_buddy_dashboard_plus.log_care` auswählen und eine freigegebene Pflegeart festlegen. Für eine eigene Pflegeart ist zusätzlich eine Kategorie erforderlich.
@@ -289,7 +289,7 @@ Prerequisites: Plus app 2.4.6 or newer running on the same Home Assistant instal
 2. Select **Integration** as the repository type and add it.
 3. Find **Baby Buddy Dashboard Plus** in HACS and download it. Adding the repository alone does not install the integration.
 4. **Restart Home Assistant**, not just the dashboard app.
-5. Open the dashboard through the HA sidebar, select the intended child, and enable and save the allowed Care types under **Care → Settings → Log care from Home Assistant**.
+5. Open the dashboard through the HA sidebar, select the intended child, and enable and save the allowed Care types under **Settings (gear, top right) → Home Assistant actions**.
 6. **Generate the one-time pairing code only now.** It expires after ten minutes.
 7. Open **Settings → Devices & services → Add integration**, search for **Baby Buddy Dashboard Plus**, and enter the code.
 8. In the automation editor, select `baby_buddy_dashboard_plus.log_care` and an enabled Care type. Custom Care also requires a category label.
