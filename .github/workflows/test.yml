@@ -3,21 +3,21 @@ name: Tests
 on:
   pull_request:
   push:
-    branches: [main, dashboard-improvements]
+    branches: [main]
 
 jobs:
   frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: baby-buddy-dashboard/frontend
+        working-directory: baby-buddy-dashboard-plus/frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-          cache-dependency-path: baby-buddy-dashboard/frontend/package-lock.json
+          cache-dependency-path: baby-buddy-dashboard-plus/frontend/package-lock.json
       - run: npm ci
       - run: npm test
       - run: npm run build
@@ -26,13 +26,13 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: baby-buddy-dashboard/backend
+        working-directory: baby-buddy-dashboard-plus/backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: pip
-          cache-dependency-path: baby-buddy-dashboard/backend/requirements-dev.txt
+          cache-dependency-path: baby-buddy-dashboard-plus/backend/requirements-dev.txt
       - run: pip install -r requirements-dev.txt
       - run: python -m pytest -q
