@@ -5,6 +5,7 @@
 - The dashboard reloads its data as soon as it is opened again, brought to the foreground, regains focus or the device is back online, instead of waiting for the next refresh interval.
 - While the dashboard is hidden in the background, the periodic refresh pauses. Browsers and the Home Assistant app throttle hidden pages, so those requests often stalled and ended as a connection error.
 - A failed refresh is retried once after two seconds before the header shows "Connection error", so a single dropped request no longer flags the connection as broken.
+- A 401 from Home Assistant (its ingress session is being renewed after the app was in the background) and 502–504 answers (Home Assistant or the add-on restarting) get up to three further attempts, four seconds apart, before the error appears.
 - The GitHub test workflow now runs against the Plus folders.
 
 ## 2.5.2 (Pumping like breastfeeding)

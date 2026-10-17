@@ -52,4 +52,13 @@ describe("useBabyData sync", () => {
     expect(result.current.error).toBeNull();
     expect(result.current.child?.first_name).toBe("Test");
   }, 10000);
+
+  it("waits out a short 401 while Home Assistant renews its session", async () => {
+    const unauthorized = Object.assign(new Error("API error 401: Unauthorized"), { status: 401 });
+    api.getChildren.mockRejectedValueOnce(unauthorized).mockRejectedValueOnce(unauthorized);
+    const { result } = renderHook(() => useBabyData());
+    await waitFor(() => expect(api.getChildren).toHaveBeenCalledTimes(3), { timeout: 12000 });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBeNull();
+  }, 20000);
 });
