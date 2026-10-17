@@ -14,11 +14,11 @@
 
 ## Tour in screenshots
 
-### New in 2.5.2 / Neu in 2.5.2
+### New in 2.5.3 / Neu in 2.5.3
 
-**Deutsch:** Die Oberfläche ist deutlich flacher. Es gibt fünf Bereiche statt sieben Tabs (**Übersicht**, **Verlauf**, **Entwicklung**, **Pflege & Medis**, **Aufgaben**), alle Einstellungen liegen hinter dem Zahnrad oben rechts, und die Schnellerfassung (+) zeigt wieder die aufklappbaren Gruppen, Timer starten über den Timer-Knopf daneben. Neu in 2.5.2: Abpumpen funktioniert wie Stillen, mit eigenem Timer und der Seite (links, rechts, beidseitig), die als Baby-Buddy-Tag gespeichert wird. Einträge in der Abpumpen-Karte lassen sich bearbeiten und löschen. Daten und übrige Einstellungen bleiben unverändert.
+**Deutsch:** Die Oberfläche ist deutlich flacher. Es gibt fünf Bereiche statt sieben Tabs (**Übersicht**, **Verlauf**, **Entwicklung**, **Pflege & Medis**, **Aufgaben**), alle Einstellungen liegen hinter dem Zahnrad oben rechts, und die Schnellerfassung (+) zeigt wieder die aufklappbaren Gruppen, Timer starten über den Timer-Knopf daneben. Neu in 2.5.3: Das Dashboard lädt seine Daten sofort neu, wenn es wieder geöffnet oder in den Vordergrund geholt wird, und meldet einen Verbindungsfehler erst nach einem zweiten Fehlversuch. Seit 2.5.2: Abpumpen funktioniert wie Stillen, mit eigenem Timer und der Seite (links, rechts, beidseitig), die als Baby-Buddy-Tag gespeichert wird. Einträge in der Abpumpen-Karte lassen sich bearbeiten und löschen. Daten und übrige Einstellungen bleiben unverändert.
 
-**English:** The interface is much flatter. There are five areas instead of seven tabs (**Overview**, **History**, **Progress**, **Care & meds**, **Tasks**), all settings live behind the gear at the top right, and quick entry (+) shows its collapsible groups again, with timers on the Timer button next to it. New in 2.5.2: pumping works like breastfeeding, with its own timer and the side (left, right, both) stored as a Baby Buddy tag. Entries in the pumping card can be edited and deleted. Data and other settings remain unchanged.
+**English:** The interface is much flatter. There are five areas instead of seven tabs (**Overview**, **History**, **Progress**, **Care & meds**, **Tasks**), all settings live behind the gear at the top right, and quick entry (+) shows its collapsible groups again, with timers on the Timer button next to it. New in 2.5.3: the dashboard reloads its data as soon as it is opened again or brought to the foreground, and reports a connection error only after a second failed attempt. Since 2.5.2: pumping works like breastfeeding, with its own timer and the side (left, right, both) stored as a Baby Buddy tag. Entries in the pumping card can be edited and deleted. Data and other settings remain unchanged.
 
 All screenshots use the built-in Baby Buddy demo data. / Alle Screenshots verwenden die integrierten Baby-Buddy-Demodaten.
 

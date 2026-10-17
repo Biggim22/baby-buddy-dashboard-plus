@@ -20,6 +20,10 @@ function fixChildPicture(c) {
   return c;
 }
 
+const RETRY_DELAY_MS = 2000;
+// Visibility, focus and pageshow often fire together when the app is resumed.
+const AUTO_REFRESH_MIN_GAP_MS = 5000;
+
 export function useBabyData() {
   const [children, setChildren] = useState([]);
   const [child, setChild] = useState(null);
@@ -50,8 +54,11 @@ export function useBabyData() {
   const [theme, setTheme] = useState(null);
   const intervalRef = useRef(null);
   const childIdRef = useRef(null);
+  const demoRef = useRef(false);
+  const syncInFlightRef = useRef(false);
+  const lastSyncAttemptRef = useRef(0);
 
-  const fetchData = useCallback(async (childId) => {
+  const fetchData = useCallback(async (childId, { throwOnError = false } = {}) => {
     try {
       const now = new Date();
 
@@ -146,6 +153,7 @@ export function useBabyData() {
       setLastSync(new Date());
       setError(null);
     } catch (err) {
+      if (throwOnError) throw err;
       setError(err.message);
     } finally {
       setLoading(false);
@@ -153,23 +161,61 @@ export function useBabyData() {
   }, []);
 
   const fetchAll = useCallback(async () => {
+    syncInFlightRef.current = true;
+    lastSyncAttemptRef.current = Date.now();
     try {
-      const childrenRes = await api.getChildren();
-      const allChildren = (childrenRes.results || []).map(fixChildPicture);
-      setChildren(allChildren);
+      // One quiet retry: a single dropped request (mobile network, a tab that was just
+      // resumed) should not flip the header to "connection error".
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          const childrenRes = await api.getChildren();
+          const allChildren = (childrenRes.results || []).map(fixChildPicture);
+          setChildren(allChildren);
 
-      const active = allChildren.find((c) => c.id === childIdRef.current) || allChildren[0] || null;
-      if (active) {
-        childIdRef.current = active.id;
-        setChild(active);
+          const active = allChildren.find((c) => c.id === childIdRef.current) || allChildren[0] || null;
+          if (active) {
+            childIdRef.current = active.id;
+            setChild(active);
+          }
+
+          await fetchData(active?.id, { throwOnError: true });
+          return;
+        } catch (err) {
+          if (attempt >= 1) {
+            setError(err.message);
+            setLoading(false);
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        }
       }
-
-      await fetchData(active?.id);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
+    } finally {
+      syncInFlightRef.current = false;
     }
   }, [fetchData]);
+
+  // Background refresh: skipped while the page is hidden (browsers throttle or freeze
+  // hidden tabs, so those requests tend to stall), and run as soon as it is shown again.
+  const autoRefresh = useCallback(() => {
+    if (demoRef.current || syncInFlightRef.current) return;
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    if (Date.now() - lastSyncAttemptRef.current < AUTO_REFRESH_MIN_GAP_MS) return;
+    fetchAll();
+  }, [fetchAll]);
+
+  useEffect(() => {
+    const onResume = () => autoRefresh();
+    document.addEventListener("visibilitychange", onResume);
+    window.addEventListener("focus", onResume);
+    window.addEventListener("online", onResume);
+    window.addEventListener("pageshow", onResume);
+    return () => {
+      document.removeEventListener("visibilitychange", onResume);
+      window.removeEventListener("focus", onResume);
+      window.removeEventListener("online", onResume);
+      window.removeEventListener("pageshow", onResume);
+    };
+  }, [autoRefresh]);
 
   const selectChild = useCallback(
     (id) => {
@@ -241,7 +287,6 @@ export function useBabyData() {
     [children, child]
   );
 
-  const demoRef = useRef(false);
 
   useEffect(() => {
     api
@@ -256,16 +301,16 @@ export function useBabyData() {
         } else {
           fetchAll();
           const ms = (cfg.refresh_interval || 30) * 1000;
-          intervalRef.current = setInterval(fetchAll, ms);
+          intervalRef.current = setInterval(autoRefresh, ms);
         }
       })
       .catch(() => {
         fetchAll();
-        intervalRef.current = setInterval(fetchAll, 30000);
+        intervalRef.current = setInterval(autoRefresh, 30000);
       });
 
     return () => clearInterval(intervalRef.current);
-  }, [fetchAll, loadMock]);
+  }, [fetchAll, autoRefresh, loadMock]);
 
   return {
     children,
