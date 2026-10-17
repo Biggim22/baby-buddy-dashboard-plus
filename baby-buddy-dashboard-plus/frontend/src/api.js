@@ -50,7 +50,9 @@ async function request(endpoint, options = {}) {
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`API error ${response.status}: ${text}${clockSkewSuffix(response)}`);
+    const error = new Error(`API error ${response.status}: ${text}${clockSkewSuffix(response)}`);
+    error.status = response.status;
+    throw error;
   }
 
   if (response.status === 204) return null;
@@ -64,7 +66,9 @@ async function localRequest(endpoint, options = {}) {
   });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`Local API error ${response.status}: ${text}`);
+    const error = new Error(`Local API error ${response.status}: ${text}`);
+    error.status = response.status;
+    throw error;
   }
   if (response.status === 204) return null;
   return response.json();

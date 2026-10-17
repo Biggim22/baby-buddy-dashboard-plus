@@ -21,6 +21,12 @@ function fixChildPicture(c) {
 }
 
 const RETRY_DELAY_MS = 2000;
+// Home Assistant answers 401 while it renews the ingress session after the app was in
+// the background, and 502-504 while it or the add-on restarts. Those resolve on their
+// own within seconds, so they get a few more attempts before the header shows an error.
+const TRANSIENT_STATUSES = new Set([401, 502, 503, 504]);
+const TRANSIENT_RETRIES = 3;
+const TRANSIENT_RETRY_DELAY_MS = 4000;
 // Visibility, focus and pageshow often fire together when the app is resumed.
 const AUTO_REFRESH_MIN_GAP_MS = 5000;
 
@@ -181,12 +187,13 @@ export function useBabyData() {
           await fetchData(active?.id, { throwOnError: true });
           return;
         } catch (err) {
-          if (attempt >= 1) {
+          const transient = TRANSIENT_STATUSES.has(err?.status);
+          if (attempt >= (transient ? TRANSIENT_RETRIES : 1)) {
             setError(err.message);
             setLoading(false);
             return;
           }
-          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+          await new Promise((resolve) => setTimeout(resolve, transient ? TRANSIENT_RETRY_DELAY_MS : RETRY_DELAY_MS));
         }
       }
     } finally {
