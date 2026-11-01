@@ -1,25 +1,51 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { api } from "../api";
+import { logError } from "../utils/errorLog";
+import {
+  dropLocalTimer,
+  getOutbox,
+  isLocalTimerId,
+  pendingLocalTimers,
+  pendingTimerDeletes,
+  rememberTimerStart,
+  resolveTimerId,
+  subscribeOutbox,
+  updateLocalTimerStart,
+} from "../utils/outbox";
+
+// Server timers plus timers started while the connection was down (still in the outbox),
+// minus timers whose discard or save is still waiting to be sent.
+function mergeTimers(serverTimers, childId) {
+  const deleted = pendingTimerDeletes();
+  const server = (serverTimers || [])
+    .filter((t) => !deleted.has(t.id))
+    .map((t) => ({ id: t.id, name: t.name || "timer", start: new Date(t.start) }));
+  const local = pendingLocalTimers()
+    .filter((t) => !childId || t.child == null || t.child === childId)
+    .map((t) => ({ id: t.id, name: t.name, start: new Date(t.start), pending: true }));
+  return [...server, ...local];
+}
 
 export function useTimers(serverTimers, childId) {
   const [activeTimers, setActiveTimers] = useState([]);
   const [elapsedMap, setElapsedMap] = useState({});
   const tickRef = useRef(null);
+  const outbox = useSyncExternalStore(subscribeOutbox, getOutbox);
+  // Timers stopped for saving stay hidden until the next server data arrives, even when
+  // the outbox changes in between.
+  const stoppedRef = useRef(new Set());
+  const lastServerTimersRef = useRef(serverTimers);
 
-  // Sync with server timers on data load
+  // Sync with server timers on data load and whenever the outbox changes
   useEffect(() => {
-    if (serverTimers?.length > 0) {
-      setActiveTimers(
-        serverTimers.map((t) => ({
-          id: t.id,
-          name: t.name || "timer",
-          start: new Date(t.start),
-        }))
-      );
-    } else {
-      setActiveTimers([]);
+    if (lastServerTimersRef.current !== serverTimers) {
+      lastServerTimersRef.current = serverTimers;
+      stoppedRef.current.clear();
     }
-  }, [serverTimers]);
+    const merged = mergeTimers(serverTimers, childId).filter((t) => !stoppedRef.current.has(t.id));
+    merged.forEach((t) => rememberTimerStart(t.id, t.start));
+    setActiveTimers(merged);
+  }, [serverTimers, childId, outbox]);
 
   // Tick elapsed time for all active timers
   useEffect(() => {
@@ -44,11 +70,20 @@ export function useTimers(serverTimers, childId) {
   const startTimer = useCallback(
     async (name) => {
       if (!childId) return;
-      const res = await api.createTimer({ child: childId, name });
-      setActiveTimers((prev) => [
-        ...prev,
-        { id: res.id, name: res.name || name, start: new Date(res.start) },
-      ]);
+      // Falls back to a local timer (sent later) when the connection is down.
+      let res;
+      try {
+        res = await api.createTimer({ child: childId, name });
+      } catch (err) {
+        logError("Start Timer", err.message);
+        return;
+      }
+      rememberTimerStart(res.id, res.start);
+      setActiveTimers((prev) =>
+        prev.some((t) => t.id === res.id)
+          ? prev
+          : [...prev, { id: res.id, name: res.name || name, start: new Date(res.start), pending: !!res.queued }]
+      );
     },
     [childId]
   );
@@ -56,12 +91,18 @@ export function useTimers(serverTimers, childId) {
   const stopTimer = useCallback(async (timerId) => {
     const timer = activeTimers.find((t) => t.id === timerId);
     if (!timer) return null;
+    stoppedRef.current.add(timerId);
     setActiveTimers((prev) => prev.filter((t) => t.id !== timerId));
     return { ...timer };
   }, [activeTimers]);
 
   const editTimer = useCallback(async (timerId, newStart) => {
-    await api.updateTimer(timerId, { start: newStart });
+    if (isLocalTimerId(resolveTimerId(timerId))) {
+      updateLocalTimerStart(timerId, newStart);
+    } else {
+      await api.updateTimer(resolveTimerId(timerId), { start: newStart });
+    }
+    rememberTimerStart(timerId, newStart);
     setActiveTimers((prev) =>
       prev.map((t) => (t.id === timerId ? { ...t, start: new Date(newStart) } : t))
     );
@@ -70,7 +111,11 @@ export function useTimers(serverTimers, childId) {
   const discardTimer = useCallback(async (timerId) => {
     const timer = activeTimers.find((t) => t.id === timerId);
     if (!timer) return;
-    await api.deleteTimer(timerId);
+    if (isLocalTimerId(resolveTimerId(timerId))) {
+      dropLocalTimer(timerId);
+    } else {
+      await api.deleteTimer(resolveTimerId(timerId));
+    }
     setActiveTimers((prev) => prev.filter((t) => t.id !== timerId));
   }, [activeTimers]);
 

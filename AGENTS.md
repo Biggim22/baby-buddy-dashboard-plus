@@ -20,7 +20,7 @@ A commit link under this repository's GitHub URL can also belong to the original
 
 | Last reviewed upstream commit | Reviewed | Decision |
 | --- | --- | --- |
-| `8f53981` Added CI to push images to DockerHub automatically | 2026-10-15 | Rechecked: no newer upstream commits. Not adopted: targets upstream paths and image. Idea planned for Plus in ROADMAP 3.0 (standalone self-hosting). |
+| `d947d2f` Merge PR #12 (HA add-on 1.7.8 for the DST fix) | 2026-11-01 | `b5fc0e9` (sleep-history cutoff as UTC instant, avoids the ambiguous hour at the DST fallback): Plus has the same code; recommended to re-implement, awaiting the maintainer's decision. `81037c0` and the merges only bump the upstream add-on version: not relevant. |
 
 ## Product rules
 

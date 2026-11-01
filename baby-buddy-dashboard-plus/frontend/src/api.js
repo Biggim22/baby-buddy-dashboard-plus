@@ -1,3 +1,4 @@
+import { flushOutbox, sendOrQueue } from "./utils/outbox";
 const API_BASE = "./api/baby-buddy";
 const CONFIG_PATH = "./api/config";
 const LOCAL_API_BASE = "./api/local";
@@ -13,9 +14,14 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_M
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } catch (err) {
+    // fetch() only rejects when no response arrived at all, so both cases are connection
+    // problems; the outbox queues writes that fail this way.
     if (err.name === "AbortError") {
-      throw new Error(`Request timed out after ${timeoutMs / 1000}s: ${url}`);
+      const timeout = new Error(`Request timed out after ${timeoutMs / 1000}s: ${url}`);
+      timeout.connection = true;
+      throw timeout;
     }
+    err.connection = true;
     throw err;
   } finally {
     clearTimeout(timeoutId);
@@ -39,7 +45,7 @@ function clockSkewSuffix(response) {
   return ` [clockCheck: device=${new Date(clientMs).toISOString()} server=${new Date(serverMs).toISOString()} deviceAheadByMs=${skewMs}]`;
 }
 
-async function request(endpoint, options = {}) {
+async function sendRequest(endpoint, options = {}) {
   const url = `${API_BASE}/${endpoint}`;
   const config = {
     headers: { "Content-Type": "application/json" },
@@ -57,6 +63,10 @@ async function request(endpoint, options = {}) {
 
   if (response.status === 204) return null;
   return response.json();
+}
+
+function request(endpoint, options = {}) {
+  return sendOrQueue(sendRequest, endpoint, options);
 }
 
 async function localRequest(endpoint, options = {}) {
@@ -182,6 +192,9 @@ export const api = {
   updateNote: (id, data) =>
     request(`notes/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteNote: (id) => request(`notes/${id}/`, { method: "DELETE" }),
+
+  // Writes that waited for the connection (see utils/outbox.js).
+  flushPendingWrites: () => flushOutbox(sendRequest),
 
   // Timers
   getTimers: () => request("timers/"),

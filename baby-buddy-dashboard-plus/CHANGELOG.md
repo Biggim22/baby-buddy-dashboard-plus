@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.5.4 (Nothing lost when the connection drops)
+
+- Baby Buddy writes that fail because the connection is down (no response, timeout, a Home Assistant 401 while its session renews, 408/429 or 502–504) are kept in an outbox in the browser's local storage and sent again, in order, at the start of the next sync. Errors Baby Buddy itself reports, such as a validation error, still appear in the form as before.
+- Starting a timer without a connection starts it locally. It shows in the timer bar like any other timer and is created in Baby Buddy with its original start time once the connection is back.
+- Saving an entry from a timer while the connection is down stores the entry with the timer's start and the moment of saving, and removes the timer from Baby Buddy afterwards. A timer that only existed locally is never sent.
+- Editing or discarding a local timer works without a connection as well.
+- A queued write that Baby Buddy rejects when it is finally sent is moved to the error log with its content instead of being dropped silently. Deleting a record that is already gone counts as done.
+- The refresh button moved from the settings dialog into the header, right next to the gear. It spins while syncing and shows an amber badge with the number of writes still waiting.
+- BMI values are not queued because they are recalculated on every sync. Dashboard Plus data stored in the add-on itself (care, tasks, settings) is not queued yet.
+- Limitation: when a request timed out, Baby Buddy may have received it after all; in that rare case the entry can appear twice and one copy has to be deleted by hand.
+
 ## 2.5.3 (Refresh when the dashboard comes back)
 
 - The dashboard reloads its data as soon as it is opened again, brought to the foreground, regains focus or the device is back online, instead of waiting for the next refresh interval.

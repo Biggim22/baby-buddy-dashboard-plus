@@ -75,6 +75,8 @@ export default {
   },
 
   header: {
+    refresh: "Refresh",
+    refreshPending: "Refresh ({count} entries waiting to be sent)",
     defaultBabyName: "Baby",
     loading: "Loading...",
     connectionError: "Connection error",
@@ -225,7 +227,6 @@ export default {
     connected: "Connected",
     connectionError: "Connection error",
     lastSync: "Last sync {time}",
-    refreshNow: "Refresh now",
     errorLog: "Error Log",
     noErrorsRecorded: "No errors recorded. Save failures will show up here.",
     exportLog: "Export log",

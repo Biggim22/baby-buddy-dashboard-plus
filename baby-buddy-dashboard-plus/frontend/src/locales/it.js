@@ -75,6 +75,8 @@ export default {
   },
 
   header: {
+    refresh: "Aggiorna",
+    refreshPending: "Aggiorna ({count} voci in attesa di invio)",
     defaultBabyName: "Bebè",
     loading: "Caricamento…",
     connectionError: "Errore di connessione",
@@ -225,7 +227,6 @@ export default {
     connected: "Connesso",
     connectionError: "Errore di connessione",
     lastSync: "Ultima sincronizzazione: {time}",
-    refreshNow: "Aggiorna ora",
     errorLog: "Registro errori",
     noErrorsRecorded: "Nessun errore registrato. Qui compariranno gli errori di salvataggio.",
     exportLog: "Esporta registro",
