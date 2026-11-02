@@ -74,7 +74,9 @@ export function useBabyData() {
       const todayMax = `${todayStr}T23:59:59`;
 
       const twentyFourAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const sleepMin = `${toLocalISODate(twentyFourAgo)}T${String(twentyFourAgo.getHours()).padStart(2, "0")}:${String(twentyFourAgo.getMinutes()).padStart(2, "0")}:00`;
+      // An exact instant (UTC) instead of local wall-clock time: during the autumn clock
+      // change the same local hour happens twice, so a local cutoff is ambiguous.
+      const sleepMin = twentyFourAgo.toISOString();
 
       const weekAgo = new Date(now);
       // Eight calendar days ensure the oldest displayed rolling 24-hour window

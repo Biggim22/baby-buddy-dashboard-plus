@@ -62,3 +62,23 @@ describe("useBabyData sync", () => {
     expect(result.current.error).toBeNull();
   }, 20000);
 });
+
+describe("rolling sleep-history cutoff", () => {
+  it.each([
+    ["the first repeated hour of the autumn clock change", "2026-10-25T00:46:31.553Z", "2026-10-24T00:46:31.553Z"],
+    ["the second repeated hour of the autumn clock change", "2026-10-25T01:46:31.553Z", "2026-10-24T01:46:31.553Z"],
+    ["the day after the autumn clock change", "2026-10-26T01:46:31.553Z", "2026-10-25T01:46:31.553Z"],
+    ["the spring clock change", "2026-03-29T01:46:31.553Z", "2026-03-28T01:46:31.553Z"],
+  ])("asks for exactly the last 24 hours across %s", async (_label, now, expectedCutoff) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(now));
+    try {
+      const { result } = renderHook(() => useBabyData());
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      const sleepCall = api.getSleep.mock.calls.find(([params]) => params.limit === 100);
+      expect(sleepCall[0].start_min).toBe(expectedCutoff);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

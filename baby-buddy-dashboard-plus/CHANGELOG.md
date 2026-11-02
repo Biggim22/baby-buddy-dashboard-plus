@@ -9,6 +9,7 @@
 - A queued write that Baby Buddy rejects when it is finally sent is moved to the error log with its content instead of being dropped silently. Deleting a record that is already gone counts as done.
 - The refresh button moved from the settings dialog into the header, right next to the gear. It spins while syncing and shows an amber badge with the number of writes still waiting.
 - BMI values are not queued because they are recalculated on every sync. Dashboard Plus data stored in the add-on itself (care, tasks, settings) is not queued yet.
+- The 24-hour sleep window now starts at an exact instant instead of local wall-clock time. During the autumn clock change the same local hour happens twice, which made the cutoff ambiguous. Re-implemented from upstream `b5fc0e9`.
 - Limitation: when a request timed out, Baby Buddy may have received it after all; in that rare case the entry can appear twice and one copy has to be deleted by hand.
 
 ## 2.5.3 (Refresh when the dashboard comes back)
