@@ -139,7 +139,7 @@ export default function App() {
       setTimeFormat(settings.time_format);
       refreshAppearance();
       const asObject = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
-      setTabCardSettings({ hidden: asObject(settings.tab_hidden_cards), order: asObject(settings.tab_card_order) });
+      setTabCardSettings({ hidden: asObject(settings.tab_hidden_cards), order: asObject(settings.tab_card_order), timelineSort: settings.timeline_sort_order === "oldest" ? "oldest" : "newest" });
     }).catch(() => {});
     loadSettings();
     const interval = window.setInterval(refreshAppearance, 30000);
@@ -432,6 +432,7 @@ export default function App() {
         )}
         {activeTab === "timeline" && (
           <TimelineTab
+            sortOrder={tabCardSettings.timelineSort || "newest"}
             onOpenSection={setActiveTab}
             hiddenCards={cardPrefs("timeline").hidden}
             childId={data.child?.id}

@@ -45,6 +45,16 @@ async def test_feeding_defaults_are_validated_and_child_scoped(monkeypatch, tmp_
         plus_local.SettingsPatch(last_feeding_type="invalid")
 
 
+async def test_timeline_sort_order_defaults_persists_and_is_child_scoped(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    assert (await plus_local.get_local_settings(1))["timeline_sort_order"] == "newest"
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(timeline_sort_order="oldest"))
+    assert (await plus_local.get_local_settings(1))["timeline_sort_order"] == "oldest"
+    assert (await plus_local.get_local_settings(2))["timeline_sort_order"] == "newest"
+    with pytest.raises(ValidationError):
+        plus_local.SettingsPatch(timeline_sort_order="invalid")
+
+
 async def test_care_pagination_and_latest_are_independent(monkeypatch, tmp_path):
     use_temp_database(monkeypatch, tmp_path)
     with plus_local.db() as connection:

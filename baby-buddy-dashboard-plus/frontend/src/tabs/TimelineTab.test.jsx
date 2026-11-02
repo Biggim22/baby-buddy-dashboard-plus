@@ -19,7 +19,7 @@ it("shows care and confirmed tasks during sleep with links to their source secti
     { id: "task-2-2026-10-31", kind: "task", time: "2026-11-01T11:15:00", title: "Vitamin D", due_date: "2026-10-31" },
   ] });
   const open = vi.fn();
-  render(<TimelineTab childId={1} onOpenSection={open} />);
+  render(<TimelineTab childId={1} sortOrder="oldest" onOpenSection={open} />);
   await screen.findByText(/Task confirmed: Vitamin D/);
   expect(screen.getByText(/Ears cleaned/)).toBeInTheDocument();
   expect(screen.getAllByText("During:")).toHaveLength(2);
@@ -81,4 +81,17 @@ it("restores per-child filters and allows an empty selection without affecting o
   expect(screen.getAllByRole("checkbox").filter(box => box.checked)).toHaveLength(1);
   view.rerender(<TimelineTab childId={1} />);
   expect(screen.getAllByRole("checkbox").every(box => !box.checked)).toBe(true);
+});
+
+it("defaults to newest first and reverses endpoints with the setting", async () => {
+  api.getSleep.mockResolvedValue({ results: [{ id: 1, start: "2026-11-01T10:00:00", end: "2026-11-01T12:00:00" }] });
+  const view = render(<TimelineTab childId={1} />);
+  await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(2));
+  expect(screen.getAllByRole("listitem")[0]).toHaveTextContent("End");
+  expect(view.container.querySelectorAll(".timeline-bracket-first")).toHaveLength(1);
+  expect(view.container.querySelectorAll(".timeline-bracket-last")).toHaveLength(1);
+  view.rerender(<TimelineTab childId={1} sortOrder="oldest" />);
+  expect(screen.getAllByRole("listitem")[0]).toHaveTextContent("Start");
+  fireEvent.click(screen.getByRole("checkbox", { name: "Sleep" }));
+  expect(view.container.querySelectorAll(".timeline-bracket")).toHaveLength(0);
 });

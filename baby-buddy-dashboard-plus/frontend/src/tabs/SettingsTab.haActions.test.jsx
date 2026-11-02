@@ -35,6 +35,9 @@ it("preserves drafts across the five settings tabs and saves all groups together
   fireEvent.click(screen.getByRole("tab", { name: "Appearance" }));
   fireEvent.change(screen.getByLabelText("Mode"), { target: { value: "oled" } });
   fireEvent.click(screen.getByRole("tab", { name: "Content" }));
+  const sort = screen.getByLabelText("History sort order");
+  expect(sort).toHaveValue("newest");
+  fireEvent.change(sort, { target: { value: "oldest" } });
   const medicationInput = screen.getByPlaceholderText("Name of the new entry");
   const disclosure = medicationInput.closest("details");
   fireEvent.click(disclosure.querySelector("summary"));
@@ -48,7 +51,7 @@ it("preserves drafts across the five settings tabs and saves all groups together
   expect(screen.getByText(`Baby Buddy Dashboard Plus ${__APP_VERSION__}`)).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
   await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({
-    time_format: "12h", theme: "oled", medication_presets: [expect.objectContaining({ name: "Draft medicine" })],
+    time_format: "12h", theme: "oled", timeline_sort_order: "oldest", medication_presets: [expect.objectContaining({ name: "Draft medicine" })],
   })));
   expect(api.getLocalSettings).toHaveBeenCalledTimes(1);
 });

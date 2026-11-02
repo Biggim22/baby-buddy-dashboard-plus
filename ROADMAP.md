@@ -11,6 +11,12 @@ Baby Buddy Dashboard Plus remains a dashboard and companion for [Baby Buddy](htt
 - **Research** — worth investigating before a product decision.
 - **Candidate** — useful idea, but not committed to a release.
 
+## 2.6.1 — Completed
+
+- Coloured brackets connect interval endpoints across intervening events; overlapping intervals use separate lanes and clipped day-boundary markers remain connected.
+- History defaults to newest entries first. The sort order can be reversed under Content / Cards per tab and is persisted per child in Plus settings.
+- App-only update; the optional integration remains at 2.6.0. No health-record migration.
+
 ## 2.6.0 — Completed
 
 The first block unifies calendar/rolling sleep calculations across Overview,

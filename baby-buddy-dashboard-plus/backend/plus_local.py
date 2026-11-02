@@ -292,6 +292,7 @@ def ensure_child_defaults(child_id: int) -> None:
             "media_player_mode": "custom",
             "calendar_entities": json.dumps([]),
             "analytics_sleep_period_mode": "rolling",
+            "timeline_sort_order": "newest",
             "tab_hidden_cards": json.dumps({}),
             "tab_card_order": json.dumps({}),
             "analytics_diaper_calculator_enabled": "false",
@@ -493,6 +494,7 @@ class SettingsPatch(BaseModel):
     media_player_mode: Literal["custom", "alexa_tts", "alexa_announce"] | None = None
     calendar_entities: list[str] | None = None
     analytics_sleep_period_mode: Literal["rolling", "calendar"] | None = None
+    timeline_sort_order: Literal["newest", "oldest"] | None = None
     tab_hidden_cards: dict[str, list[str]] | None = None
     tab_card_order: dict[str, list[str]] | None = None
     analytics_diaper_calculator_enabled: bool | None = None

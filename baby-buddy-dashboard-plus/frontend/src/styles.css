@@ -795,7 +795,11 @@ body { overflow-x: hidden; }
 /* Six equally sized tabs fill the available width. Phones use two rows. */
 .tab-nav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .tab-nav .tab-btn { min-width: 0; justify-content: center; white-space: normal; }
-.interval-timeline { list-style: none; margin: 0; padding: 0 0 0 60px; }
+.interval-timeline { --marker-space: 60px; list-style: none; margin: 0; padding: 0 0 0 calc(var(--marker-space) + var(--bracket-gutter, 0px)); }
+.interval-timeline::before { left: calc(var(--bracket-gutter, 0px) + 20px); }
+.timeline-bracket { position: absolute; pointer-events: none; left: calc(-1 * var(--marker-space) - var(--bracket-gutter) + var(--bracket-lane) * 12px); top: 0; bottom: 0; width: 8px; border-left: 3px solid var(--bracket-color); }
+.timeline-bracket-first { top: 38px; border-top: 3px solid var(--bracket-color); border-top-left-radius: 6px; }
+.timeline-bracket-last { bottom: auto; height: 38px; border-bottom: 3px solid var(--bracket-color); border-bottom-left-radius: 6px; }
 .interval-timeline .timeline-event-card { border-inline-start: 3px solid var(--event-color); align-items: flex-start; text-align: left; }
 .timeline-event-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .timeline-event-heading time { font-family: var(--mono); font-weight: 700; }
@@ -804,7 +808,10 @@ body { overflow-x: hidden; }
 .timeline-during { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; font-size: 12px; }
 .timeline-context { border-inline-start: 3px solid; padding: 3px 7px; color: var(--text); }
 @media (max-width: 600px) {
-  .interval-timeline { padding-left: 50px; }
+  .interval-timeline { --marker-space: 50px; }
+  .interval-timeline::before { left: calc(var(--bracket-gutter, 0px) + 16px); }
+  .timeline-bracket-first { top: 35px; }
+  .timeline-bracket-last { height: 35px; }
   .tab-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tab-btn { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 4px; padding: 7px 2px; font-size: 11px; line-height: 1.15; white-space: normal; text-align: center; }
   .tab-btn svg { display: block; width: 18px; height: 18px; }

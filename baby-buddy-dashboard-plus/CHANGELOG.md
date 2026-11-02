@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.1
+
+- Connect interval endpoints in History with coloured brackets; overlapping intervals use separate lanes, including across intervening point events and day-boundary continuation markers.
+- Default History to newest entries first. Add a per-child, server-persisted newest-first/oldest-first setting under Content / Cards per tab. Reversing display order never changes event timestamps or start/end meanings.
+- No health records are changed. The optional Home Assistant integration remains at 2.6.0; these changes require only the app update.
+
 ## 2.6.0
 
 - Add multi-select History filters, an all-categories reset and a sleep/feeding shortcut. Remember the selection per child on the current device; hidden categories also stay out of interval context labels.

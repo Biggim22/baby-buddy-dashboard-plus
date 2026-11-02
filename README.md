@@ -1,5 +1,8 @@
 # Baby Buddy Dashboard Plus
 
+> **2.6.1** — Der Verlauf verbindet zusammengehörige Einträge mit farbigen Klammern. Neueste Einträge stehen standardmäßig oben; die Reihenfolge lässt sich unter Einstellungen → Inhalte → Karten je Tab umkehren.
+> History now connects matching interval endpoints with coloured brackets. Newest entries appear first by default; reverse the order under Settings → Content → Cards per tab. Only the app needs updating; the optional integration remains at 2.6.0.
+
 > **2.6.0** — Neue Schlafauswertungen, getrennte Tabs für Auswertung und Entwicklung, filterbarer Verlauf mit Anfang/Ende und parallelen Ereignissen, kompakter Pflegeverlauf mit „Ohren geputzt“, Einstellungs-Tabs und OLED-Verbesserungen. Fütterungsart und -methode werden pro Kind gemerkt. Vor dem Update sichern; der kompakte Kinderarzt-Bericht folgt später.
 > Shared sleep calculations, separate Analytics and Progress tabs, filterable interval-aware History, paginated Care with ear-care tracking, settings tabs and OLED improvements. Remembers feeding type and method per child. Back up before updating; the compact paediatric report remains planned for a later release.
 

@@ -38,6 +38,7 @@ const DEFAULTS = {
   media_player_mode: "custom",
   calendar_entities: [],
   analytics_sleep_period_mode: "rolling",
+  timeline_sort_order: "newest",
   tab_hidden_cards: {},
   tab_card_order: {},
   medication_presets: [],
@@ -245,6 +246,7 @@ export default function SettingsTab({ childId, embedded = false, group = null })
         media_player_mode: settings.media_player_mode,
         calendar_entities: settings.calendar_entities,
         analytics_sleep_period_mode: settings.analytics_sleep_period_mode,
+        timeline_sort_order: settings.timeline_sort_order,
         tab_hidden_cards: settings.tab_hidden_cards,
         tab_card_order: settings.tab_card_order,
         medication_presets: normalizePresets(settings.medication_presets),
@@ -361,6 +363,10 @@ export default function SettingsTab({ childId, embedded = false, group = null })
       </>)}
 
       {section("cards", t("plus.settings.cardsPerTab"), <Icons.Clipboard />, "#64748B", <>
+        <label>{t("timelineSortOrder")}<select value={settings.timeline_sort_order} onChange={event => update("timeline_sort_order", event.target.value)}>
+          <option value="newest">{t("timelineNewest")}</option>
+          <option value="oldest">{t("timelineOldest")}</option>
+        </select></label>
         <p className="form-hint">{t("plus.settings.cardsPerTabHint")}</p>
         {getTabCardGroups(t).map(({ tabId, label, cards }) => {
           const ordered = orderCards(cards, settings.tab_card_order[tabId]);

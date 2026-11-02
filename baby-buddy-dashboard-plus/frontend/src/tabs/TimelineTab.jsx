@@ -4,7 +4,7 @@ import { Icons } from "../components/Icons";
 import { colors } from "../utils/colors";
 import { formatElapsedHM, formatTime } from "../utils/formatters";
 import { useTranslation, getLocale } from "../locales";
-import { buildTimeline, loadTimelinePages, timelineBounds } from "../utils/timeline";
+import { buildTimeline, layoutTimeline, loadTimelinePages, timelineBounds } from "../utils/timeline";
 import { getTabCardGroups } from "../utils/tabCards";
 
 function localDate(value) {
@@ -22,7 +22,7 @@ function readFilters(childId) {
   return Object.keys(icons);
 }
 
-export default function TimelineTab({ childId, childName, hiddenCards = [], onEditEntry, onOpenSection }) {
+export default function TimelineTab({ childId, childName, hiddenCards = [], sortOrder = "newest", onEditEntry, onOpenSection }) {
   const t = useTranslation();
   const [day, setDay] = useState(() => localDate(new Date()));
   const [data, setData] = useState(empty);
@@ -90,6 +90,7 @@ export default function TimelineTab({ childId, childName, hiddenCards = [], onEd
     return buildTimeline(points.filter(visible), intervals.filter(visible), day);
   }, [data, day, childName, hiddenCards, t, selectedKey]);
 
+  const layout = useMemo(() => layoutTimeline(events, sortOrder), [events, sortOrder]);
   const moveDay = direction => {
     const next = new Date(`${day}T12:00:00`);
     next.setDate(next.getDate() + direction);
@@ -113,15 +114,17 @@ export default function TimelineTab({ childId, childName, hiddenCards = [], onEd
       </label>)}</div>
     </fieldset>
     <p className="form-hint">{t("timelineGuide")}</p>
+    <p className="form-hint">{t(sortOrder === "oldest" ? "timelineOldest" : "timelineNewest")}</p>
     <p className="form-hint">{t("timelineCoverage")}</p>
     {loading && <div className="empty-state">{t("plus.loading")}</div>}
     {error && <div className="preview-error">{error}</div>}
     {!loading && !error && events.length === 0 && <div className="empty-state">{t("timelineFilterEmpty")}</div>}
-    {!loading && !error && <ol className="timeline-list interval-timeline">
-      {events.map(event => {
+    {!loading && !error && <ol className="timeline-list interval-timeline" style={{ "--bracket-gutter": `${layout.lanes ? layout.lanes * 12 + 8 : 0}px` }}>
+      {layout.rows.map(event => {
         const Icon = icons[event.type];
         const phase = event.phase === "point" ? "" : t(`timelinePhases.${event.phase}`);
         return <li className={`timeline-event timeline-phase-${event.phase}`} key={event.id} style={{ "--event-color": event.color }}>
+          {event.brackets.map(bracket => <span key={bracket.id} aria-hidden="true" className={`timeline-bracket timeline-bracket-${bracket.edge}`} style={{ "--bracket-lane": bracket.lane, "--bracket-color": bracket.color }} />)}
           <div className="timeline-marker" style={{ "--timeline-color": event.color }}><Icon /></div>
           <div className="timeline-event-card">
             <div className="timeline-event-heading"><time dateTime={event.time}>{formatTime(event.time)}</time>{phase && <span className="timeline-phase-label">{phase}</span>}</div>

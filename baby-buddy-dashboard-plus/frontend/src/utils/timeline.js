@@ -28,6 +28,31 @@ export function buildTimeline(points, intervals, day, now = new Date()) {
       (!item.end || +new Date(item.end) > +new Date(row.time))).map(item => item) }));
 }
 
+// Allocate separate lanes for overlapping pairs in display order. Row-sized
+// segments follow variable card heights without DOM measurements or fixed pixels.
+export function layoutTimeline(rows, order = "newest") {
+  const displayed = order === "oldest" ? [...rows] : [...rows].reverse();
+  const pairs = new Map();
+  displayed.forEach((row, index) => {
+    if (!row.intervalId) return;
+    const pair = pairs.get(row.intervalId);
+    if (pair) pair.last = index;
+    else pairs.set(row.intervalId, { id: row.intervalId, first: index, last: index, color: row.color });
+  });
+  const lanes = [];
+  const segments = displayed.map(() => []);
+  for (const pair of pairs.values()) {
+    if (pair.first === pair.last) continue;
+    let lane = lanes.findIndex(end => end < pair.first);
+    if (lane < 0) lane = lanes.length;
+    lanes[lane] = pair.last;
+    for (let i = pair.first; i <= pair.last; i++) {
+      segments[i].push({ ...pair, lane, edge: i === pair.first ? "first" : i === pair.last ? "last" : "middle" });
+    }
+  }
+  return { lanes: lanes.length, rows: displayed.map((row, i) => ({ ...row, brackets: segments[i] })) };
+}
+
 export async function loadTimelinePages(fetchPage, params) {
   const results = [];
   const seen = new Set();
