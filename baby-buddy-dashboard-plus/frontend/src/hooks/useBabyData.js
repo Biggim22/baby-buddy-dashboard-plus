@@ -55,6 +55,7 @@ export function useBabyData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastSync, setLastSync] = useState(null);
+  const [syncing, setSyncing] = useState(false);
   const [unitSystem, setUnitSystem] = useState("metric");
   const [childSex, setChildSex] = useState("");
   const [theme, setTheme] = useState(null);
@@ -73,7 +74,9 @@ export function useBabyData() {
       const todayMax = `${todayStr}T23:59:59`;
 
       const twentyFourAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const sleepMin = `${toLocalISODate(twentyFourAgo)}T${String(twentyFourAgo.getHours()).padStart(2, "0")}:${String(twentyFourAgo.getMinutes()).padStart(2, "0")}:00`;
+      // An exact instant (UTC) instead of local wall-clock time: during the autumn clock
+      // change the same local hour happens twice, so a local cutoff is ambiguous.
+      const sleepMin = twentyFourAgo.toISOString();
 
       const weekAgo = new Date(now);
       // Eight calendar days ensure the oldest displayed rolling 24-hour window
@@ -167,13 +170,20 @@ export function useBabyData() {
   }, []);
 
   const fetchAll = useCallback(async () => {
+    if (demoRef.current) return;
     syncInFlightRef.current = true;
     lastSyncAttemptRef.current = Date.now();
+    setSyncing(true);
     try {
       // One quiet retry: a single dropped request (mobile network, a tab that was just
       // resumed) should not flip the header to "connection error".
       for (let attempt = 0; ; attempt += 1) {
         try {
+          // Writes that failed while the connection was down go out first, so the data
+          // fetched next already contains them.
+          try {
+            await api.flushPendingWrites();
+          } catch { /* a failed flush keeps its queue; the fetch below reports the error */ }
           const childrenRes = await api.getChildren();
           const allChildren = (childrenRes.results || []).map(fixChildPicture);
           setChildren(allChildren);
@@ -198,6 +208,7 @@ export function useBabyData() {
       }
     } finally {
       syncInFlightRef.current = false;
+      setSyncing(false);
     }
   }, [fetchData]);
 
@@ -345,6 +356,7 @@ export function useBabyData() {
     loading,
     error,
     lastSync,
+    syncing,
     unitSystem,
     childSex,
     theme,

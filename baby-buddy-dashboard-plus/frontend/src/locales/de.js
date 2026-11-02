@@ -75,6 +75,8 @@ export default {
   },
 
   header: {
+    refresh: "Aktualisieren",
+    refreshPending: "Aktualisieren ({count} Einträge warten auf das Senden)",
     defaultBabyName: "Baby",
     loading: "Laden...",
     connectionError: "Verbindungsfehler",
@@ -225,7 +227,6 @@ export default {
     connected: "Verbunden",
     connectionError: "Verbindungsfehler",
     lastSync: "Letzte Synchronisierung {time}",
-    refreshNow: "Jetzt aktualisieren",
     errorLog: "Fehlerprotokoll",
     noErrorsRecorded: "Keine Fehler erfasst. Fehlgeschlagene Speicherungen werden hier angezeigt.",
     exportLog: "Protokoll exportieren",

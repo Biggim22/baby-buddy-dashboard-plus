@@ -2,6 +2,7 @@ import { Component, useState, useEffect, useRef, useSyncExternalStore } from "re
 import { useBabyData } from "./hooks/useBabyData";
 import { api } from "./api";
 import { useTimers } from "./hooks/useTimers";
+import { getOutbox, subscribeOutbox } from "./utils/outbox";
 import { UnitContext } from "./utils/units";
 import { Icons } from "./components/Icons";
 import { colors } from "./utils/colors";
@@ -122,6 +123,7 @@ export default function App() {
   useSyncExternalStore(subscribeTimeFormat, getTimeFormat);
   const data = useBabyData();
   const timer = useTimers(data.timers, data.child?.id);
+  const pendingWrites = useSyncExternalStore(subscribeOutbox, getOutbox).length;
 
   useEffect(() => {
     if (data.theme) applyTheme(data.theme);
@@ -224,6 +226,21 @@ export default function App() {
               {formatTime(data.lastSync)}
             </span>
           )}
+          <button
+            className={`refresh-btn${data.syncing ? " refresh-btn-syncing" : ""}`}
+            style={{ position: "relative" }}
+            onClick={() => data.refetch()}
+            disabled={data.syncing}
+            title={pendingWrites > 0 ? t("header.refreshPending", { count: pendingWrites }) : t("header.refresh")}
+            aria-label={pendingWrites > 0 ? t("header.refreshPending", { count: pendingWrites }) : t("header.refresh")}
+          >
+            <Icons.Refresh />
+            {pendingWrites > 0 && (
+              <span className="header-badge header-badge-pending">
+                {pendingWrites > 9 ? "9+" : pendingWrites}
+              </span>
+            )}
+          </button>
           <button
             className="refresh-btn"
             style={{ position: "relative" }}
@@ -636,7 +653,6 @@ export default function App() {
           connected={!data.error}
           lastSync={data.lastSync}
           errorMessage={data.error}
-          onRefresh={data.refetch}
           onClose={() => setShowSettings(false)}
         />
       )}

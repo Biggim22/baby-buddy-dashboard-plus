@@ -16,7 +16,7 @@ function formatTime(iso) {
   });
 }
 
-export default function SettingsModal({ childId, connected, lastSync, errorMessage, onRefresh, onClose }) {
+export default function SettingsModal({ childId, connected, lastSync, errorMessage, onClose }) {
   const t = useTranslation();
   const log = useSyncExternalStore(subscribeErrorLog, getErrorLog);
   const language = useSyncExternalStore(subscribeLanguage, getLanguage);
@@ -72,26 +72,6 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
             <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 4 }}>{errorMessage}</div>
           )}
         </div>
-        <button
-          onClick={onRefresh}
-          title={t("settings.refreshNow")}
-          aria-label={t("settings.refreshNow")}
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 8,
-            border: "1px solid var(--border)",
-            background: "var(--bg)",
-            color: "var(--text-muted)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <Icons.Activity />
-        </button>
       </div>
 
       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 10 }}>
