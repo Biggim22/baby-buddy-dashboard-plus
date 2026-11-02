@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../api";
 import Modal, { FormField, FormSelect, FormInput, FormButton, FormError } from "../Modal";
 import DeleteButton from "../DeleteButton";
@@ -46,9 +46,23 @@ export default function FeedingForm({ childId, timerId, entry, onDone, onClose }
   const [notes, setNotes] = useState(entry?.notes || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const touched = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+    touched.current = false;
+    if (entry) { setType(entry.type); setMethod(entry.method); return; }
+    setType("breast milk"); setMethod("bottle");
+    if (childId) api.getLocalSettings(childId).then(settings => {
+      if (cancelled || touched.current) return;
+      if (TYPES.some(item => item.value === settings.last_feeding_type)) setType(settings.last_feeding_type);
+      if (METHODS.some(item => item.value === settings.last_feeding_method)) setMethod(settings.last_feeding_method);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [childId, entry]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    touched.current = true;
     const amountValue = amount.trim() ? parseLocalizedNumber(amount) : null;
     if (amount.trim() && (amountValue == null || amountValue < 0)) {
       setError(t("common.invalidNumber"));
@@ -111,10 +125,10 @@ export default function FeedingForm({ childId, timerId, entry, onDone, onClose }
     <Modal title={isEdit ? t("feedingForm.editTitle") : t("feedingForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
         <FormField label={t("form.type")}>
-          <FormSelect options={TYPES} value={type} onChange={(e) => setType(e.target.value)} />
+          <FormSelect options={TYPES} value={type} onChange={(e) => { touched.current = true; setType(e.target.value); }} />
         </FormField>
         <FormField label={t("form.method")}>
-          <FormSelect options={METHODS} value={method} onChange={(e) => setMethod(e.target.value)} />
+          <FormSelect options={METHODS} value={method} onChange={(e) => { touched.current = true; setMethod(e.target.value); }} />
         </FormField>
         <FormField label={t("feedingForm.amount", { unit: units.volume })}>
         <FormInput type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("common.optional")} />

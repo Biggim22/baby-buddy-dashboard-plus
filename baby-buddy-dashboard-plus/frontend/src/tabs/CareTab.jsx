@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { Icons } from "../components/Icons";
 import Modal, {
@@ -16,7 +16,7 @@ import { logError } from "../utils/errorLog";
 import { CARAWAY_SUPPOSITORY, createPresetId, hasPresetNamed, normalizePresets, planCarawayMigration, runCarawayMigration } from "../utils/medicationPresets";
 
 // caraway_suppository stays here only so existing entries keep their label until they are transferred.
-const CARE_TYPES = ["bath", "full_wash", "quick_wash", CARAWAY_SUPPOSITORY, "caraway_oil", "nail_care", "skin_care", "custom"];
+const CARE_TYPES = ["bath", "full_wash", "quick_wash", CARAWAY_SUPPOSITORY, "caraway_oil", "ear_care", "nail_care", "skin_care", "custom"];
 
 function getCareLabels(t) {
   return Object.fromEntries(CARE_TYPES.map((type) => [type, t(`plus.careTypes.${type}`)]));
@@ -184,6 +184,12 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
   const t = useTranslation();
   const labels = getCareLabels(t);
   const [entries, setEntries] = useState([]);
+  const [latest, setLatest] = useState([]);
+  const [count, setCount] = useState(0);
+  const [nextOffset, setNextOffset] = useState(null);
+  const [moreLoading, setMoreLoading] = useState(false);
+  const requestVersion = useRef(0);
+  const moreBusy = useRef(false);
   const [editing, setEditing] = useState(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -197,33 +203,58 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
   }, [autoOpen, onAutoOpenHandled]);
 
   const load = useCallback(async () => {
-    if (!childId) return;
+    const version = ++requestVersion.current;
+    moreBusy.current = false;
+    setMoreLoading(false);
+    setEntries([]);
+    setLatest([]);
+    setNextOffset(null);
+    setCount(0);
+    if (!childId) { setLoading(false); return; }
     setLoading(true);
     try {
       await api.bootstrapLocal(childId);
       const [response, localSettings, caraway] = await Promise.all([
-        api.getCare(childId),
+        api.getCare(childId, 10),
         api.getLocalSettings(childId),
         api.getCare(childId, 1000, CARAWAY_SUPPOSITORY),
       ]);
+      if (version !== requestVersion.current) return;
       setEntries(response.results || []);
+      setLatest(response.latest || response.results || []);
+      setCount(response.count ?? response.results?.length ?? 0);
+      setNextOffset(response.next_offset ?? null);
       setCarawayEntries(caraway.results || []);
       setSettings(localSettings || {});
       setError("");
     } catch (err) {
-      setError(err.message);
+      if (version === requestVersion.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }, [childId]);
 
-  useEffect(() => void load(), [load]);
+  useEffect(() => { void load(); return () => { requestVersion.current++; }; }, [load]);
 
-  const careStats = useMemo(() => {
-    const latest = (types) => entries.find((entry) => types.includes(entry.care_type));
-    // A more complete wash also counts as each less extensive level.
-    return { latestBath: latest(["bath"]), latestFullWash: latest(["bath", "full_wash"]), latestQuickWash: latest(["bath", "full_wash", "quick_wash"]), latestCare: entries[0] };
-  }, [entries]);
+  const loadMore = async () => {
+    if (moreBusy.current || nextOffset == null) return;
+    moreBusy.current = true;
+    setMoreLoading(true);
+    setError("");
+    const version = requestVersion.current;
+    try {
+      const response = await api.getCare(childId, 10, "", nextOffset);
+      if (version !== requestVersion.current) return;
+      setEntries(current => [...current, ...(response.results || []).filter(item => !current.some(old => old.id === item.id))]);
+      setCount(response.count);
+      setNextOffset(response.next_offset ?? null);
+      setLatest(response.latest || []);
+    } catch (err) {
+      if (version === requestVersion.current) setError(err.message);
+    } finally {
+      if (version === requestVersion.current) { moreBusy.current = false; setMoreLoading(false); }
+    }
+  };
 
   const headerCards = useMemo(() => {
     const saved = Array.isArray(settings.care_header_types)
@@ -237,9 +268,9 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
     };
     return selected.map((type) => ({
       type,
-      entry: entries.find((entry) => (matchingTypes[type] || [type]).includes(entry.care_type)),
+      entry: latest.find((entry) => (matchingTypes[type] || [type]).includes(entry.care_type)),
     }));
-  }, [entries, settings.care_header_types]);
+  }, [latest, settings.care_header_types]);
 
   const ago = (value) => {
     if (!value) return t("plus.notRecorded");
@@ -287,6 +318,11 @@ export default function CareTab({ childId, hiddenCards = [], cardOrder = [], aut
             </div>
           ))}
         </div>
+        {!loading && <div className="preview-toolbar">
+          <span aria-live="polite">{t("carePageCount", { shown: entries.length, total: count })}</span>
+          {nextOffset != null && <button className="secondary-inline" onClick={loadMore} disabled={moreLoading}>{moreLoading ? t("plus.loading") : t("careShowMore")}</button>}
+          {entries.length > 10 && <button className="secondary-inline" onClick={load} disabled={moreLoading}>{t("careShowLess")}</button>}
+        </div>}
       </SectionCard>}
       {editing !== undefined && (
         <CareForm childId={childId} entry={editing} onClose={() => setEditing(undefined)} onSaved={load} />

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { api } from "./api";
+import { resetOutbox } from "./utils/outbox";
 
 /** api.js always calls the global fetch - stub it so every test in this file
  * runs with zero real network calls (per project constraint: mocked tests only). */
@@ -22,6 +23,44 @@ function jsonResponse(body, { status = 200, headers = {} } = {}) {
 }
 
 describe("api request building", () => {
+  it("remembers queued feeding choices only after the server confirms replay", async () => {
+    resetOutbox();
+    fetch.mockResolvedValueOnce(jsonResponse({}, { status: 503 }));
+    const result = await api.createFeeding({ child: 3, type: "formula", method: "bottle" });
+    expect(result.queued).toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    fetch.mockResolvedValueOnce(jsonResponse({ id: 9 })).mockResolvedValueOnce(jsonResponse({}));
+    await api.flushPendingWrites();
+    expect(fetch.mock.calls[2][0]).toBe("./api/local/settings/3");
+    resetOutbox();
+  });
+  it("remembers only confirmed new feeding choices, without copying other fields", async () => {
+    fetch.mockResolvedValueOnce(jsonResponse({ id: 7 })).mockResolvedValueOnce(jsonResponse({}));
+    await api.createFeeding({ child: 2, type: "formula", method: "bottle", amount: 120, notes: "not a preference" });
+    expect(fetch.mock.calls[1][0]).toBe("./api/local/settings/2");
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ last_feeding_type: "formula", last_feeding_method: "bottle" });
+    fetch.mockClear(); fetch.mockResolvedValueOnce(jsonResponse({ id: 7 }));
+    await api.updateFeeding(7, { type: "breast milk", method: "left breast" });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  it("does not fail or replay a saved feeding when remembering defaults fails", async () => {
+    fetch.mockResolvedValueOnce(jsonResponse({ id: 7 })).mockResolvedValueOnce(jsonResponse({}, { status: 500 }));
+    await expect(api.createFeeding({ child: 2, type: "formula", method: "bottle" })).resolves.toEqual({ id: 7 });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+  it("loads every sleep page through the local proxy and preserves overlap filters", async () => {
+    fetch.mockResolvedValueOnce(jsonResponse({ results: [{ id: 1 }], next: "https://upstream.invalid/api/sleep/?offset=1" }));
+    fetch.mockResolvedValueOnce(jsonResponse({ results: [{ id: 2 }], next: null }));
+    const response = await api.getSleep({ child: 1, end_min: "2026-11-01T00:00:00Z" });
+    expect(response.results.map(x => x.id)).toEqual([1, 2]);
+    expect(fetch.mock.calls[1][0]).toContain("./api/baby-buddy/sleep/?");
+    expect(fetch.mock.calls[1][0]).toContain("offset=1");
+    expect(fetch.mock.calls[1][0]).toContain("end_min=");
+  });
+  it("rejects a stuck sleep page instead of reporting truncated data as complete", async () => {
+    fetch.mockResolvedValue(jsonResponse({ results: [{ id: 1 }], next: "next" }));
+    await expect(api.getSleep()).rejects.toThrow("no progress");
+  });
   it("GETs against the local proxy path, not a direct Baby Buddy URL", async () => {
     fetch.mockResolvedValueOnce(jsonResponse({ results: [] }));
     await api.getChildren();

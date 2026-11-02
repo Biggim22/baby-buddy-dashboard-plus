@@ -1,6 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import SettingsTab from "./SettingsTab";
+import SettingsModal from "../components/SettingsModal";
 import { api } from "../api";
 import { setLanguage } from "../locales";
 
@@ -23,6 +24,45 @@ beforeEach(() => {
   ] });
   api.updateLocalSettings.mockResolvedValue({});
   api.createCarePairing.mockResolvedValue({ pairing_code: "TEST2345", expires_at: "2026-10-02T12:10:00+02:00" });
+});
+
+it("preserves drafts across the five settings tabs and saves all groups together", async () => {
+  render(<SettingsModal childId={2} connected onClose={vi.fn()} />);
+  await waitFor(() => expect(api.getLocalSettings).toHaveBeenCalledTimes(1));
+  await screen.findByText("Test task · ID 7");
+  expect(screen.getAllByRole("tab")).toHaveLength(5);
+  fireEvent.change(screen.getByLabelText("Time format"), { target: { value: "12h" } });
+  fireEvent.click(screen.getByRole("tab", { name: "Appearance" }));
+  fireEvent.change(screen.getByLabelText("Mode"), { target: { value: "oled" } });
+  fireEvent.click(screen.getByRole("tab", { name: "Content" }));
+  const medicationInput = screen.getByPlaceholderText("Name of the new entry");
+  const disclosure = medicationInput.closest("details");
+  fireEvent.click(disclosure.querySelector("summary"));
+  fireEvent.change(medicationInput, { target: { value: "Draft medicine" } });
+  fireEvent.click(screen.getByRole("tab", { name: "Home Assistant" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Content" }));
+  expect(medicationInput).toHaveValue("Draft medicine");
+  expect(disclosure).toHaveAttribute("open");
+  fireEvent.click(screen.getByRole("button", { name: "Add" }));
+  fireEvent.click(screen.getByRole("tab", { name: "System" }));
+  expect(screen.getByText(`Baby Buddy Dashboard Plus ${__APP_VERSION__}`)).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
+  await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({
+    time_format: "12h", theme: "oled", medication_presets: [expect.objectContaining({ name: "Draft medicine" })],
+  })));
+  expect(api.getLocalSettings).toHaveBeenCalledTimes(1);
+});
+
+it("supports keyboard tab navigation and does not save on switching tabs", async () => {
+  render(<SettingsModal childId={2} connected onClose={vi.fn()} />);
+  const general = screen.getByRole("tab", { name: "General" });
+  general.focus();
+  fireEvent.keyDown(general, { key: "ArrowRight" });
+  expect(screen.getByRole("tab", { name: "Appearance" })).toHaveFocus();
+  expect(screen.getByRole("tab", { name: "Appearance" })).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(document.activeElement, { key: "End" });
+  expect(screen.getByRole("tab", { name: "System" })).toHaveFocus();
+  expect(api.updateLocalSettings).not.toHaveBeenCalled();
 });
 
 it("requires explicit task opt-in and permits task-only pairing", async () => {
@@ -70,7 +110,7 @@ it("offers OLED manually and in the schedule without changing existing defaults"
 it("keeps card layout, medication list and diaper calculator on the single settings page", async () => {
   api.getLocalSettings.mockResolvedValue({ tab_hidden_cards: { growth: ["bmi"] }, tab_card_order: {}, medication_presets: [] });
   render(<SettingsTab childId={2} embedded />);
-  expect(document.querySelector("details")).toBeNull();
+  expect(document.querySelector("details")).toBeInTheDocument();
   const bmi = await screen.findByLabelText("Progress · Growth: BMI Trend");
   expect(bmi).not.toBeChecked();
   fireEvent.click(bmi);

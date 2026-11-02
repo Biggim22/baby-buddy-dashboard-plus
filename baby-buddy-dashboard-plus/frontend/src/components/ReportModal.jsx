@@ -52,7 +52,7 @@ export default function ReportModal({ childId, demoMode, onClose }) {
     Promise.all([
       api.getFeedings(timeParams),
       api.getChanges(changeParams),
-      api.getSleep(timeParams),
+      api.getSleep({ child: childId, end_min: new Date(startMin).toISOString(), start_max: new Date().toISOString(), ordering: "-start" }),
       api.getTummyTimes(timeParams),
     ])
       .then(([feedingsRes, changesRes, sleepRes, tummyRes]) => {
@@ -105,6 +105,7 @@ export default function ReportModal({ childId, demoMode, onClose }) {
 
   return (
     <Modal title={t("report.growthTitle")} onClose={onClose} maxWidth={720}>
+      <p className="form-hint">{t("sleepCalendarTitle")}. {t("sleepExplanation")}</p>
       <ReportRangeBar
         rangeDays={rangeDays}
         setRangeDays={setRangeDays}

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.6.0-rc.1 (Release candidate — device acceptance pending)
+
+- Share sleep interval calculations across Overview, Analytics and reports, including midnight, DST, overlapping records and complete sleep pagination.
+- Restore separate Analytics and Progress tabs; place History last and fill navigation width.
+- Show interval starts/ends and concurrent events in History, including local Care and actual task completions.
+- Paginate Care in groups of ten with independent whole-history summaries; add optional ear-care tracking and explicitly permitted HA actions.
+- Group settings into five tabs and collapsible sections while retaining unsaved drafts.
+- Remember confirmed new feeding type/method per child, including successful offline replay; never copy amounts or notes.
+- Improve quick-entry category visibility and use true-black OLED surface tokens.
+- App and optional integration both have this release candidate version. Back up before testing. Device acceptance is pending.
+- Not included: compact half-page paediatric report, timer-start feeding drafts, editable HA sidebar title. The report's sleep duration correction is included.
+- Existing offline-write limitation remains: an ambiguous network failure can cause a replay duplicate; inspect records if a save response was lost.
+
 ## 2.5.5 (Timers start again)
 
 - Fixed: starting a timer failed with "Date/time can not be in the future" in 2.5.4. The timer request carried the phone's own clock time, and a phone running even half a second ahead of the Baby Buddy server was rejected. Online timers are started by Baby Buddy itself again, as before 2.5.4.

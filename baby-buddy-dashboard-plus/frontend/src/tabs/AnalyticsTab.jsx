@@ -20,6 +20,7 @@ import { useUnits } from "../utils/units";
 import { getLanguage, getLocale, getTimeFormat, useTranslation } from "../locales";
 import DiaperSizeCalculator from "../components/DiaperSizeCalculator";
 import PumpingCard from "../components/PumpingCard";
+import { sleepWindows } from "../utils/sleep";
 
 function dateKey(value) {
   const date = new Date(value);
@@ -47,38 +48,6 @@ function formatMinutes(value) {
   }
   if (minutes < 60) return `${minutes} min`;
   return `${Math.floor(minutes / 60)}h ${minutes % 60}min`;
-}
-
-function nextBoundary(cursor, isDay) {
-  const next = new Date(cursor);
-  if (isDay) {
-    next.setHours(20, 0, 0, 0);
-  } else if (cursor.getHours() < 6) {
-    next.setHours(6, 0, 0, 0);
-  } else {
-    next.setDate(next.getDate() + 1);
-    next.setHours(6, 0, 0, 0);
-  }
-  return next;
-}
-
-function sleepWindowMinutes(entries, startWindow, endWindow, mode) {
-  let milliseconds = 0;
-  entries.forEach((entry) => {
-    let cursor = new Date(Math.max(new Date(entry.start).getTime(), startWindow.getTime()));
-    const entryEnd = entry.end ? new Date(entry.end) : endWindow;
-    const end = new Date(Math.min(entryEnd.getTime(), endWindow.getTime()));
-    while (cursor < end) {
-      const isDay = cursor.getHours() >= 6 && cursor.getHours() < 20;
-      const boundary = nextBoundary(cursor, isDay);
-      const segmentEnd = new Date(Math.min(boundary.getTime(), end.getTime()));
-      if (mode === "total" || (mode === "day" && isDay) || (mode === "night" && !isDay)) {
-        milliseconds += segmentEnd - cursor;
-      }
-      cursor = segmentEnd;
-    }
-  });
-  return Math.round(milliseconds / 60000);
 }
 
 function breastData(entries, locale) {
@@ -200,24 +169,11 @@ export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = []
   const [sleepPeriodMode, setSleepPeriodMode] = useState("rolling");
   const [breastChartMode, setBreastChartMode] = useState(() => { try { return localStorage.getItem("bbd_breast_chart_mode") || "count"; } catch { return "count"; } });
   const updateBreastChartMode = (mode) => { setBreastChartMode(mode); try { localStorage.setItem("bbd_breast_chart_mode", mode); } catch { /* preference remains active for this session */ } };
-  const rollingSleep = useMemo(() => Array.from({ length: 7 }, (_, index) => {
-    const end = new Date(Date.now() - index * 24 * 3600000);
-    const start = new Date(end.getTime() - 24 * 3600000);
-    return {
-      day: end.toLocaleDateString(locale, { weekday: "short" }),
-      period: windowLabel(start, end, locale),
-      minuten: sleepWindowMinutes(weeklySleep, start, end, sleepMode),
-    };
-  }).reverse(), [weeklySleep, sleepMode, locale]);
-  const calendarSleep = useMemo(() => Array.from({ length: 7 }, (_, index) => {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - (6 - index));
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    return { day: start.toLocaleDateString(locale, { weekday: "short" }), period: windowLabel(start, end, locale), minuten: sleepWindowMinutes(weeklySleep, start, end, sleepMode) };
-  }), [weeklySleep, sleepMode, locale]);
-  const shownSleep = sleepPeriodMode === "calendar" ? calendarSleep : rollingSleep;
+  const shownSleep = useMemo(() => sleepWindows(weeklySleep, sleepPeriodMode).map(window => ({
+    day: (sleepPeriodMode === "calendar" ? window.start : window.end).toLocaleDateString(locale, { weekday: "short" }) + (window.partial ? " *" : ""),
+    period: windowLabel(window.start, window.end, locale),
+    minuten: window[sleepMode],
+  })), [weeklySleep, sleepMode, sleepPeriodMode, locale]);
   useEffect(() => { if (childId) api.getLocalSettings(childId).then((value) => setSleepPeriodMode(value.analytics_sleep_period_mode || "rolling")).catch(() => {}); }, [childId]);
   const updateSleepPeriodMode = (mode) => { setSleepPeriodMode(mode); if (childId) api.updateLocalSettings(childId, { analytics_sleep_period_mode: mode }).catch(() => {}); };
   const breasts = useMemo(() => breastData(weeklyFeedings, locale), [weeklyFeedings, locale]);
@@ -250,7 +206,8 @@ export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = []
         <div className="analytics-summary-card" style={{ "--summary-color": colors.sleep }}><Icons.Moon /><span>{t("plus.analytics.averageSleep")}</span><strong>{averageSleep ? formatMinutes(averageSleep * 60) : "—"}</strong><small>{t("plus.analytics.perDay30")}</small></div>
         <div className="analytics-summary-card" style={{ "--summary-color": colors.diaper }}><Icons.Droplet /><span>{t("plus.analytics.averageDiapers")}</span><strong>{averageDiapers ? `${averageDiapers}×` : "—"}</strong><small>{t("plus.analytics.perDay30")}</small></div>
       </div>}
-      {!hiddenCards.includes("sleep") && <SectionCard style={cardStyle("sleep")} title={sleepPeriodMode === "calendar" ? t("plus.analytics.calendarSleep") : t("plus.analytics.rollingSleep")} icon={<Icons.Moon />} color={colors.sleep} actions={<SleepPeriodMenu value={sleepPeriodMode} onChange={updateSleepPeriodMode} t={t} />}>
+      {!hiddenCards.includes("sleep") && <SectionCard style={cardStyle("sleep")} title={sleepPeriodMode === "calendar" ? t("sleepCalendarTitle") : t("plus.analytics.rollingSleep")} icon={<Icons.Moon />} color={colors.sleep} actions={<SleepPeriodMenu value={sleepPeriodMode} onChange={updateSleepPeriodMode} t={t} />}>
+        <p className="form-hint">{t("sleepExplanation")}</p>
         <div className="segmented-control">
           {[{ id: "day", label: t("plus.analytics.daySleep") }, { id: "night", label: t("plus.analytics.nightSleep") }, { id: "total", label: t("plus.analytics.totalSleep") }].map((item) => <button key={item.id} className={sleepMode === item.id ? "selected" : ""} onClick={() => setSleepMode(item.id)}>{item.label}</button>)}
         </div>

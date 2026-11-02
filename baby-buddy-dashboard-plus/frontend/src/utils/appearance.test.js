@@ -42,7 +42,9 @@ it("handles daytime and all-day schedules without altering their existing semant
 it("defines true-black OLED surfaces with readable text and dark native controls", () => {
   const block = css.match(/:root\[data-theme="oled"\] \{([^}]+)\}/)[1];
   expect(block).toContain("--bg: #000000");
-  expect(block).toContain("--card-bg: #080808");
+  expect(block).toContain("--card-bg: #000000");
+  expect(block).toContain("--surface: #000000");
+  expect(block).toContain("--tooltip-bg: #000000");
   expect(block).toContain("color-scheme: dark");
   // WCAG normal-text contrast for the three text tokens against card and page.
   const luminance = (hex) => {

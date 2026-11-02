@@ -29,6 +29,7 @@ CARE_TYPES: Final = (
     "full_wash",
     "quick_wash",
     "caraway_oil",
+    "ear_care",
     "nail_care",
     "skin_care",
     "custom",

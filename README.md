@@ -1,5 +1,8 @@
 # Baby Buddy Dashboard Plus
 
+> **2.6.0-rc.1 — Testversion / release candidate.** Enthält die neuen Schlafauswertungen, Navigation, Verlauf, Pflege- und Einstellungsverbesserungen. Geräteabnahme steht aus; vor Installation sichern. Der kompakte Kinderarzt-Bericht folgt später.
+> Includes the sleep, navigation, history, care and settings improvements. Device acceptance is pending; back up before installation. The compact paediatric report is not included yet.
+
 [Deutsch](#deutsch) · [English](#english) · [Screenshots](#tour-in-screenshots) · [Installation](#installation-via-home-assistant) · [HACS (DE)](#optionale-home-assistant-integration-via-hacs) · [HACS (EN)](#optional-home-assistant-integration-through-hacs) · [Care automation](HOME_ASSISTANT_CARE_AUTOMATION.md) · [Roadmap](ROADMAP.md) · [Development](DEVELOPMENT.md) · [Release process](RELEASING.md)
 
 > An independent community fork that turns [Baby Buddy Dashboard](https://github.com/mbentancour/baby-buddy-dashboard) into a more complete everyday companion for Home Assistant and [Baby Buddy](https://github.com/babybuddy/babybuddy).

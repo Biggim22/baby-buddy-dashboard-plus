@@ -100,11 +100,12 @@ async def test_actions_with_same_context_are_independent(integration):
     schema = i.registered["schema"]
     with pytest.raises(vol.Invalid):
         schema({"care_type": "arbitrary"})
-    for kind in ("bath", "nail_care"):
+    for kind in ("bath", "nail_care", "ear_care"):
         call = SimpleNamespace(data=schema({"care_type": kind, "notes": "  test  "}), context=SimpleNamespace(id="shared-context"))
         await i.registered["handler"](call)
-    first, second = [call[1]["json"] for call in i.session.calls]
-    assert first["request_id"] != second["request_id"]
+    first, second, third = [call[1]["json"] for call in i.session.calls]
+    assert len({item["request_id"] for item in (first, second, third)}) == 3
+    assert third["care_type"] == "ear_care"
     assert first["notes"] == "test"
     assert "child_id" not in first
 

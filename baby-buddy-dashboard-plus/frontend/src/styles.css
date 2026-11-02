@@ -420,13 +420,14 @@ body {
 }
 
 .fab-group-label {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-dim);
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
+  padding: 10px 14px;
+  min-height: 44px;
+  border: 2px solid var(--text-dim);
   border-radius: 8px;
   background: var(--card-bg);
   cursor: pointer;
@@ -440,8 +441,8 @@ body {
 }
 
 .fab-group-label-active {
-  color: var(--text-muted);
-  border-color: var(--text-dim);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .fab-group-items {
@@ -564,13 +565,13 @@ body { overflow-x: hidden; }
   color-scheme: dark;
   background: #000000;
   --bg: #000000;
-  --card-bg: #080808;
-  --surface: #080808;
+  --card-bg: #000000;
+  --surface: #000000;
   --border: #303030;
   --text: #d6d6d6;
   --text-muted: #a6a6a6;
   --text-dim: #909090;
-  --tooltip-bg: #101010;
+  --tooltip-bg: #000000;
 }
 :root[data-accent="mint"] { --preview-accent: #5eead4; --accent: #5eead4; }
 :root[data-accent="blue"] { --preview-accent: #60a5fa; --accent: #60a5fa; }
@@ -637,6 +638,14 @@ body { overflow-x: hidden; }
 .settings-jump button { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--text-muted); padding: 6px 11px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .settings-jump button:hover { color: var(--accent); border-color: var(--accent-40); }
 .settings-save-sticky { position: sticky; bottom: -20px; z-index: 2; padding: 12px 0; background: var(--card-bg); border-top: 1px solid var(--border); }
+.settings-category-tabs { display: flex; flex-wrap: wrap; gap: 6px; position: sticky; top: -20px; z-index: 3; padding: 10px 0; margin-bottom: 16px; background: var(--card-bg); }
+.settings-category-tabs button { flex: 1 1 auto; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; cursor: pointer; }
+.settings-category-tabs button[aria-selected="true"] { border-color: var(--accent); color: var(--accent); }
+.settings-section[hidden] { display: none; }
+.settings-disclosure { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; }
+.settings-disclosure > summary { padding: 14px; cursor: pointer; font-weight: 600; color: var(--text); }
+.settings-disclosure > .settings-section-body { padding: 0 14px 14px; }
+.settings-disclosure > .preview-form-grid, .settings-disclosure > .preview-check { margin: 12px; }
 .notification-test-result { margin-top: 10px; padding: 10px; border-radius: 9px; background: var(--bg); color: var(--text-muted); font-size: 11px; overflow-wrap: anywhere; }
 .diaper-range-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .diaper-range-row { display: grid; grid-template-columns: minmax(60px, .7fr) 1fr 1fr auto; gap: 8px; align-items: center; }
@@ -776,8 +785,20 @@ body { overflow-x: hidden; }
   .diaper-recent-row small { grid-column: 2 / -1; }
 }
 
-/* Five pages fit side by side on phones: icon above a short label, no sideways scrolling. */
+/* Six equally sized tabs fill the available width. Phones use two rows. */
+.tab-nav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.tab-nav .tab-btn { min-width: 0; justify-content: center; white-space: normal; }
+.interval-timeline { list-style: none; margin: 0; padding: 0 0 0 60px; }
+.interval-timeline .timeline-event-card { border-inline-start: 3px solid var(--event-color); align-items: flex-start; text-align: left; }
+.timeline-event-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.timeline-event-heading time { font-family: var(--mono); font-weight: 700; }
+.timeline-phase-label { border: 1px solid var(--event-color); border-radius: 5px; padding: 2px 6px; font-size: 12px; }
+.timeline-phase-end .timeline-phase-label, .timeline-phase-continues .timeline-phase-label { border-style: dashed; }
+.timeline-during { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; font-size: 12px; }
+.timeline-context { border-inline-start: 3px solid; padding: 3px 7px; color: var(--text); }
 @media (max-width: 600px) {
+  .interval-timeline { padding-left: 50px; }
+  .tab-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tab-btn { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 4px; padding: 7px 2px; font-size: 11px; line-height: 1.15; white-space: normal; text-align: center; }
   .tab-btn svg { display: block; width: 18px; height: 18px; }
 }

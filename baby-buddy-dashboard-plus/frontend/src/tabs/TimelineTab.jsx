@@ -1,124 +1,111 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { Icons } from "../components/Icons";
 import { colors } from "../utils/colors";
-import { formatElapsedHM, formatTime, parseDuration, timeAgo } from "../utils/formatters";
-import { useTranslation } from "../locales";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { formatElapsedHM, formatTime } from "../utils/formatters";
+import { useTranslation, getLocale } from "../locales";
+import { buildTimeline, loadTimelinePages, timelineBounds } from "../utils/timeline";
 
 function localDate(value) {
   const date = new Date(value);
-  const pad = (number) => String(number).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
+const empty = { feedings: [], sleep: [], changes: [], tummy: [], medications: [], notes: [], local: [] };
+const icons = { feeding: Icons.Bottle, sleep: Icons.Moon, tummy: Icons.Sun, diaper: Icons.Droplet, medication: Icons.Pill, note: Icons.StickyNote, care: Icons.Heart, task: Icons.Clipboard };
 
-function dateBounds(day) {
-  return { start: `${day}T00:00:00`, end: `${day}T23:59:59` };
-}
-
-function readableDuration(value) {
-  const hours = parseDuration(value);
-  return hours ? formatElapsedHM(hours * 60 * 60 * 1000) : "";
-}
-
-function eventTime(value) {
-  return new Date(value).getTime();
-}
-
-export default function TimelineTab({ childId, childName, hiddenCards = [], onEditEntry }) {
+export default function TimelineTab({ childId, childName, hiddenCards = [], onEditEntry, onOpenSection }) {
   const t = useTranslation();
   const [day, setDay] = useState(() => localDate(new Date()));
-  const [data, setData] = useState({ feedings: [], sleep: [], changes: [], tummy: [], medications: [], notes: [] });
+  const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const today = localDate(new Date());
 
-  const load = useCallback(async () => {
-    if (!childId) return;
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError("");
-    const { start, end } = dateBounds(day);
-    try {
-      const [feedings, sleep, changes, tummy, medications, notes] = await Promise.all([
-        api.getFeedings({ child: childId, start_min: start, start_max: end, limit: 200, ordering: "-start" }),
-        api.getSleep({ child: childId, start_min: start, start_max: end, limit: 200, ordering: "-start" }),
-        api.getChanges({ child: childId, date_min: start, date_max: end, limit: 200, ordering: "-time" }),
-        api.getTummyTimes({ child: childId, start_min: start, start_max: end, limit: 200, ordering: "-start" }),
-        api.getMedication({ child: childId, limit: 300, ordering: "-time" }),
-        api.getNotes({ child: childId, limit: 300, ordering: "-time" }),
-      ]);
-      const onlyDay = (entries, key) => (entries.results || []).filter((entry) => localDate(entry[key]) === day);
-      setData({
-        feedings: feedings.results || [],
-        sleep: sleep.results || [],
-        changes: changes.results || [],
-        tummy: tummy.results || [],
-        medications: onlyDay(medications, "time"),
-        notes: onlyDay(notes, "time"),
-      });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    setData(empty);
+    if (!childId) { setLoading(false); return; }
+    const { start, end } = timelineBounds(day);
+    const intervals = { child: childId, end_min: start.toISOString(), start_max: end.toISOString(), ordering: "start" };
+    const points = { child: childId, date_min: start.toISOString(), date_max: end.toISOString(), ordering: "time" };
+    Promise.all([
+      loadTimelinePages(api.getFeedings, intervals), loadTimelinePages(api.getSleep, intervals),
+      loadTimelinePages(api.getChanges, points), loadTimelinePages(api.getTummyTimes, intervals),
+      loadTimelinePages(api.getMedication, points), loadTimelinePages(api.getNotes, points),
+      loadTimelinePages(api.getLocalTimeline, { child_id: childId, start: start.toISOString(), end: end.toISOString() }),
+    ]).then(([feedings, sleep, changes, tummy, medications, notes, local]) => {
+      if (!cancelled) setData({ feedings, sleep, changes, tummy, medications, notes, local });
+    }).catch(err => { if (!cancelled) setError(err.message); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [childId, day]);
 
-  useEffect(() => void load(), [load]);
-
   const events = useMemo(() => {
-    const next = [];
-    data.changes.forEach((entry) => {
-      const kind = entry.wet && entry.solid ? t("plus.timeline.diaperBoth") : entry.solid ? t("plus.timeline.diaperSolid") : entry.wet ? t("plus.timeline.diaperWet") : t("plus.timeline.diaperHygiene");
-      next.push({ id: `change-${entry.id}`, time: entry.time, type: "diaper", color: colors.diaper, icon: <Icons.Droplet />, title: t("plus.timeline.diaperTitle", { name: childName, kind }), detail: entry.notes || kind, entryType: "diaper", entry });
+    const points = [];
+    const intervals = [];
+    data.local.forEach(entry => points.push({ id: `local-${entry.id}`, time: entry.time, type: entry.kind, entry,
+      color: entry.kind === "care" ? "#06B6D4" : "#22C55E",
+      title: entry.kind === "care" ? `${t("plus.care")}: ${entry.title || t(`plus.careTypes.${entry.care_type}`)}` : `${t("timelineTaskCompleted")}: ${entry.title}`,
+      detail: entry.kind === "task" ? `${t("timelineTaskDue")}: ${entry.due_date}` : entry.notes,
+    }));
+    const addIntervals = (entries, type, title) => {
+      [...entries].sort((a, b) => +new Date(a.start) - +new Date(b.start)).forEach((entry, index) => {
+        intervals.push({ id: `${type}-${entry.id}`, type, entry, start: entry.start, end: entry.end,
+          title: `${title} ${index + 1}`, color: colors[type],
+          detail: [entry.method, entry.end ? formatElapsedHM(new Date(entry.end) - new Date(entry.start)) : "", entry.notes].filter(Boolean).join(" · ") });
+      });
+    };
+    addIntervals(data.sleep, "sleep", t("plus.analytics.sleep"));
+    addIntervals(data.feedings, "feeding", t("action.feeding"));
+    addIntervals(data.tummy, "tummy", t("plus.analytics.tummyTime"));
+    data.changes.forEach(entry => {
+      const kind = t(`plus.timeline.${entry.wet && entry.solid ? "diaperBoth" : entry.solid ? "diaperSolid" : entry.wet ? "diaperWet" : "diaperHygiene"}`);
+      points.push({ id: `diaper-${entry.id}`, time: entry.time, type: "diaper", color: colors.diaper,
+        title: t("plus.timeline.diaperTitle", { name: childName, kind }), detail: entry.notes || kind, entry });
     });
-    data.feedings.forEach((entry) => {
-      const method = String(entry.method || entry.type || "");
-      const end = entry.end || entry.start;
-      next.push({ id: `feeding-end-${entry.id}`, time: end, type: "feeding", color: colors.feeding, icon: <Icons.Bottle />, title: t("plus.timeline.feedingFinished", { name: childName }), detail: [readableDuration(entry.duration), method].filter(Boolean).join(" · "), entryType: "feeding", entry });
-      if (entry.end && new Date(entry.end).getTime() > new Date(entry.start).getTime()) {
-        next.push({ id: `feeding-start-${entry.id}`, time: entry.start, type: "feeding", color: "#22C55E", icon: <Icons.Bottle />, title: t("plus.timeline.feedingStarted", { name: childName }), detail: method, entryType: "feeding", entry });
-      }
-    });
-    data.sleep.forEach((entry) => {
-      if (entry.end) next.push({ id: `sleep-end-${entry.id}`, time: entry.end, type: "sleep", color: colors.sleep, icon: <Icons.Moon />, title: t("plus.timeline.sleepWoke", { name: childName }), detail: readableDuration(entry.duration), entryType: "sleep", entry });
-      next.push({ id: `sleep-start-${entry.id}`, time: entry.start, type: "sleep", color: "#38BDF8", icon: <Icons.Moon />, title: t("plus.timeline.sleepStarted", { name: childName }), detail: entry.nap ? t("plus.timeline.nap") : "", entryType: "sleep", entry });
-    });
-    data.tummy.forEach((entry) => next.push({ id: `tummy-${entry.id}`, time: entry.end || entry.start, type: "tummy", color: colors.tummy, icon: <Icons.Sun />, title: t("plus.timeline.tummyFinished", { name: childName }), detail: readableDuration(entry.duration), entryType: "tummy", entry }));
-    data.medications.forEach((entry) => next.push({ id: `med-${entry.id}`, time: entry.time, type: "medication", color: colors.medication, icon: <Icons.Pill />, title: t("plus.timeline.medicationGiven", { name: childName }), detail: `${entry.name}${entry.dosage != null ? ` · ${entry.dosage} ${entry.dosage_unit || ""}` : ""}`.trim(), entryType: "medication", entry }));
-    data.notes.forEach((entry) => next.push({ id: `note-${entry.id}`, time: entry.time, type: "note", color: colors.note, icon: <Icons.StickyNote />, title: t("plus.timeline.noteAdded", { name: childName }), detail: entry.note, entryType: "note", entry }));
-    return next.sort((a, b) => eventTime(b.time) - eventTime(a.time));
-  }, [childName, data, t]);
+    data.medications.forEach(entry => points.push({ id: `medication-${entry.id}`, time: entry.time, type: "medication", color: colors.medication,
+      title: t("plus.timeline.medicationGiven", { name: childName }), detail: [entry.name || entry.medication, entry.dosage != null ? `${entry.dosage} ${entry.dosage_unit || ""}` : "", entry.notes].filter(Boolean).join(" · "), entry }));
+    data.notes.forEach(entry => points.push({ id: `note-${entry.id}`, time: entry.time, type: "note", color: colors.note,
+      title: t("plus.timeline.noteAdded", { name: childName }), detail: entry.note, entry }));
+    return buildTimeline(points.filter(x => !hiddenCards.includes(x.type)), intervals.filter(x => !hiddenCards.includes(x.type)), day);
+  }, [data, day, childName, hiddenCards, t]);
 
-  const moveDay = (direction) => {
+  const moveDay = direction => {
     const next = new Date(`${day}T12:00:00`);
     next.setDate(next.getDate() + direction);
-    const value = localDate(next);
-    if (value <= today) setDay(value);
+    if (localDate(next) <= today) setDay(localDate(next));
   };
-  const selectedDate = new Date(`${day}T12:00:00`);
-
-  return (
-    <div className="fade-in timeline-tab">
-      <div className="timeline-day-nav">
-        <button onClick={() => moveDay(-1)} aria-label={t("plus.timeline.previousDay")}>‹</button>
-        <h2>{selectedDate.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}</h2>
-        <button onClick={() => moveDay(1)} disabled={day >= today} aria-label={t("plus.timeline.nextDay")}>›</button>
-      </div>
-      {loading && <div className="empty-state">{t("plus.loading")}</div>}
-      {error && <div className="preview-error">{error}</div>}
-      {!loading && !error && events.length === 0 && <div className="empty-state">{t("plus.timeline.empty")}</div>}
-      {!loading && !error && <div className="timeline-list">
-        {events.filter((event) => !hiddenCards.includes(event.type)).map((event) => <article className="timeline-event" key={event.id}>
-          <div className="timeline-marker" style={{ "--timeline-color": event.color }}>{event.icon}</div>
-          <div className="timeline-event-card">
-            <strong>{event.title}</strong>
-            <span>{day === today ? timeAgo(event.time) : formatTime(event.time)} · {formatTime(event.time)}</span>
-            {event.detail && <small>{event.detail}</small>}
-            <button onClick={() => onEditEntry?.(event.entryType, event.entry)}>{t("plus.timeline.edit")}</button>
-          </div>
-        </article>)}
-      </div>}
+  return <div className="fade-in timeline-tab">
+    <div className="timeline-day-nav">
+      <button onClick={() => moveDay(-1)} aria-label={t("plus.timeline.previousDay")}>‹</button>
+      <h2>{new Date(`${day}T12:00:00`).toLocaleDateString(getLocale(), { day: "numeric", month: "long", year: "numeric" })}</h2>
+      <button onClick={() => moveDay(1)} disabled={day >= today} aria-label={t("plus.timeline.nextDay")}>›</button>
     </div>
-  );
+    <p className="form-hint">{t("timelineGuide")}</p>
+    <p className="form-hint">{t("timelineCoverage")}</p>
+    {loading && <div className="empty-state">{t("plus.loading")}</div>}
+    {error && <div className="preview-error">{error}</div>}
+    {!loading && !error && events.length === 0 && <div className="empty-state">{t("plus.timeline.empty")}</div>}
+    {!loading && !error && <ol className="timeline-list interval-timeline">
+      {events.map(event => {
+        const Icon = icons[event.type];
+        const phase = event.phase === "point" ? "" : t(`timelinePhases.${event.phase}`);
+        return <li className={`timeline-event timeline-phase-${event.phase}`} key={event.id} style={{ "--event-color": event.color }}>
+          <div className="timeline-marker" style={{ "--timeline-color": event.color }}><Icon /></div>
+          <div className="timeline-event-card">
+            <div className="timeline-event-heading"><time dateTime={event.time}>{formatTime(event.time)}</time>{phase && <span className="timeline-phase-label">{phase}</span>}</div>
+            <strong>{event.title}</strong>
+            {event.intervalId && <span>{formatTime(event.start)} → {event.end ? formatTime(event.end) : "…"}</span>}
+            {event.detail && <small>{event.detail}</small>}
+            {event.during.length > 0 && <div className="timeline-during"><span>{t("timelineDuring")}</span>{event.during.map(item => <span className="timeline-context" key={item.id} style={{ borderColor: item.color }}>{item.title} · {formatTime(item.start)} → {item.end ? formatTime(item.end) : "…"}</span>)}</div>}
+            {["care", "task"].includes(event.type)
+              ? <button onClick={() => onOpenSection?.(event.type === "care" ? "care" : "tasks")}>{t("timelineOpenSource")}</button>
+              : <button onClick={() => onEditEntry?.(event.type, event.entry)}>{t("plus.timeline.edit")}</button>}
+          </div>
+        </li>;
+      })}
+    </ol>}
+  </div>;
 }

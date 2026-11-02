@@ -1,4 +1,5 @@
 import { flushOutbox, sendOrQueue } from "./utils/outbox";
+import { logError } from "./utils/errorLog";
 const API_BASE = "./api/baby-buddy";
 const CONFIG_PATH = "./api/config";
 const LOCAL_API_BASE = "./api/local";
@@ -62,7 +63,22 @@ async function sendRequest(endpoint, options = {}) {
   }
 
   if (response.status === 204) return null;
-  return response.json();
+  const result = await response.json();
+  // Only confirmed NEW feedings update defaults, including successful outbox replay.
+  // Failure to save a preference must never turn a saved feeding into a retry.
+  if (endpoint === "feedings/" && options.method === "POST" && result?.id) {
+    try {
+      const payload = JSON.parse(options.body);
+      if (payload.child != null && payload.type && payload.method) {
+        await localRequest(`settings/${payload.child}`, { method: "PATCH", body: JSON.stringify({
+          last_feeding_type: payload.type, last_feeding_method: payload.method,
+        }) });
+      }
+    } catch {
+      logError("Feeding defaults", "Feeding saved, but its defaults could not be saved.");
+    }
+  }
+  return result;
 }
 
 function request(endpoint, options = {}) {
@@ -106,7 +122,22 @@ export const api = {
   deleteFeeding: (id) => request(`feedings/${id}/`, { method: "DELETE" }),
 
   // Sleep
-  getSleep: (params) => request(`sleep/${qs(params)}`),
+  getSleep: async (params = {}) => {
+    const results = [];
+    const seen = new Set();
+    let offset = 0;
+    for (let page = 0; page < 1000; page += 1) {
+      // Never follow an absolute upstream next URL through the browser.
+      const response = await request(`sleep/${qs({ ...params, limit: 200, offset })}`);
+      const rows = response.results || [];
+      const fresh = rows.filter(row => !seen.has(row.id));
+      for (const row of fresh) { seen.add(row.id); results.push(row); }
+      if (!response.next) return { ...response, results, next: null };
+      if (!rows.length || !fresh.length) throw new Error("Sleep pagination made no progress");
+      offset += rows.length;
+    }
+    throw new Error("Sleep pagination limit exceeded; results are incomplete");
+  },
   createSleep: (data) =>
     request("sleep/", { method: "POST", body: JSON.stringify(data) }),
   updateSleep: (id, data) =>
@@ -208,9 +239,10 @@ export const api = {
   getConfig: () => fetchWithTimeout(CONFIG_PATH).then((r) => r.json()),
 
   // Dashboard Plus data stored locally below /data.
+  getLocalTimeline: (params) => localRequest(`timeline${qs(params)}`),
   bootstrapLocal: (childId) => localRequest(`bootstrap/${childId}`, { method: "POST" }),
-  getCare: (childId, limit = 100, careType = "") =>
-    localRequest(`care?child_id=${childId}&limit=${limit}${careType ? `&care_type=${encodeURIComponent(careType)}` : ""}`),
+  getCare: (childId, limit = 100, careType = "", offset = 0) =>
+    localRequest(`care?child_id=${childId}&limit=${limit}&offset=${offset}${careType ? `&care_type=${encodeURIComponent(careType)}` : ""}`),
   createCare: (data) => localRequest("care", { method: "POST", body: JSON.stringify(data) }),
   updateCare: (id, data) => localRequest(`care/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteCare: (id) => localRequest(`care/${id}`, { method: "DELETE" }),

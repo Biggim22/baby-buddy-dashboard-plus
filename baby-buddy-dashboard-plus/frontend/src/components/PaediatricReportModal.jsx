@@ -3,6 +3,7 @@ import Modal, { FormButton, FormError } from "./Modal";
 import { api } from "../api";
 import { downloadFile } from "../utils/download";
 import { useTranslation, getLocale } from "../locales";
+import { sleepTotals } from "../utils/sleep";
 
 const isoDate = (date) => date.toLocaleDateString("sv-SE");
 const dayStart = (value) => `${value}T00:00:00`;
@@ -39,7 +40,7 @@ export default function PaediatricReportModal({ childId, childName, onClose }) {
         api.getTemperature({ child: childId, limit: 500, ordering: "-time" }),
         api.getMedication({ child: childId, limit: 500, ordering: "-time" }),
         api.getFeedings({ child: childId, start_min: dayStart(start), start_max: dayEnd(end), limit: 500, ordering: "-start" }),
-        api.getSleep({ child: childId, start_min: dayStart(start), start_max: dayEnd(end), limit: 500, ordering: "-start" }),
+        api.getSleep({ child: childId, end_min: new Date(dayStart(start)).toISOString(), start_max: new Date(dayEnd(end)).toISOString(), ordering: "-start" }),
         api.getChanges({ child: childId, date_min: dayStart(start), date_max: dayEnd(end), limit: 500, ordering: "-time" }),
         api.getCare(childId, 500), api.getTasks(childId, true, end),
       ]);
@@ -48,6 +49,7 @@ export default function PaediatricReportModal({ childId, childName, onClose }) {
         temperatures: inRange(temperatures.results, "time", start, end), medications: inRange(medications.results, "time", start, end),
         feedings: feedings.results || [], sleep: sleep.results || [], changes: changes.results || [], care: inRange(care.results, "time", start, end),
         appointments: (tasks.results || []).filter((item) => item.task_kind === "appointment" && item.start_date >= start && item.start_date <= end),
+        start, end, generatedAt: new Date(),
       });
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
@@ -56,7 +58,11 @@ export default function PaediatricReportModal({ childId, childName, onClose }) {
   const text = useMemo(() => {
     if (!report) return "";
     const title = `${t("report.paediatricTitle")} · ${childName || t("header.defaultBabyName")}`;
-    const output = [title, `${t("report.paediatricPeriod")}: ${start} – ${end}`, t("report.paediatricDisclaimer"), ""];
+    const output = [title, `${t("report.paediatricPeriod")}: ${report.start} – ${report.end}`, t("report.paediatricDisclaimer"), ""];
+    const sleepEnd = new Date(dayStart(report.end));
+    sleepEnd.setDate(sleepEnd.getDate() + 1);
+    const sleep = sleepTotals(report.sleep, dayStart(report.start), sleepEnd, report.generatedAt);
+    const hours = minutes => (minutes / 60).toLocaleString(getLocale(), { maximumFractionDigits: 2 });
     if (sections.growth) output.push(...linesFor(t("report.paediatricGrowth"), [
       ...report.weights.map((x) => `${x.date}: ${t("growth.weight")} ${x.weight}`), ...report.heights.map((x) => `${x.date}: ${t("growth.height")} ${x.height}`),
       ...report.heads.map((x) => `${x.date}: ${t("growth.headCircumference")} ${x.head_circumference}`), ...report.bmis.map((x) => `${x.date}: BMI ${x.bmi}`),
@@ -64,10 +70,13 @@ export default function PaediatricReportModal({ childId, childName, onClose }) {
     if (sections.temperature) output.push("", ...linesFor(t("report.paediatricTemperature"), report.temperatures.map((x) => `${x.time}: ${x.temperature} °C${x.notes ? ` · ${x.notes}` : ""}`)));
     if (sections.medication) output.push("", ...linesFor(t("notes.medications"), report.medications.map((x) => `${x.time}: ${x.medication} · ${x.dosage || ""} ${x.dosage_unit || ""}${x.notes ? ` · ${x.notes}` : ""}`)));
     if (sections.activities) output.push("", ...linesFor(t("report.paediatricActivities"), [
-      `${t("report.columnFeedings")}: ${report.feedings.length}`, `${t("report.columnSleepH")}: ${report.sleep.length}`, `${t("report.paediatricDiapers")}: ${report.changes.length}`,
+      `${t("report.columnFeedings")}: ${report.feedings.length}`, `${t("report.columnSleepH")}: ${hours(sleep.total)}`,
+      `${t("plus.analytics.daySleep")}: ${hours(sleep.day)} h`, `${t("plus.analytics.nightSleep")}: ${hours(sleep.night)} h`,
+      t("sleepExplanation"),
+      `${t("report.paediatricDiapers")}: ${report.changes.length}`,
     ]));
     if (sections.local) output.push("", ...linesFor(t("report.paediatricLocal"), [
-      ...report.care.map((x) => `${x.time}: ${x.category_label || x.care_type}${x.notes ? ` · ${x.notes}` : ""}`),
+      ...report.care.map((x) => `${x.time}: ${x.category_label || t(`plus.careTypes.${x.care_type}`)}${x.notes ? ` · ${x.notes}` : ""}`),
       ...report.appointments.map((x) => `${x.start_date}${x.appointment_time ? ` ${x.appointment_time}` : ""}: ${x.title}${x.notes ? ` · ${x.notes}` : ""}`),
     ]));
     return output.join("\n");

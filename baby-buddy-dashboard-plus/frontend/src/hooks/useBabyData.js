@@ -113,8 +113,8 @@ export function useBabyData() {
       ] = await Promise.all([
         api.getFeedings({ child: c, start_min: todayMin, start_max: todayMax, limit: 100, ordering: "-start" }),
         api.getFeedings({ child: c, start_min: weekMin, limit: 200, ordering: "-start" }),
-        api.getSleep({ child: c, start_min: sleepMin, limit: 100, ordering: "-start" }),
-        api.getSleep({ child: c, start_min: weekMin, limit: 200, ordering: "-start" }),
+        api.getSleep({ child: c, end_min: sleepMin, start_max: now.toISOString(), ordering: "-start" }),
+        api.getSleep({ child: c, end_min: new Date(weekMin).toISOString(), start_max: now.toISOString(), ordering: "-start" }),
         api.getChanges({ child: c, date_min: todayMin, date_max: todayMax, limit: 100, ordering: "-time" }),
         api.getTummyTimes({ child: c, start_min: todayMin, start_max: todayMax, limit: 100, ordering: "-start" }),
         api.getTummyTimes({ child: c, start_min: weekMin, limit: 200, ordering: "-start" }),
@@ -127,7 +127,7 @@ export function useBabyData() {
         api.getTimers(),
         api.getNotes({ child: c, limit: 20, ordering: "-time" }),
         api.getFeedings({ child: c, start_min: monthMin, limit: 500, ordering: "-start" }),
-        api.getSleep({ child: c, start_min: monthMin, limit: 500, ordering: "-start" }),
+        api.getSleep({ child: c, end_min: new Date(monthMin).toISOString(), start_max: now.toISOString(), ordering: "-start" }),
         api.getChanges({ child: c, date_min: monthMin, limit: 500, ordering: "-time" }),
         api.getPumping({ child: c, start_min: weekMin, limit: 200, ordering: "-start" }),
       ]);

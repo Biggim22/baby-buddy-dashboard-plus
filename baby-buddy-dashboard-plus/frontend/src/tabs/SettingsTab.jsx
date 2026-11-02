@@ -52,7 +52,7 @@ const DEFAULTS = {
   appearance_schedule_accent: "rose",
 };
 
-const CARE_HEADER_TYPES = ["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care"];
+const CARE_HEADER_TYPES = ["bath", "full_wash", "quick_wash", "caraway_oil", "ear_care", "nail_care", "skin_care"];
 const HA_CARE_TYPES = [...CARE_HEADER_TYPES, "custom"];
 
 const PAMPERS_RANGES = [
@@ -84,7 +84,7 @@ function humanDate(value, t) {
   return new Date(value).toLocaleDateString([], { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-export default function SettingsTab({ childId, embedded = false }) {
+export default function SettingsTab({ childId, embedded = false, group = null }) {
   const t = useTranslation();
   const [settings, setSettings] = useState(DEFAULTS);
   const [status, setStatus] = useState("");
@@ -305,26 +305,35 @@ export default function SettingsTab({ childId, embedded = false }) {
 
   const themeOptions = <><option value="dark">{t("plus.settings.dark")}</option><option value="oled">{t("plus.nightAppearance.oled")}</option><option value="light">{t("plus.settings.light")}</option><option value="pastel">{t("plus.settings.pastel")}</option><option value="nord">Nord</option><option value="dracula">Dracula</option><option value="solarized">Solarized Light</option></>;
   const accentOptions = <><option value="amber">Amber</option><option value="mint">Mint</option><option value="blue">Blue</option><option value="rose">Rose</option><option value="violet">Violet</option></>;
+  const sectionGroup = { general: "general", appearance: "appearance", overview: "content", cards: "content", care: "content", medications: "content", diapers: "content", notifications: "ha", calendar: "ha", homeAssistant: "ha" };
   const section = (id, title, icon, color, children) => (
-    <section id={`settings-${id}`} className="settings-section">
-      <SectionCard title={title} icon={icon} color={color}><div className="settings-section-body">{children}</div></SectionCard>
+    <section id={`settings-${id}`} className="settings-section" hidden={group != null && sectionGroup[id] !== group}>
+      {group != null && ["content", "ha"].includes(sectionGroup[id]) ?
+        <details className="settings-disclosure"><summary>{title}</summary><div className="settings-section-body">{children}</div></details> :
+        <SectionCard title={title} icon={icon} color={color}><div className="settings-section-body">{children}</div></SectionCard>}
     </section>
   );
 
   return (
     <div className={`${embedded ? "" : "fade-in "}settings-preview-layout`}>
-      <nav className="settings-jump" aria-label={t("plus.settings.jumpTo")}>
+      {group === "content" && <p className="form-hint">{t("pumpingDiscovery")}</p>}
+      {group === "ha" && <p className="form-hint">{t("calendarDiscovery")}</p>}
+      {group == null && <nav className="settings-jump" aria-label={t("plus.settings.jumpTo")}>
         {SECTIONS.map(([id, label]) => <button key={id} type="button" onClick={() => jumpTo(id)}>{t(label)}</button>)}
-      </nav>
+      </nav>}
+
+      {section("general", t("settingsGroups.general"), <Icons.Settings />, "#64748B", <>
+        <label>{t("plus.timeFormat")}<select value={settings.time_format} onChange={(event) => update("time_format", event.target.value)}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></label>
+        <p className="form-hint">{t("settingsPanelTitleHint")}</p>
+      </>)}
 
       {section("appearance", t("plus.settings.appearance"), <Icons.Activity />, "#F59E0B", <>
         <div className="preview-form-grid">
           <label>{t("plus.settings.mode")}<select value={settings.theme} onChange={(event) => update("theme", event.target.value)}>{themeOptions}</select></label>
           <label>{t("plus.settings.colorScheme")}<select value={settings.accent} onChange={(event) => update("accent", event.target.value)}>{accentOptions}</select></label>
-          <label>{t("plus.timeFormat")}<select value={settings.time_format} onChange={(event) => update("time_format", event.target.value)}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></label>
         </div>
         <p className="form-hint">{t("plus.nightAppearance.hint")}</p>
-        <div className="settings-subheading">{t("plus.settings.appearanceSchedule")}</div>
+        <details className="settings-disclosure" open={group == null || undefined}><summary>{t("plus.settings.appearanceSchedule")}</summary>
         <label className="preview-check"><input type="checkbox" checked={Boolean(settings.appearance_schedule_enabled)} onChange={(event) => update("appearance_schedule_enabled", event.target.checked)} /> {t("plus.settings.enableSchedule")}</label>
         <div className="preview-form-grid settings-two-columns">
           <label>{t("plus.settings.from")}<input type="time" value={settings.appearance_schedule_start} onChange={(event) => update("appearance_schedule_start", event.target.value)} /></label>
@@ -332,6 +341,7 @@ export default function SettingsTab({ childId, embedded = false }) {
           <label>{t("plus.settings.scheduledMode")}<select value={settings.appearance_schedule_theme} onChange={(event) => update("appearance_schedule_theme", event.target.value)}>{themeOptions}</select></label>
           <label>{t("plus.settings.scheduledColor")}<select value={settings.appearance_schedule_accent} onChange={(event) => update("appearance_schedule_accent", event.target.value)}>{accentOptions}</select></label>
         </div>
+        </details>
       </>)}
 
       {section("overview", t("plus.overview.settings"), <Icons.TrendUp />, "#8B5CF6", <>

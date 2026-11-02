@@ -12,6 +12,73 @@ def use_temp_database(monkeypatch, tmp_path):
     plus_local.init_database()
 
 
+async def test_local_timeline_actual_completion_time_pagination_and_child_scope(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    with plus_local.db() as connection:
+        connection.execute("INSERT INTO care_entries (child_id, care_type, time) VALUES (1, 'ear_care', '2026-11-01T23:30:00+01:00')")
+        connection.execute("INSERT INTO care_entries (child_id, care_type, time) VALUES (2, 'bath', '2026-11-01T23:30:00+01:00')")
+        connection.execute("INSERT INTO care_entries (child_id, care_type, time) VALUES (1, 'bath', '2026-11-02T00:00:00+01:00')")
+        task = connection.execute("INSERT INTO task_definitions (child_id, title, start_date, active) VALUES (1, 'Test task', '2026-10-01', 0)").lastrowid
+        connection.execute("INSERT INTO task_completions VALUES (?, '2026-10-31', '2026-11-01T22:45:00Z')", (task,))
+    start = datetime.fromisoformat('2026-10-31T23:00:00+00:00')
+    end = datetime.fromisoformat('2026-11-01T23:00:00+00:00')
+    first = await plus_local.local_timeline(1, start, end, limit=1)
+    second = await plus_local.local_timeline(1, start, end, limit=1, offset=1)
+    assert first['count'] == 2 and first['next'] is True
+    assert second['next'] is False
+    assert first['results'][0]['kind'] == 'care'
+    assert second['results'][0]['kind'] == 'task'
+    assert second['results'][0]['due_date'] == '2026-10-31'
+    with plus_local.db() as connection:
+        connection.execute('DELETE FROM task_completions WHERE task_id = ?', (task,))
+    assert (await plus_local.local_timeline(1, start, end))['count'] == 1
+    with pytest.raises(plus_local.HTTPException):
+        await plus_local.local_timeline(1, end, start)
+
+
+async def test_feeding_defaults_are_validated_and_child_scoped(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(last_feeding_type="formula", last_feeding_method="bottle"))
+    assert (await plus_local.get_local_settings(1))["last_feeding_type"] == "formula"
+    assert "last_feeding_type" not in await plus_local.get_local_settings(2)
+    with pytest.raises(ValidationError):
+        plus_local.SettingsPatch(last_feeding_type="invalid")
+
+
+async def test_care_pagination_and_latest_are_independent(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    with plus_local.db() as connection:
+        for index in range(25):
+            connection.execute("INSERT INTO care_entries (child_id, care_type, time, category_label, notes) VALUES (?, ?, ?, '', '')",
+                               (1, "ear_care" if index == 0 else "skin_care", f"2026-01-{index + 1:02d}T12:00:00+00:00"))
+        connection.execute("INSERT INTO care_entries (child_id, care_type, time, category_label, notes) VALUES (2, 'bath', '2026-01-30T12:00:00+00:00', '', '')")
+    pages = [await plus_local.list_care(1, limit=10, care_type=None, offset=offset) for offset in (0, 10, 20)]
+    assert [len(page["results"]) for page in pages] == [10, 10, 5]
+    assert [page["next_offset"] for page in pages] == [10, 20, None]
+    assert all(page["count"] == 25 for page in pages)
+    assert len({row["id"] for page in pages for row in page["results"]}) == 25
+    assert any(row["care_type"] == "ear_care" for row in pages[0]["latest"])
+    assert not any(row["care_type"] == "ear_care" for row in pages[0]["results"])
+    filtered = await plus_local.list_care(1, limit=10, care_type="ear_care", offset=0)
+    assert filtered["count"] == 1
+    assert filtered["next_offset"] is None
+    with pytest.raises(plus_local.HTTPException):
+        await plus_local.list_care(1, limit=10, care_type=None, offset=-1)
+
+
+async def test_ear_care_requires_explicit_ha_permission(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    entry = plus_local.HomeAssistantCareEntryIn(care_type="ear_care", request_id="ears-test")
+    with pytest.raises(plus_local.HTTPException) as denied:
+        plus_local.record_home_assistant_care(1, entry)
+    assert denied.value.status_code == 403
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(ha_care_allowed_types=["ear_care"]))
+    saved = plus_local.record_home_assistant_care(1, entry)
+    assert saved["entry"]["care_type"] == "ear_care"
+    plus_local.record_home_assistant_care(1, entry)
+    assert (await plus_local.list_care(1, limit=10, care_type=None))["count"] == 1
+
+
 async def test_oled_is_opt_in_and_saved_for_manual_and_scheduled_appearance(monkeypatch, tmp_path):
     use_temp_database(monkeypatch, tmp_path)
     before = await plus_local.get_local_settings(1)

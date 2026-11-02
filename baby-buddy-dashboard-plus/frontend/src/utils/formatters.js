@@ -1,4 +1,5 @@
 import { translate as t, getLocale, getTimeFormat } from "../locales";
+import { sleepHoursOnDate } from "./sleep";
 
 // A <input type="datetime-local"> value ("2026-07-23T07:22") has no timezone info. Sending
 // it to the Baby Buddy API as-is (just appending ":00") is naive-string, timezone-blind -
@@ -385,13 +386,7 @@ export function aggregateByDayOfWeek(entries, valueKey, dateKey = "start") {
 
 export function aggregateSleepByDay(entries) {
   const days = getLast7Days();
-  const sums = {};
-  days.forEach((d) => (sums[d.dateStr] = 0));
-  entries.forEach((e) => {
-    const key = entryDateStr(e.start);
-    if (key in sums) sums[key] += parseDuration(e.duration);
-  });
-  return days.map((d) => ({ day: d.label, hours: Math.round(sums[d.dateStr] * 10) / 10 }));
+  return days.map((d, i) => ({ day: i === days.length - 1 ? `${d.label} *` : d.label, hours: Math.round(sleepHoursOnDate(entries, d.dateStr) * 10) / 10 }));
 }
 
 export function aggregateTummyByDay(entries) {
@@ -521,7 +516,7 @@ export function buildDailyReport(feedings, changes, sleepEntries, numDays = 7, t
   const rows = {};
   days.forEach((d) => {
     rows[d.dateStr] = {
-      date: d.label,
+      date: d.dateStr === entryDateStr(new Date()) ? `${d.label} *` : d.label,
       amount: 0,
       feedCount: 0,
       wet: 0,
@@ -548,10 +543,7 @@ export function buildDailyReport(feedings, changes, sleepEntries, numDays = 7, t
       rows[key].diaperTotal += 1;
     }
   });
-  sleepEntries.forEach((s) => {
-    const key = entryDateStr(s.start);
-    if (key in rows) rows[key].sleepHours += parseDuration(s.duration);
-  });
+  days.forEach(d => { rows[d.dateStr].sleepHours = sleepHoursOnDate(sleepEntries, d.dateStr); });
   tummyTimes.forEach((tt) => {
     const key = entryDateStr(tt.start);
     if (key in rows) rows[key].tummyMinutes += parseDuration(tt.duration) * 60;
@@ -566,13 +558,7 @@ export function buildDailyReport(feedings, changes, sleepEntries, numDays = 7, t
 
 export function dailySleepTotals(entries, numDays = 30) {
   const days = getLastNDays(numDays);
-  const sums = {};
-  days.forEach((d) => (sums[d.dateStr] = 0));
-  entries.forEach((e) => {
-    const key = entryDateStr(e.start);
-    if (key in sums) sums[key] += parseDuration(e.duration);
-  });
-  const result = days.map((d) => ({ date: d.label, hours: Math.round(sums[d.dateStr] * 10) / 10 }));
+  const result = days.map((d) => ({ date: d.label, hours: Math.round(sleepHoursOnDate(entries, d.dateStr) * 10) / 10 }));
   const firstNonZero = result.findIndex((d) => d.hours > 0);
   return firstNonZero > 0 ? result.slice(firstNonZero) : result;
 }

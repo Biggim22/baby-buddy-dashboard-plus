@@ -11,6 +11,92 @@ Baby Buddy Dashboard Plus remains a dashboard and companion for [Baby Buddy](htt
 - **Research** — worth investigating before a product decision.
 - **Candidate** — useful idea, but not committed to a release.
 
+## 2.6 preparation — shared sleep calculation (local implementation)
+
+The first block unifies calendar/rolling sleep calculations across Overview,
+Analytics and reports, includes intervals crossing the requested boundaries,
+loads all sleep pages and marks today's incomplete calendar totals.
+See [sleep calculation rules and verification](SLEEP_CALCULATION.md).
+Packaged as 2.6.0-rc.1 for the maintainer-authorized installation test. Device acceptance is pending; sections marked local implementation describe this candidate's development history.
+
+### Navigation and interval-aware history — local implementation
+
+- Six separate tabs: Overview, Analytics, Progress, Care & meds, Tasks, History.
+  Existing growth/analytics card preference identifiers are unchanged.
+- Equal-width navigation; three columns and two rows on narrow screens.
+- Chronological history pairs interval starts/ends with matching labels and
+  identifies events occurring during sleep, feeding or tummy-time intervals.
+- Cross-midnight intervals use explicit continuation markers. Data fetching
+  includes overlapping records and exhausts pagination; stale responses after
+  child/day switches are ignored. Hidden categories do not appear as context.
+- Care entries and actual task completions are included as local point events,
+  with independent visibility controls and links to their source sections.
+  Task completion uses the actual confirmation timestamp, not the due date.
+  Running timers remain separate. Unchecking a task removes its completion;
+  deleted tasks have no retained completion audit log in the existing model.
+- Local tests cover interval boundaries, simultaneous activities, DST, paging,
+  edit actions and hidden categories. Device visual acceptance remains pending.
+
+### Compact Care history and ear care — local implementation
+
+- Initially show ten records, with a visible shown/total count, ten-record
+  server-side pagination, retry on failure and a collapse action.
+- Summary timestamps are queried across the child's entire care history,
+  independently of the displayed page. Existing wash hierarchy is preserved.
+- Add `ear_care` (German: Ohren geputzt) to entry/edit forms, configurable care
+  summary, translated report labels and HA action selectors. This is a factual
+  tracking category only, not a care recommendation or instruction.
+- HA recording and last-care access remain subject to the existing per-child
+  allow-list; ear care is not enabled automatically. Both app and integration
+  will need the corresponding release when published.
+- No database migration, release version bump, push or live update in this block.
+
+### Settings navigation — local implementation
+
+- Five accessible tabs: General, Appearance, Content, Home Assistant, System.
+- Keep a single settings state mounted while switching tabs; preserve form drafts,
+  medication drafts and expanded sections. One sticky save row saves all groups.
+- Content and HA sections, plus scheduled appearance, use collapsible panels.
+- General contains language and time format. Language applies immediately, as
+  before, with an explicit hint. The sidebar title is currently fixed in the
+  add-on manifest; General explains this limitation instead of offering a fake
+  editable setting. A UI-backed title setting remains separate work.
+- System contains connection details, logs and version information.
+- No report redesign in this implementation block.
+
+### Compact paediatric summary — proposal, not implemented
+
+Target approximately half an A4 page and strictly less than one A4 page,
+with readable type and a few aggregate rows, never a detailed event dump.
+Use a selected period and sections, aggregate feeding/pumping, diaper types and
+day/night sleep, show growth changes with measurement dates, and compact factual
+temperature/medication/care information. Explicitly distinguish unrecorded days
+from recorded zero counts. Daily summaries or individual entries should be an
+optional separate appendix/export, never the default report. Final scope awaits
+maintainer approval; complete pagination remains mandatory.
+
+### Everyday input and OLED polish — local implementation
+
+- Quick-entry category buttons have stronger borders, explicit expanded state,
+  direction indicators and a 44px minimum height without bright background fills.
+- OLED card, surface and tooltip tokens are true black; existing borders, focus
+  indicators and readable text remain. Scheduled switching remains supported.
+- Store only the last confirmed NEW feeding type/method per child in Plus settings.
+  Read fresh defaults on opening a new form, including timer completion. Never
+  copy amount, note or timestamps. Edits and failed/queued requests do not change
+  defaults; successful outbox replay does. A preference-write failure must not
+  fail/replay the already saved feeding. Manual choices override late defaults.
+- Add hints locating pumping enablement and the existing calendar bridge.
+## After 2.6 — deferred by maintainer
+
+- Sidebar title selection (child name or default app title): implement a real
+  persisted connection to the HA panel configuration; not part of 2.6.
+- Timer-start type/method selection: reviewed, deferred beyond 2.6. It needs a
+  server-persisted per-timer draft keyed to the Baby Buddy timer ID, plus explicit
+  reconciliation of offline temporary IDs, completion/discard cleanup and
+  multi-device conflict handling. Per-child last-used defaults alone are not
+  a reliable replacement for a particular running timer's selection.
+
 ## 2.3.x – reliability and polish (completed in 2.3.3)
 
 ### Localised numeric input — Completed

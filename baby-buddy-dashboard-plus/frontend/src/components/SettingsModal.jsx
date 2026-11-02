@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Modal from "./Modal";
 import { Icons } from "./Icons";
 import { subscribeErrorLog, getErrorLog, clearErrorLog } from "../utils/errorLog";
@@ -18,6 +18,8 @@ function formatTime(iso) {
 
 export default function SettingsModal({ childId, connected, lastSync, errorMessage, onClose }) {
   const t = useTranslation();
+  const [group, setGroup] = useState("general");
+  const groups = ["general", "appearance", "content", "ha", "system"];
   const log = useSyncExternalStore(subscribeErrorLog, getErrorLog);
   const language = useSyncExternalStore(subscribeLanguage, getLanguage);
 
@@ -37,6 +39,16 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
 
   return (
     <Modal title={t("settings.title")} onClose={onClose} maxWidth={760} className="modal-sheet">
+      <div className="settings-category-tabs" role="tablist" aria-label={t("settings.title")}>
+        {groups.map((id, index) => <button key={id} id={`settings-tab-${id}`} type="button" role="tab" aria-selected={group === id} aria-controls="settings-panel" tabIndex={group === id ? 0 : -1}
+          onClick={() => setGroup(id)} onKeyDown={event => {
+            const target = event.key === "ArrowRight" ? (index + 1) % groups.length : event.key === "ArrowLeft" ? (index + groups.length - 1) % groups.length : event.key === "Home" ? 0 : event.key === "End" ? groups.length - 1 : null;
+            if (target == null) return;
+            event.preventDefault(); setGroup(groups[target]); document.getElementById(`settings-tab-${groups[target]}`)?.focus();
+          }}>{t(`settingsGroups.${id}`)}</button>)}
+      </div>
+      <div role="tabpanel" id="settings-panel" aria-labelledby={`settings-tab-${group}`}>
+      <div hidden={group !== "system"}>
       <div
         style={{
           display: "flex",
@@ -74,6 +86,8 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
         </div>
       </div>
 
+      </div>
+      <div hidden={group !== "general"}>
       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 10 }}>
         {t("settings.language")}
       </div>
@@ -100,7 +114,9 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
         ))}
       </div>
 
-      <SettingsTab childId={childId} embedded />
+      <p className="form-hint">{t("settingsLanguageImmediate")}</p>
+      </div>
+      <div hidden={group !== "system"}>
 
       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.03em", marginTop: 24, marginBottom: 10 }}>
         {t("settings.errorLog")}
@@ -181,6 +197,9 @@ export default function SettingsModal({ childId, connected, lastSync, errorMessa
         <strong style={{ color: "var(--text)" }}>Baby Buddy Dashboard Plus {__APP_VERSION__}</strong><br />
         <span>{t("plus.aboutPlus")}</span><br />
         {t("plus.basedOn")} <a href="https://github.com/mbentancour/baby-buddy-dashboard" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>Baby Buddy Dashboard 1.7.7</a>
+      </div>
+      </div>
+      <SettingsTab key={childId} childId={childId} embedded group={group} />
       </div>
     </Modal>
   );

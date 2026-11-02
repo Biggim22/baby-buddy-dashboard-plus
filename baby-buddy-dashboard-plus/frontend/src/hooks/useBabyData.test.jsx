@@ -75,8 +75,10 @@ describe("rolling sleep-history cutoff", () => {
     try {
       const { result } = renderHook(() => useBabyData());
       await waitFor(() => expect(result.current.loading).toBe(false));
-      const sleepCall = api.getSleep.mock.calls.find(([params]) => params.limit === 100);
-      expect(sleepCall[0].start_min).toBe(expectedCutoff);
+      const sleepCall = api.getSleep.mock.calls.find(([params]) => params.end_min === expectedCutoff);
+      expect(sleepCall[0].end_min).toBe(expectedCutoff);
+      expect(sleepCall[0].start_max).toBe(now);
+      expect(sleepCall[0].start_min).toBeUndefined();
     } finally {
       vi.useRealTimers();
     }

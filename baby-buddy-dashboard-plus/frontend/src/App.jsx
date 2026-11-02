@@ -35,13 +35,14 @@ import TimerButton from "./components/TimerButton";
 import SettingsModal from "./components/SettingsModal";
 import "./styles.css";
 
-function getTabs(t) {
+export function getTabs(t) {
   return [
     { id: "overview", label: t("tab.overview"), icon: <Icons.Activity /> },
-    { id: "timeline", label: t("plus.timeline.title"), icon: <Icons.Clock /> },
-    { id: "analytics", label: t("plus.nav.progress"), icon: <Icons.TrendUp /> },
+    { id: "analytics", label: t("plus.analyticsTab"), icon: <Icons.Activity /> },
+    { id: "growth", label: t("plus.nav.progress"), icon: <Icons.TrendUp /> },
     { id: "care", label: t("plus.nav.careHealth"), icon: <Icons.Heart /> },
     { id: "tasks", label: t("plus.tasksTab"), icon: <Icons.Clipboard /> },
+    { id: "timeline", label: t("plus.timeline.title"), icon: <Icons.Clock /> },
   ];
 }
 
@@ -385,7 +386,7 @@ export default function App() {
             onEditEntry={(type, entry) => setModal({ type, entry })}
           />
         )}
-        {activeTab === "analytics" && (
+        {activeTab === "growth" && (
           <div className="tab-stack">
             <h2 className="tab-stack-heading">{t("tab.growth")}</h2>
             <GrowthTab
@@ -405,7 +406,10 @@ export default function App() {
               monthlyChanges={data.monthlyChanges}
               onEditEntry={(type, entry) => setModal({ type, entry })}
             />
-            <h2 className="tab-stack-heading">{t("plus.analyticsTab")}</h2>
+          </div>
+        )}
+        {activeTab === "analytics" && (
+          <div className="tab-stack">
             <AnalyticsTab
               childId={data.child?.id}
               hiddenCards={cardPrefs("analytics").hidden}
@@ -428,6 +432,7 @@ export default function App() {
         )}
         {activeTab === "timeline" && (
           <TimelineTab
+            onOpenSection={setActiveTab}
             hiddenCards={cardPrefs("timeline").hidden}
             childId={data.child?.id}
             childName={data.child?.first_name || t("header.defaultBabyName")}
@@ -464,12 +469,14 @@ export default function App() {
                 <div key={group.id} className="fab-group">
                   <button
                     className={`fab-group-label${isOpen ? " fab-group-label-active" : ""}`}
+                    aria-expanded={isOpen}
+                    aria-controls={`quick-group-${group.id}`}
                     onClick={() => setExpandedGroup(isOpen ? null : group.id)}
                   >
-                    {group.label}
+                    <span aria-hidden="true">{isOpen ? "▾" : "▸"}</span> {group.label}
                   </button>
                   {isOpen && (
-                    <div className="fab-group-items">
+                    <div className="fab-group-items" id={`quick-group-${group.id}`}>
                       {group.actions.map((action) => (
                         <button
                           key={action.id}

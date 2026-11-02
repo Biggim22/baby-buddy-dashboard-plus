@@ -41,7 +41,7 @@ DEFAULT_BATH_TIME = "10:00"
 # This is deliberately a small fixed vocabulary.  An external Home Assistant
 # automation may add a care record, but it must never turn the add-on into a
 # generic write endpoint for arbitrary local data.
-HA_CARE_TYPES = ("bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom")
+HA_CARE_TYPES = ("bath", "full_wash", "quick_wash", "caraway_oil", "ear_care", "nail_care", "skin_care", "custom")
 PAIRING_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 PAIRING_CODE_LIFETIME = timedelta(minutes=10)
 measurement_client: httpx.AsyncClient | None = None
@@ -344,7 +344,7 @@ class HomeAssistantCareEntryIn(BaseModel):
     """Narrow, idempotent payload accepted from the paired HA integration."""
 
     model_config = ConfigDict(extra="forbid")
-    care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]
+    care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "ear_care", "nail_care", "skin_care", "custom"]
     category_label: str = Field(default="", max_length=120, validate_default=True)
     time: datetime | None = None
     notes: str = Field(default="", max_length=2000)
@@ -380,7 +380,7 @@ class HomeAssistantTaskCompleteIn(BaseModel):
 
 class HomeAssistantCareQueryIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]
+    care_type: Literal["bath", "full_wash", "quick_wash", "caraway_oil", "ear_care", "nail_care", "skin_care", "custom"]
     category_label: str = Field(default="", max_length=120)
 
     @model_validator(mode="after")
@@ -470,6 +470,8 @@ class MedicationPreset(BaseModel):
 
 
 class SettingsPatch(BaseModel):
+    last_feeding_type: Literal["breast milk", "formula", "fortified breast milk", "solid food"] | None = None
+    last_feeding_method: Literal["bottle", "left breast", "right breast", "both breasts", "parent fed", "self fed"] | None = None
     bath_reminder_days: int | None = Field(default=None, ge=1, le=60)
     bath_reminder_time: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     language: Literal["de", "en", "it"] | None = None
@@ -483,7 +485,7 @@ class SettingsPatch(BaseModel):
     feeding_average_metric: Literal["volume", "duration", "frequency"] | None = None
     time_format: Literal["12h", "24h"] | None = None
     care_header_types: list[str] | None = None
-    ha_care_allowed_types: list[Literal["bath", "full_wash", "quick_wash", "caraway_oil", "nail_care", "skin_care", "custom"]] | None = None
+    ha_care_allowed_types: list[Literal["bath", "full_wash", "quick_wash", "caraway_oil", "ear_care", "nail_care", "skin_care", "custom"]] | None = None
     ha_task_allowed_ids: list[int] | None = Field(default=None, max_length=100)
     ha_measurement_allowed_types: list[Literal["temperature", "height", "weight"]] | None = None
     notification_targets: list[str] | None = None
@@ -816,21 +818,52 @@ async def list_care(
     child_id: int,
     limit: int = Query(100, ge=1, le=1000),
     care_type: str | None = Query(default=None, min_length=1, max_length=80),
+    offset: int = 0,
 ):
+    if offset < 0:
+        raise HTTPException(status_code=422, detail="Offset must not be negative")
     ensure_child_defaults(child_id)
     with db() as connection:
-        if care_type:
-            rows = connection.execute(
-                """SELECT * FROM care_entries WHERE child_id = ? AND care_type = ?
-                   ORDER BY time DESC LIMIT ?""",
-                (child_id, care_type, limit),
-            ).fetchall()
-        else:
-            rows = connection.execute(
-                "SELECT * FROM care_entries WHERE child_id = ? ORDER BY time DESC LIMIT ?",
-                (child_id, limit),
-            ).fetchall()
-    return {"results": [dict(row) for row in rows]}
+        where = "child_id = ?" + (" AND care_type = ?" if care_type else "")
+        params = [child_id, care_type] if care_type else [child_id]
+        count = connection.execute(f"SELECT COUNT(*) FROM care_entries WHERE {where}", params).fetchone()[0]
+        rows = connection.execute(
+            f"SELECT * FROM care_entries WHERE {where} ORDER BY julianday(time) DESC, id DESC LIMIT ? OFFSET ?",
+            [*params, limit, offset],
+        ).fetchall()
+        latest = connection.execute(
+            """SELECT * FROM (
+                SELECT *, ROW_NUMBER() OVER (PARTITION BY care_type ORDER BY julianday(time) DESC, id DESC) AS rank
+                FROM care_entries WHERE child_id = ?
+            ) WHERE rank = 1 ORDER BY julianday(time) DESC, id DESC""", (child_id,)
+        ).fetchall()
+    return {"results": [dict(row) for row in rows], "count": count,
+            "next_offset": offset + len(rows) if offset + len(rows) < count else None,
+            "latest": [{key: row[key] for key in row.keys() if key != "rank"} for row in latest]}
+
+
+@router.get("/api/local/timeline")
+async def local_timeline(child_id: int, start: datetime, end: datetime, limit: int = 200, offset: int = 0):
+    """Read actual care/completion timestamps, never inferred due-date events."""
+    if start.utcoffset() is None or end.utcoffset() is None or end <= start or not 1 <= limit <= 1000 or offset < 0:
+        raise HTTPException(status_code=422, detail="Invalid timeline range or pagination")
+    query = """SELECT * FROM (
+        SELECT 'care-' || id AS id, 'care' AS kind, id AS source_id, time,
+               care_type, category_label AS title, notes, '' AS due_date
+        FROM care_entries WHERE child_id = ?
+        UNION ALL
+        SELECT 'task-' || t.id || '-' || c.due_date AS id, 'task' AS kind,
+               t.id AS source_id, c.completed_at AS time, '' AS care_type,
+               t.title, '' AS notes, c.due_date
+        FROM task_completions c JOIN task_definitions t ON t.id = c.task_id
+        WHERE t.child_id = ? AND t.task_kind = 'task'
+    ) WHERE julianday(time) >= julianday(?) AND julianday(time) < julianday(?)"""
+    params = [child_id, child_id, start.isoformat(), end.isoformat()]
+    with db() as connection:
+        count = connection.execute(f"SELECT COUNT(*) FROM ({query})", params).fetchone()[0]
+        rows = connection.execute(query + " ORDER BY julianday(time), id LIMIT ? OFFSET ?", [*params, limit, offset]).fetchall()
+    return {"results": [dict(row) for row in rows], "count": count,
+            "next": offset + len(rows) < count}
 
 
 @router.post("/api/local/care", status_code=201)

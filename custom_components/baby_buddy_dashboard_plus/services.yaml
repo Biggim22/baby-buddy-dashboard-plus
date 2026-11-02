@@ -7,7 +7,7 @@ get_last_care:
       required: true
       selector:
         select:
-          options: [bath, full_wash, quick_wash, caraway_oil, nail_care, skin_care, custom]
+          options: [bath, full_wash, quick_wash, caraway_oil, ear_care, nail_care, skin_care, custom]
     category_label:
       name: Custom category
       description: Required for custom Care.
@@ -83,6 +83,7 @@ log_care:
             - quick_wash
             - caraway_oil
             - nail_care
+            - ear_care
             - skin_care
             - custom
     category_label:

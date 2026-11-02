@@ -63,6 +63,7 @@ describe("SettingsModal language selector", () => {
 describe("SettingsModal error log", () => {
   it("shows the empty state when there are no logged errors", () => {
     render(<SettingsModal connected onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: "System" }));
     expect(screen.getByText(/No errors recorded/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Export log/ })).toBeDisabled();
   });
@@ -70,6 +71,7 @@ describe("SettingsModal error log", () => {
   it("lists logged errors and enables export/clear", () => {
     logError("Save feeding", "Network request failed");
     render(<SettingsModal connected onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: "System" }));
 
     expect(screen.getByText("Network request failed")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Export log/ })).toBeEnabled();
@@ -78,6 +80,7 @@ describe("SettingsModal error log", () => {
   it("clears the log when Clear is clicked", () => {
     logError("Save note", "boom");
     render(<SettingsModal connected onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: "System" }));
 
     fireEvent.click(screen.getByRole("button", { name: /Clear/ }));
     expect(screen.getByText(/No errors recorded/)).toBeInTheDocument();
