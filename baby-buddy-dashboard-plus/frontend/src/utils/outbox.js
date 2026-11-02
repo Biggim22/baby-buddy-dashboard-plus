@@ -7,6 +7,7 @@ import { logError } from "./errorLog";
 const STORAGE_KEY = "bbdp_outbox_v1";
 const CONNECTION_STATUSES = new Set([401, 408, 429, 502, 503, 504]);
 const LOCAL_TIMER_PREFIX = "local-";
+const CLOCK_MARGIN_MS = 5000;
 
 function load() {
   try {
@@ -134,7 +135,9 @@ export async function sendOrQueue(send, endpoint, options = {}) {
   const method = (options.method || "GET").toUpperCase();
   if (!isQueueable(method, endpoint)) return send(endpoint, options);
 
-  const savedAt = new Date().toISOString();
+  // A few seconds early on purpose: Baby Buddy rejects times "in the future", and a phone
+  // clock running even half a second ahead of the server would trip that check.
+  const savedAt = new Date(Date.now() - CLOCK_MARGIN_MS).toISOString();
   let body = options.body ? JSON.parse(options.body) : undefined;
   let finishTimerId = null;
 
@@ -150,14 +153,14 @@ export async function sendOrQueue(send, endpoint, options = {}) {
   }
 
   const isTimerCreate = method === "POST" && endpoint === "timers/";
-  if (isTimerCreate && body && !body.start) body = { ...body, start: savedAt };
-
+  // Online, Baby Buddy sets the timer start itself; only a queued timer needs its own.
   try {
     return await send(endpoint, { ...options, body: body ? JSON.stringify(body) : undefined });
   } catch (err) {
     if (!isConnectionError(err)) throw err;
 
     if (isTimerCreate) {
+      if (!body.start) body = { ...body, start: savedAt };
       const localTimerId = newId(LOCAL_TIMER_PREFIX);
       enqueue({ method, endpoint, body, localTimerId });
       return { id: localTimerId, name: body.name, start: body.start, child: body.child, queued: true };
