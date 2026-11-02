@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.5 (Timers start again)
+
+- Fixed: starting a timer failed with "Date/time can not be in the future" in 2.5.4. The timer request carried the phone's own clock time, and a phone running even half a second ahead of the Baby Buddy server was rejected. Online timers are started by Baby Buddy itself again, as before 2.5.4.
+- Times the dashboard fills in for a queued timer or for an entry saved from an offline timer are set five seconds early, so a slightly fast phone clock can no longer push them into the future.
+
 ## 2.5.4 (Nothing lost when the connection drops)
 
 - Baby Buddy writes that fail because the connection is down (no response, timeout, a Home Assistant 401 while its session renews, 408/429 or 502–504) are kept in an outbox in the browser's local storage and sent again, in order, at the start of the next sync. Errors Baby Buddy itself reports, such as a validation error, still appear in the form as before.

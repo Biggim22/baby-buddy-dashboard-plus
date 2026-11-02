@@ -54,6 +54,22 @@ describe("sendOrQueue", () => {
     expect(getOutbox()[0]).toMatchObject({ method: "DELETE", endpoint: "sleep/1/" });
   });
 
+  it("lets Baby Buddy set the start of a timer created online", async () => {
+    const send = vi.fn().mockResolvedValue({ id: 1, start: "2026-11-02T08:44:20Z" });
+    await sendOrQueue(send, "timers/", body({ child: 1, name: "sleep" }));
+    expect(JSON.parse(send.mock.calls[0][1].body).start).toBeUndefined();
+  });
+
+  it("never sends an end time in the future, even with a phone clock slightly ahead", async () => {
+    const send = vi.fn().mockRejectedValueOnce(offline());
+    const timer = await sendOrQueue(send, "timers/", body({ child: 1, name: "sleep" }));
+    send.mockResolvedValueOnce({ id: 9 });
+    await sendOrQueue(send, "sleep/", body({ child: 1, timer: timer.id }));
+    const sent = JSON.parse(send.mock.calls[1][1].body);
+    expect(Date.parse(sent.end)).toBeLessThanOrEqual(Date.now() - 4000);
+    expect(Date.parse(timer.start)).toBeLessThanOrEqual(Date.now() - 4000);
+  });
+
   it("starts a local timer when the timer cannot be created", async () => {
     const send = vi.fn().mockRejectedValue(offline());
     const res = await sendOrQueue(send, "timers/", body({ child: 1, name: "sleep" }));
