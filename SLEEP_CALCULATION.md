@@ -1,4 +1,19 @@
-# Sleep calculation (2.6 preparation, local only)
+# Sleep calculation (2.6)
+
+The shared calculation was published and installed for testing in 2.6.0-rc.1.
+The original implementation notes below are historical, not the current release status.
+
+## Follow-up included in 2.6.0
+
+- Overview sleep history now includes explicit start/end dates. Analytics labels
+  include dates and explain that calendar days split nights at midnight.
+- A gap between completed records is unrecorded time, not proof of wakefulness.
+  It contributes no recorded sleep; the dashboard must never invent a missing
+  interval or extend a record automatically.
+- Added synthetic regression tests for overnight gaps and date labels. The shared
+  calculation itself is unchanged. Private diagnostic records are not stored here.
+- Full frontend suite: 203 tests passed in Europe/Berlin; production build passed.
+  These follow-up changes are included in the stable 2.6.0 publication.
 
 ## Shared rules
 

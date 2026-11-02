@@ -11,15 +11,15 @@ Baby Buddy Dashboard Plus remains a dashboard and companion for [Baby Buddy](htt
 - **Research** — worth investigating before a product decision.
 - **Candidate** — useful idea, but not committed to a release.
 
-## 2.6 preparation — shared sleep calculation (local implementation)
+## 2.6.0 — Completed
 
 The first block unifies calendar/rolling sleep calculations across Overview,
 Analytics and reports, includes intervals crossing the requested boundaries,
 loads all sleep pages and marks today's incomplete calendar totals.
 See [sleep calculation rules and verification](SLEEP_CALCULATION.md).
-Packaged as 2.6.0-rc.1 for the maintainer-authorized installation test. Device acceptance is pending; sections marked local implementation describe this candidate's development history.
+The maintainer tested 2.6.0-rc.1 and approved stable publication. Version 2.6.0 also includes multi-select History filters (with a sleep/feeding shortcut and per-child device-local persistence), explicit sleep dates and a midnight-split explanation. The compact paediatric report below is not included.
 
-### Navigation and interval-aware history — local implementation
+### Navigation and interval-aware history — Completed
 
 - Six separate tabs: Overview, Analytics, Progress, Care & meds, Tasks, History.
   Existing growth/analytics card preference identifiers are unchanged.
@@ -35,9 +35,9 @@ Packaged as 2.6.0-rc.1 for the maintainer-authorized installation test. Device a
   Running timers remain separate. Unchecking a task removes its completion;
   deleted tasks have no retained completion audit log in the existing model.
 - Local tests cover interval boundaries, simultaneous activities, DST, paging,
-  edit actions and hidden categories. Device visual acceptance remains pending.
+  edit actions and hidden categories. RC1 device testing reported no further errors.
 
-### Compact Care history and ear care — local implementation
+### Compact Care history and ear care — Completed
 
 - Initially show ten records, with a visible shown/total count, ten-record
   server-side pagination, retry on failure and a collapse action.
@@ -48,10 +48,10 @@ Packaged as 2.6.0-rc.1 for the maintainer-authorized installation test. Device a
   tracking category only, not a care recommendation or instruction.
 - HA recording and last-care access remain subject to the existing per-child
   allow-list; ear care is not enabled automatically. Both app and integration
-  will need the corresponding release when published.
-- No database migration, release version bump, push or live update in this block.
+  need the corresponding release for the new category.
+- No database migration is required.
 
-### Settings navigation — local implementation
+### Settings navigation — Completed
 
 - Five accessible tabs: General, Appearance, Content, Home Assistant, System.
 - Keep a single settings state mounted while switching tabs; preserve form drafts,
@@ -64,7 +64,7 @@ Packaged as 2.6.0-rc.1 for the maintainer-authorized installation test. Device a
 - System contains connection details, logs and version information.
 - No report redesign in this implementation block.
 
-### Compact paediatric summary — proposal, not implemented
+### Compact paediatric summary — Planned after 2.6.0, not implemented
 
 Target approximately half an A4 page and strictly less than one A4 page,
 with readable type and a few aggregate rows, never a detailed event dump.
@@ -75,7 +75,7 @@ from recorded zero counts. Daily summaries or individual entries should be an
 optional separate appendix/export, never the default report. Final scope awaits
 maintainer approval; complete pagination remains mandatory.
 
-### Everyday input and OLED polish — local implementation
+### Everyday input and OLED polish — Completed
 
 - Quick-entry category buttons have stronger borders, explicit expanded state,
   direction indicators and a 44px minimum height without bright background fills.

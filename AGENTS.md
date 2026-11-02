@@ -20,7 +20,7 @@ A commit link under this repository's GitHub URL can also belong to the original
 
 | Last reviewed upstream commit | Reviewed | Decision |
 | --- | --- | --- |
-| `d947d2f` Merge PR #12 (HA add-on 1.7.8 for the DST fix) | 2026-11-01 | `b5fc0e9` (sleep-history cutoff as UTC instant, avoids the ambiguous hour at the DST fallback): Plus had the same code; re-implemented in 2.5.4 at the maintainer's request (2026-11-02). `81037c0` and the merges only bump the upstream add-on version: not relevant. |
+| `d947d2f` Merge PR #12 (HA add-on 1.7.8 for the DST fix) | 2026-11-02 | Rechecked for the RC1 follow-up; no new upstream commits. `b5fc0e9` (sleep-history cutoff as UTC instant, avoids the ambiguous hour at the DST fallback): Plus had the same code; re-implemented in 2.5.4 at the maintainer's request (2026-11-02). `81037c0` and the merges only bump the upstream add-on version: not relevant. |
 
 ## Product rules
 

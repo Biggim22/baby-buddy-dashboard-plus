@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.6.0
+
+- Add multi-select History filters, an all-categories reset and a sleep/feeding shortcut. Remember the selection per child on the current device; hidden categories also stay out of interval context labels.
+- Show explicit start/end dates in Overview sleep history and dates on Analytics sleep periods. Explain how calendar-day totals split overnight sessions at midnight.
+- Add synthetic regression coverage for filter persistence, interval endpoints, hidden context and unrecorded overnight gaps. No sleep records or calculation rules are changed.
+- Promote the tested RC1 feature set below to the stable release: shared sleep calculations, separate navigation tabs, interval-aware History with Care/tasks, Care pagination and ear care, grouped settings, remembered feeding defaults and OLED polish.
+- App and optional integration versions are 2.6.0. Update both when upgrading from a version before RC1 to obtain the new ear-care service selection; existing pairing and permissions are retained.
+- The compact half-page paediatric report remains planned for a later release. Existing ambiguous offline-write replay limitations still apply; this release does not change the retry mechanism.
+
 ## 2.6.0-rc.1 (Release candidate — device acceptance pending)
 
 - Share sleep interval calculations across Overview, Analytics and reports, including midnight, DST, overlapping records and complete sleep pagination.

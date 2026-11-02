@@ -5,6 +5,7 @@ import { colors } from "../utils/colors";
 import { formatElapsedHM, formatTime } from "../utils/formatters";
 import { useTranslation, getLocale } from "../locales";
 import { buildTimeline, loadTimelinePages, timelineBounds } from "../utils/timeline";
+import { getTabCardGroups } from "../utils/tabCards";
 
 function localDate(value) {
   const date = new Date(value);
@@ -12,6 +13,14 @@ function localDate(value) {
 }
 const empty = { feedings: [], sleep: [], changes: [], tummy: [], medications: [], notes: [], local: [] };
 const icons = { feeding: Icons.Bottle, sleep: Icons.Moon, tummy: Icons.Sun, diaper: Icons.Droplet, medication: Icons.Pill, note: Icons.StickyNote, care: Icons.Heart, task: Icons.Clipboard };
+const filterKey = childId => `bbd_timeline_filters_${childId}`;
+function readFilters(childId) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(filterKey(childId)));
+    if (Array.isArray(saved)) return saved.filter(type => Object.hasOwn(icons, type));
+  } catch { /* Storage is optional. */ }
+  return Object.keys(icons);
+}
 
 export default function TimelineTab({ childId, childName, hiddenCards = [], onEditEntry, onOpenSection }) {
   const t = useTranslation();
@@ -19,6 +28,14 @@ export default function TimelineTab({ childId, childName, hiddenCards = [], onEd
   const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [filtersByChild, setFiltersByChild] = useState({});
+  const selected = filtersByChild[childId] ?? readFilters(childId);
+  const selectedKey = selected.join(",");
+  const categories = getTabCardGroups(t)[0].cards.filter(card => !hiddenCards.includes(card.id));
+  const updateFilters = next => {
+    setFiltersByChild(previous => ({ ...previous, [childId]: next }));
+    try { localStorage.setItem(filterKey(childId), JSON.stringify(next)); } catch { /* Keep session selection. */ }
+  };
   const today = localDate(new Date());
 
   useEffect(() => {
@@ -69,8 +86,9 @@ export default function TimelineTab({ childId, childName, hiddenCards = [], onEd
       title: t("plus.timeline.medicationGiven", { name: childName }), detail: [entry.name || entry.medication, entry.dosage != null ? `${entry.dosage} ${entry.dosage_unit || ""}` : "", entry.notes].filter(Boolean).join(" · "), entry }));
     data.notes.forEach(entry => points.push({ id: `note-${entry.id}`, time: entry.time, type: "note", color: colors.note,
       title: t("plus.timeline.noteAdded", { name: childName }), detail: entry.note, entry }));
-    return buildTimeline(points.filter(x => !hiddenCards.includes(x.type)), intervals.filter(x => !hiddenCards.includes(x.type)), day);
-  }, [data, day, childName, hiddenCards, t]);
+    const visible = x => !hiddenCards.includes(x.type) && selected.includes(x.type);
+    return buildTimeline(points.filter(visible), intervals.filter(visible), day);
+  }, [data, day, childName, hiddenCards, t, selectedKey]);
 
   const moveDay = direction => {
     const next = new Date(`${day}T12:00:00`);
@@ -83,11 +101,22 @@ export default function TimelineTab({ childId, childName, hiddenCards = [], onEd
       <h2>{new Date(`${day}T12:00:00`).toLocaleDateString(getLocale(), { day: "numeric", month: "long", year: "numeric" })}</h2>
       <button onClick={() => moveDay(1)} disabled={day >= today} aria-label={t("plus.timeline.nextDay")}>›</button>
     </div>
+    <fieldset className="timeline-filters">
+      <legend>{t("timelineFilters")}</legend>
+      <div className="timeline-filter-actions">
+        <button type="button" onClick={() => updateFilters(Object.keys(icons))}>{t("timelineFilterAll")}</button>
+        <button type="button" onClick={() => updateFilters(["sleep", "feeding"])}>{t("timelineFilterSleepFeeding")}</button>
+      </div>
+      <div className="timeline-filter-options">{categories.map(category => <label key={category.id}>
+        <input type="checkbox" checked={selected.includes(category.id)} onChange={() => updateFilters(selected.includes(category.id) ? selected.filter(type => type !== category.id) : [...selected, category.id])} />
+        {category.label}
+      </label>)}</div>
+    </fieldset>
     <p className="form-hint">{t("timelineGuide")}</p>
     <p className="form-hint">{t("timelineCoverage")}</p>
     {loading && <div className="empty-state">{t("plus.loading")}</div>}
     {error && <div className="preview-error">{error}</div>}
-    {!loading && !error && events.length === 0 && <div className="empty-state">{t("plus.timeline.empty")}</div>}
+    {!loading && !error && events.length === 0 && <div className="empty-state">{t("timelineFilterEmpty")}</div>}
     {!loading && !error && <ol className="timeline-list interval-timeline">
       {events.map(event => {
         const Icon = icons[event.type];

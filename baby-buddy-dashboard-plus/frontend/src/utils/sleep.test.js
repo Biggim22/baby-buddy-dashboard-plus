@@ -1,12 +1,26 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { sleepTotals, sleepWindows, calendarWindow } from "./sleep";
-import { aggregateSleepByDay, buildDailyReport, dailySleepTotals } from "./formatters";
+import { aggregateSleepByDay, buildDailyReport, dailySleepTotals, formatSleepDateRange } from "./formatters";
+import { setLanguage } from "../locales";
 
 const entry = (start, end) => ({ start, end });
 const future = new Date("2030-01-01T00:00:00Z");
 afterEach(() => vi.useRealTimers());
 
 describe("shared sleep intervals", () => {
+  it("does not invent sleep in an unrecorded overnight gap", () => {
+    const records = [entry("2026-06-12T21:00:00", "2026-06-12T23:59:00"), entry("2026-06-13T08:00:00", "2026-06-13T09:00:00")];
+    const { start, end } = calendarWindow("2026-06-13T12:00:00");
+    expect(sleepTotals(records, start, end, future)).toEqual({ day: 60, night: 0, total: 60 });
+  });
+  it("shows both calendar dates for a night spanning midnight", () => {
+    setLanguage("de");
+    const label = formatSleepDateRange("2026-06-12T21:00:00", "2026-06-13T07:00:00");
+    expect(label).toContain("12.06.2026");
+    expect(label).toContain("13.06.2026");
+    expect(label).toContain("21:00");
+    expect(label).toContain("07:00");
+  });
   it("clips sleep entering and leaving the selected day", () => {
     const { start, end } = calendarWindow("2026-11-01T12:00:00");
     const result = sleepTotals([

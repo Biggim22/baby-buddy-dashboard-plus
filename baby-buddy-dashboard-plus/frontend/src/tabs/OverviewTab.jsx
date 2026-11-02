@@ -5,7 +5,7 @@ import TimelineItem from "../components/TimelineItem";
 import DiaperBadge from "../components/DiaperBadge";
 import { Icons } from "../components/Icons";
 import { colors } from "../utils/colors";
-import { aggregateByDayOfWeek, aggregateSleepByDay, dailyDiaperTotals, formatTime, parseDuration } from "../utils/formatters";
+import { aggregateByDayOfWeek, aggregateSleepByDay, dailyDiaperTotals, formatTime, formatSleepDateRange, parseDuration } from "../utils/formatters";
 import { useUnits } from "../utils/units";
 import { api } from "../api";
 import { TaskOverview } from "../components/TaskPanel";
@@ -160,7 +160,7 @@ export default function OverviewTab({ childId, feedings, weeklyFeedings, sleepEn
     ),
     sleep: (
       <SectionCard key="sleep" title={t("plus.overview.sleepHistory")} icon={<Icons.Moon />} color={colors.sleep}>
-        {sleepEntries.length ? <ExpandableList t={t} listKey="sleep" entries={sleepEntries} expanded={expanded} setExpanded={setExpanded} render={(entry, index, shown) => <div className="entry-clickable" key={entry.id} onClick={() => onEditEntry?.("sleep", entry)}><TimelineItem time={`${formatTime(entry.start)}–${entry.end ? formatTime(entry.end) : t("time.ongoing")}`} label={`${durationText(entry.duration)}${entry.nap ? ` · ${t("plus.timeline.nap")}` : ""}`} detail={relativeTime(entry.end || entry.start, t)} color={colors.sleep} isLast={index === shown.length - 1} /></div>} /> : <Empty>{t("plus.overview.noSleep")}</Empty>}
+        {sleepEntries.length ? <ExpandableList t={t} listKey="sleep" entries={sleepEntries} expanded={expanded} setExpanded={setExpanded} render={(entry, index, shown) => <div className="entry-clickable" key={entry.id} onClick={() => onEditEntry?.("sleep", entry)}><TimelineItem time={`${formatTime(entry.start)}–${entry.end ? formatTime(entry.end) : t("time.ongoing")}`} label={`${durationText(entry.duration)}${entry.nap ? ` · ${t("plus.timeline.nap")}` : ""}`} detail={`${formatSleepDateRange(entry.start, entry.end)} · ${relativeTime(entry.end || entry.start, t)}`} color={colors.sleep} isLast={index === shown.length - 1} /></div>} /> : <Empty>{t("plus.overview.noSleep")}</Empty>}
         {showOverviewCharts && <CompactHistoryChart data={sleepChart} dataKey="hours" color={colors.sleep} unit=" h" />}
         {showOverviewCharts && <p className="form-hint">{t("sleepCalendarTitle")}. {t("sleepExplanation")}</p>}
       </SectionCard>

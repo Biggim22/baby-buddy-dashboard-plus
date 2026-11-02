@@ -1,4 +1,9 @@
 export default {
+  timelineFilters: "Filter timeline",
+  timelineFilterAll: "All categories",
+  timelineFilterSleepFeeding: "Sleep & feeding only",
+  timelineFilterEmpty: "No entries for this day and filter selection.",
+  sleepCalendarSplit: "Calendar days split sleep at midnight. One night can therefore contribute to two daily bars. The list instead shows each complete sleep session.",
   pumpingDiscovery: "Pumping: Enable the Analytics pumping card under Cards per tab. Logging and the pumping timer then become available.",
   calendarDiscovery: "Calendar: Select a calendar already configured in Home Assistant in the Calendar section. Import and export are then available under Tasks and appointments.",
   settingsGroups: {"general":"General","appearance":"Appearance","content":"Content","ha":"Home Assistant","system":"System"},

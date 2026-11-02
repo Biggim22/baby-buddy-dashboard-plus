@@ -5,6 +5,7 @@ import { api } from "../api";
 import { setLanguage } from "../locales";
 vi.mock("../api", () => ({ api: Object.fromEntries(["getLocalTimeline", "getFeedings", "getSleep", "getChanges", "getTummyTimes", "getMedication", "getNotes"].map(name => [name, vi.fn()])) }));
 beforeEach(() => {
+  localStorage.clear();
   setLanguage("en");
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-01T18:00:00"));
@@ -48,4 +49,36 @@ it("does not leak a hidden sleep category through context labels", async () => {
   render(<TimelineTab childId={1} childName="Demo" hiddenCards={["sleep"]} />);
   await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(1));
   expect(screen.queryByText("During:")).not.toBeInTheDocument();
+});
+
+it("filters sleep and feeding together, including endpoints, without reloading records", async () => {
+  api.getSleep.mockResolvedValue({ results: [{ id: 1, start: "2026-11-01T10:00:00", end: "2026-11-01T12:00:00" }] });
+  api.getFeedings.mockResolvedValue({ results: [{ id: 2, start: "2026-11-01T11:00:00", end: "2026-11-01T11:20:00" }] });
+  api.getChanges.mockResolvedValue({ results: [{ id: 3, time: "2026-11-01T11:10:00", wet: true }] });
+  render(<TimelineTab childId={1} childName="Demo" />);
+  await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(5));
+  fireEvent.click(screen.getByRole("button", { name: "Sleep & feeding only" }));
+  expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  expect(screen.getAllByText("Start")).toHaveLength(2);
+  expect(screen.getAllByText("End")).toHaveLength(2);
+  expect(JSON.parse(localStorage.getItem("bbd_timeline_filters_1"))).toEqual(["sleep", "feeding"]);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Sleep" }));
+  expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  expect(screen.queryByText("During:")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "All categories" }));
+  expect(screen.getAllByRole("listitem")).toHaveLength(5);
+  expect(api.getSleep).toHaveBeenCalledTimes(1);
+});
+
+it("restores per-child filters and allows an empty selection without affecting other children", async () => {
+  localStorage.setItem("bbd_timeline_filters_1", JSON.stringify([]));
+  localStorage.setItem("bbd_timeline_filters_2", JSON.stringify(["sleep", "obsolete"]));
+  const view = render(<TimelineTab childId={1} />);
+  await screen.findByText("No entries for this day and filter selection.");
+  expect(screen.getAllByRole("checkbox").every(box => !box.checked)).toBe(true);
+  view.rerender(<TimelineTab childId={2} />);
+  expect(screen.getByRole("checkbox", { name: "Sleep" })).toBeChecked();
+  expect(screen.getAllByRole("checkbox").filter(box => box.checked)).toHaveLength(1);
+  view.rerender(<TimelineTab childId={1} />);
+  expect(screen.getAllByRole("checkbox").every(box => !box.checked)).toBe(true);
 });

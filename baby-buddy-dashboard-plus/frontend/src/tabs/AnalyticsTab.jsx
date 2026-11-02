@@ -157,7 +157,7 @@ function tummyData(entries, locale) {
 }
 
 function windowLabel(start, end, locale) {
-  const options = { weekday: "short", hour: "2-digit", minute: "2-digit", hour12: getTimeFormat() === "12h" };
+  const options = { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: getTimeFormat() === "12h" };
   return `${start.toLocaleString(locale, options)}–${end.toLocaleString(locale, options)}`;
 }
 
@@ -208,6 +208,7 @@ export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = []
       </div>}
       {!hiddenCards.includes("sleep") && <SectionCard style={cardStyle("sleep")} title={sleepPeriodMode === "calendar" ? t("sleepCalendarTitle") : t("plus.analytics.rollingSleep")} icon={<Icons.Moon />} color={colors.sleep} actions={<SleepPeriodMenu value={sleepPeriodMode} onChange={updateSleepPeriodMode} t={t} />}>
         <p className="form-hint">{t("sleepExplanation")}</p>
+        {sleepPeriodMode === "calendar" && <p className="form-hint">{t("sleepCalendarSplit")}</p>}
         <div className="segmented-control">
           {[{ id: "day", label: t("plus.analytics.daySleep") }, { id: "night", label: t("plus.analytics.nightSleep") }, { id: "total", label: t("plus.analytics.totalSleep") }].map((item) => <button key={item.id} className={sleepMode === item.id ? "selected" : ""} onClick={() => setSleepMode(item.id)}>{item.label}</button>)}
         </div>

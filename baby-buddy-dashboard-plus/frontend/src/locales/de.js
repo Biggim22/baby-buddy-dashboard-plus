@@ -1,4 +1,9 @@
 export default {
+  timelineFilters: "Verlauf filtern",
+  timelineFilterAll: "Alle Kategorien",
+  timelineFilterSleepFeeding: "Nur Schlaf & Füttern",
+  timelineFilterEmpty: "Keine Einträge für diesen Tag und diese Filterauswahl.",
+  sleepCalendarSplit: "Kalendertage teilen Schlaf um Mitternacht auf. Eine Nacht kann deshalb zu zwei Tagesbalken beitragen. Die Liste zeigt dagegen jeweils die ganze Schlafphase.",
   pumpingDiscovery: "Abpumpen: Unter „Karten je Tab“ die Abpumpen-Karte der Auswertung einblenden. Danach sind Erfassung und Timer verfügbar.",
   calendarDiscovery: "Kalender: Im Abschnitt „Kalender“ einen in Home Assistant eingerichteten Kalender auswählen. Import und Export findest du anschließend bei Aufgaben und Terminen.",
   settingsGroups: {"general":"Allgemein","appearance":"Darstellung","content":"Inhalte","ha":"Home Assistant","system":"System"},

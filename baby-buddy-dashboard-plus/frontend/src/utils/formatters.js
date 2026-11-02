@@ -1,6 +1,12 @@
 import { translate as t, getLocale, getTimeFormat } from "../locales";
 import { sleepHoursOnDate } from "./sleep";
 
+// Include both dates: a bare clock range hides which calendar days a night spans.
+export function formatSleepDateRange(start, end) {
+  const label = value => new Date(value).toLocaleDateString(getLocale(), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) + " " + formatTime(value);
+  return `${label(start)} → ${end ? label(end) : t("time.ongoing")}`;
+}
+
 // A <input type="datetime-local"> value ("2026-07-23T07:22") has no timezone info. Sending
 // it to the Baby Buddy API as-is (just appending ":00") is naive-string, timezone-blind -
 // Baby Buddy's Django backend parses it according to ITS OWN configured TIME_ZONE setting,

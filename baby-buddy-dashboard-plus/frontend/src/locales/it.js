@@ -1,4 +1,9 @@
 export default {
+  timelineFilters: "Filtra cronologia",
+  timelineFilterAll: "Tutte le categorie",
+  timelineFilterSleepFeeding: "Solo sonno e poppate",
+  timelineFilterEmpty: "Nessuna registrazione per questo giorno e questi filtri.",
+  sleepCalendarSplit: "I giorni di calendario dividono il sonno a mezzanotte. Una notte può quindi contribuire a due barre giornaliere. L'elenco mostra invece ogni periodo di sonno completo.",
   pumpingDiscovery: "Tiralatte: Attivare la scheda nelle statistiche tramite Schede per pagina. Saranno disponibili registrazione e timer.",
   calendarDiscovery: "Calendario: Selezionare nella sezione Calendario un calendario già configurato in Home Assistant. Importazione ed esportazione sono disponibili in Attività e appuntamenti.",
   settingsGroups: {"general":"Generale","appearance":"Aspetto","content":"Contenuti","ha":"Home Assistant","system":"Sistema"},
