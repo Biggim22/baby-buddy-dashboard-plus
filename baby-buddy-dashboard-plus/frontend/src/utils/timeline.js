@@ -53,6 +53,29 @@ export function layoutTimeline(rows, order = "newest") {
   return { lanes: lanes.length, rows: displayed.map((row, i) => ({ ...row, brackets: segments[i] })) };
 }
 
+export function timelineCategoryCounts(rows) {
+  const ids = new Map();
+  rows.forEach(row => {
+    if (!ids.has(row.type)) ids.set(row.type, new Set());
+    ids.get(row.type).add(row.intervalId || row.id);
+  });
+  return Object.fromEntries([...ids].map(([type, values]) => [type, values.size]));
+}
+
+export function timelineSpan(first, second, allRows, visibleIds) {
+  const start = Math.min(+new Date(first.time), +new Date(second.time));
+  const end = Math.max(+new Date(first.time), +new Date(second.time));
+  if (end - start < 60000) return null;
+  const hidden = new Set(allRows.filter(row => !visibleIds.has(row.id) && (row.intervalId
+    ? +new Date(row.start) < end && (!row.end || +new Date(row.end) > start)
+    : +new Date(row.time) > start && +new Date(row.time) < end)).map(row => row.intervalId || row.id));
+  return { start: new Date(start).toISOString(), end: new Date(end).toISOString(), time: new Date(start).toISOString(), hidden: hidden.size };
+}
+
+export function sleepOverlaps(entries, start, end) {
+  return entries.some(entry => +new Date(entry.start) < +new Date(end) && (!entry.end || +new Date(entry.end) > +new Date(start)));
+}
+
 export async function loadTimelinePages(fetchPage, params) {
   const results = [];
   const seen = new Set();

@@ -1,5 +1,8 @@
 # Baby Buddy Dashboard Plus
 
+> **2.6.2** — Tagesbezogene Verlaufsfilter mit passenden Symbolen/Farben, ein standardmäßig ausgeschalteter Nachtragemodus und das Alter der letzten erfolgreichen Aktualisierung. Nachträge öffnen die bekannten Formulare mit änderbaren Zeitvorschlägen; Schlafüberschneidungen werden vor dem Speichern geprüft.
+> Day-specific History filters with matching icons/colours, opt-in backfill mode and elapsed time since the last successful refresh. Backfills reuse existing forms with editable suggested times and sleep-overlap checks. App-only update; integration remains at 2.6.0.
+
 > **2.6.1** — Der Verlauf verbindet zusammengehörige Einträge mit farbigen Klammern. Neueste Einträge stehen standardmäßig oben; die Reihenfolge lässt sich unter Einstellungen → Inhalte → Karten je Tab umkehren.
 > History now connects matching interval endpoints with coloured brackets. Newest entries appear first by default; reverse the order under Settings → Content → Cards per tab. Only the app needs updating; the optional integration remains at 2.6.0.
 

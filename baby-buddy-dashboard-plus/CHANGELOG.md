@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.6.2
+
+- Limit History filters to categories present on the selected day, with matching icons/colours, plain labels and distinct record counts. Unchecking a category does not remove its filter.
+- Add an opt-in backfill mode, off by default and reset on child/day changes. Use explicit touch-friendly buttons above the timeline and between distinct timestamps; hidden records are counted without treating time spans as proof of missing sleep.
+- Reuse create forms for sleep, feeding, diapers, tummy time, medication, notes and care with editable suggested times. Task confirmations retain their existing flow. Saving refreshes the selected day and reveals the new category.
+- Recheck saved sleep intervals before a backfill and block overlaps or failed verification without changing existing records. Running timers remain separate; this does not repair the existing ambiguous offline-write replay limitation.
+- Improve modal keyboard focus, Escape dismissal and focus return.
+- Show elapsed time since the last successful refresh beside its clock time (seconds, minutes or hours), including during connection errors.
+- App-only update; the optional integration remains at 2.6.0. No health-record migration.
+
 ## 2.6.1
 
 - Connect interval endpoints in History with coloured brackets; overlapping intervals use separate lanes, including across intervening point events and day-boundary continuation markers.

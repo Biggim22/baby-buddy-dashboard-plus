@@ -15,7 +15,7 @@ function toLocalDatetime(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export default function FeedingForm({ childId, timerId, entry, onDone, onClose }) {
+export default function FeedingForm({ childId, timerId, entry, initialValues, onDone, onClose }) {
   const t = useTranslation();
   const units = useUnits();
   const isEdit = !!entry;
@@ -41,8 +41,8 @@ export default function FeedingForm({ childId, timerId, entry, onDone, onClose }
   const [type, setType] = useState(entry?.type || "breast milk");
   const [method, setMethod] = useState(entry?.method || "bottle");
   const [amount, setAmount] = useState(entry?.amount != null ? String(entry.amount) : "");
-  const [start, setStart] = useState(entry?.start ? toLocalDatetime(new Date(entry.start)) : toLocalDatetime(fifteenMinsAgo));
-  const [end, setEnd] = useState(entry?.end ? toLocalDatetime(new Date(entry.end)) : toLocalDatetime(now));
+  const [start, setStart] = useState(toLocalDatetime(new Date(entry?.start || initialValues?.start || fifteenMinsAgo)));
+  const [end, setEnd] = useState(toLocalDatetime(new Date(entry?.end || initialValues?.end || now)));
   const [notes, setNotes] = useState(entry?.notes || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -124,6 +124,7 @@ export default function FeedingForm({ childId, timerId, entry, onDone, onClose }
   return (
     <Modal title={isEdit ? t("feedingForm.editTitle") : t("feedingForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
+        {initialValues && <p className="form-hint">{t("timelineBackfillReview")}</p>}
         <FormField label={t("form.type")}>
           <FormSelect options={TYPES} value={type} onChange={(e) => { touched.current = true; setType(e.target.value); }} />
         </FormField>

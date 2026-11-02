@@ -1,0 +1,30 @@
+import { it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import SleepForm from "./SleepForm";
+import { api } from "../../api";
+vi.mock("../../api", () => ({ api: { getSleep: vi.fn(), createSleep: vi.fn(), updateSleep: vi.fn() } }));
+const initialValues = { start: "2026-06-01T01:00:00", end: "2026-06-01T05:00:00" };
+beforeEach(() => vi.resetAllMocks());
+it("checks fresh records and blocks overlapping backfills without editing existing data", async () => {
+  api.getSleep.mockResolvedValue({ results: [{ id: 8, start: "2026-06-01T02:00:00", end: "2026-06-01T03:00:00" }] });
+  const done = vi.fn();
+  const view = render(<SleepForm childId={1} initialValues={initialValues} onDone={done} onClose={vi.fn()} />);
+  fireEvent.submit(view.container.ownerDocument.querySelector("form"));
+  await screen.findByText(/overlaps an existing sleep record/);
+  expect(api.getSleep).toHaveBeenCalledWith(expect.objectContaining({ child: 1, end_min: new Date(initialValues.start).toISOString() }));
+  expect(api.createSleep).not.toHaveBeenCalled();
+  expect(api.updateSleep).not.toHaveBeenCalled();
+  expect(done).not.toHaveBeenCalled();
+});
+it("does not save if overlap verification fails and allows clearing a date without crashing", async () => {
+  api.getSleep.mockRejectedValue(new Error("offline"));
+  render(<SleepForm childId={1} initialValues={initialValues} onDone={vi.fn()} onClose={vi.fn()} />);
+  const start = document.querySelector('input[type="datetime-local"]');
+  fireEvent.change(start, { target: { value: "" } });
+  expect(start).toHaveValue("");
+  fireEvent.change(start, { target: { value: "2026-06-01T01:00" } });
+  fireEvent.submit(start.closest("form"));
+  await waitFor(() => expect(api.getSleep).toHaveBeenCalledTimes(1));
+  expect(api.createSleep).not.toHaveBeenCalled();
+  await screen.findByText(/Save failed/);
+});

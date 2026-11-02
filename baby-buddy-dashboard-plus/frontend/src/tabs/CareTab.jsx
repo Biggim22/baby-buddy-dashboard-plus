@@ -28,7 +28,7 @@ function localDatetime(value = new Date()) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
-function CareForm({ childId, entry, onClose, onSaved }) {
+export function CareForm({ childId, entry, initialValues, onClose, onSaved }) {
   const t = useTranslation();
   const labels = getCareLabels(t);
   const types = CARE_TYPES
@@ -36,7 +36,7 @@ function CareForm({ childId, entry, onClose, onSaved }) {
     .map((value) => ({ value, label: labels[value] }));
   const [type, setType] = useState(entry?.care_type || "bath");
   const [category, setCategory] = useState(entry?.category_label || "");
-  const [time, setTime] = useState(localDatetime(entry?.time));
+  const [time, setTime] = useState(localDatetime(entry?.time || initialValues?.time));
   const [notes, setNotes] = useState(entry?.notes || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -87,6 +87,7 @@ function CareForm({ childId, entry, onClose, onSaved }) {
   return (
     <Modal title={entry ? t("plus.editCare") : t("plus.addCare")} onClose={onClose}>
       <form onSubmit={submit}>
+        {initialValues && <p className="form-hint">{t("timelineBackfillReview")}</p>}
         <FormField label={t("plus.category")}>
           <FormSelect value={type} onChange={(event) => setType(event.target.value)} options={types} />
         </FormField>

@@ -12,10 +12,10 @@ function toLocalDatetime(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export default function NoteForm({ childId, entry, onDone, onClose }) {
+export default function NoteForm({ childId, entry, initialValues, onDone, onClose }) {
   const t = useTranslation();
   const isEdit = !!entry;
-  const [time, setTime] = useState(entry?.time ? toLocalDatetime(new Date(entry.time)) : toLocalDatetime(new Date()));
+  const [time, setTime] = useState(toLocalDatetime(new Date(entry?.time || initialValues?.time || new Date())));
   const [note, setNote] = useState(entry?.note || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -55,6 +55,7 @@ export default function NoteForm({ childId, entry, onDone, onClose }) {
   return (
     <Modal title={isEdit ? t("noteForm.editTitle") : t("noteForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
+        {initialValues && <p className="form-hint">{t("timelineBackfillReview")}</p>}
         <FormField label={t("common.time")}>
           <FormInput
             type="datetime-local"

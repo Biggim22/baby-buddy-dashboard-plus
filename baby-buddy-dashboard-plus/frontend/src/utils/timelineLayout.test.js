@@ -1,9 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { buildTimeline, layoutTimeline } from "./timeline";
+import { buildTimeline, layoutTimeline, timelineSpan, sleepOverlaps } from "./timeline";
 const day = "2026-06-10";
 const now = new Date("2026-06-11T12:00:00");
 const interval = (id, start, end) => ({ id, start: `${day}T${start}`, end: `${day}T${end}`, color: "orange" });
 describe("timeline bracket layout", () => {
+  it("counts hidden intervals only once even if no endpoint lies inside the span", () => {
+    const rows = buildTimeline([{ id: "a", time: `${day}T11:00:00` }, { id: "b", time: `${day}T12:00:00` }], [interval("hidden", "10:00:00", "13:00:00")], day, now);
+    const a = rows.find(row => row.id === "a"), b = rows.find(row => row.id === "b");
+    const visible = new Set(["a", "b"]);
+    expect(timelineSpan(a, b, rows, visible).hidden).toBe(1);
+    expect(timelineSpan(b, a, rows, visible)).toEqual(timelineSpan(a, b, rows, visible));
+    expect(timelineSpan(a, a, rows, visible)).toBeNull();
+    expect(sleepOverlaps([interval("x", "10:00:00", "11:00:00")], `${day}T11:00:00`, `${day}T12:00:00`)).toBe(false);
+  });
   it.each(["newest", "oldest"])("connects nested intervals over point events in %s order", order => {
     const events = buildTimeline([{ id: "diaper", time: `${day}T11:15:00` }], [interval("sleep", "10:00:00", "12:00:00"), interval("feed", "11:00:00", "11:30:00")], day, now);
     const result = layoutTimeline(events, order);

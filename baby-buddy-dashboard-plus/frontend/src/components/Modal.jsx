@@ -1,9 +1,30 @@
 import { Icons } from "./Icons";
 import { useTranslation } from "../locales";
 import { createPortal } from "react-dom";
+import { useEffect, useId, useRef } from "react";
 
 export default function Modal({ title, children, onClose, maxWidth = 400, className = "" }) {
   const t = useTranslation();
+  const dialog = useRef(null);
+  const titleId = useId();
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const previous = document.activeElement;
+    dialog.current?.focus();
+    const keydown = event => {
+      if (event.key === "Escape") { event.stopPropagation(); closeRef.current?.(); }
+      if (event.key !== "Tab") return;
+      const items = [...dialog.current.querySelectorAll('button, input, select, textarea, [tabindex="0"]')].filter(item => !item.disabled && item.type !== "hidden" && !item.closest('[hidden]'));
+      const first = items[0], last = items.at(-1);
+      if (!first) { event.preventDefault(); return; }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog.current)) { event.preventDefault(); first.focus(); }
+    };
+    const element = dialog.current;
+    element.addEventListener("keydown", keydown);
+    return () => { element.removeEventListener("keydown", keydown); if (previous?.isConnected) previous.focus(); };
+  }, []);
   return createPortal(
     <div
       className={className || undefined}
@@ -21,6 +42,11 @@ export default function Modal({ title, children, onClose, maxWidth = 400, classN
       onClick={onClose}
     >
       <div
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         style={{
           background: "var(--card-bg)",
           border: "1px solid var(--border)",
@@ -44,7 +70,7 @@ export default function Modal({ title, children, onClose, maxWidth = 400, classN
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>
+          <span id={titleId} style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>
             {title}
           </span>
           <button

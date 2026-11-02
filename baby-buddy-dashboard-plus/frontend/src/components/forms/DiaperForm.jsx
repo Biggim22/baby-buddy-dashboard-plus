@@ -12,7 +12,7 @@ function toLocalDatetime(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export default function DiaperForm({ childId, entry, onDone, onClose, preset }) {
+export default function DiaperForm({ childId, entry, initialValues, onDone, onClose, preset }) {
   const t = useTranslation();
   const isEdit = !!entry;
 
@@ -24,7 +24,7 @@ export default function DiaperForm({ childId, entry, onDone, onClose, preset }) 
     { value: "yellow", label: t("diaperForm.colors.yellow") },
   ];
 
-  const [time, setTime] = useState(entry?.time ? toLocalDatetime(new Date(entry.time)) : toLocalDatetime(new Date()));
+  const [time, setTime] = useState(toLocalDatetime(new Date(entry?.time || initialValues?.time || new Date())));
   const [wet, setWet] = useState(entry ? entry.wet : (preset === "wet" || preset === "both"));
   const [solid, setSolid] = useState(entry ? entry.solid : (preset === "solid" || preset === "both"));
   const [color, setColor] = useState(entry?.color || "");
@@ -68,6 +68,7 @@ export default function DiaperForm({ childId, entry, onDone, onClose, preset }) 
   return (
     <Modal title={isEdit ? t("diaperForm.editTitle") : t("diaperForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
+        {initialValues && <p className="form-hint">{t("timelineBackfillReview")}</p>}
         <FormField label={t("common.time")}>
           <FormInput
             type="datetime-local"

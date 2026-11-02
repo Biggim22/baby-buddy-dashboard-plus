@@ -6,7 +6,8 @@ import { getOutbox, subscribeOutbox } from "./utils/outbox";
 import { UnitContext } from "./utils/units";
 import { Icons } from "./components/Icons";
 import { colors } from "./utils/colors";
-import { getAge, formatElapsed, formatTime, toApiDatetime } from "./utils/formatters";
+import { getAge, formatElapsed, toApiDatetime } from "./utils/formatters";
+import SyncAge from "./components/SyncAge";
 import { subscribeErrorLog, getErrorLog } from "./utils/errorLog";
 import { clickableProps } from "./utils/a11y";
 import { applyTheme } from "./utils/theme";
@@ -222,11 +223,7 @@ export default function App() {
           {data.error && (
             <span className="sync-error">{t("header.connectionError")}</span>
           )}
-          {data.lastSync && !data.error && (
-            <span className="sync-time">
-              {formatTime(data.lastSync)}
-            </span>
-          )}
+          <SyncAge lastSync={data.lastSync} />
           <button
             className={`refresh-btn${data.syncing ? " refresh-btn-syncing" : ""}`}
             style={{ position: "relative" }}
@@ -432,6 +429,7 @@ export default function App() {
         )}
         {activeTab === "timeline" && (
           <TimelineTab
+            onDataChanged={data.refetch}
             sortOrder={tabCardSettings.timelineSort || "newest"}
             onOpenSection={setActiveTab}
             hiddenCards={cardPrefs("timeline").hidden}

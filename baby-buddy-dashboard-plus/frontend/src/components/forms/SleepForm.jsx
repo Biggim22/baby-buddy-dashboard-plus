@@ -7,6 +7,7 @@ import { colors } from "../../utils/colors";
 import { logError } from "../../utils/errorLog";
 import { useTranslation } from "../../locales";
 import { formatElapsedHM, localDatetimeDurationMs, toApiDatetime } from "../../utils/formatters";
+import { sleepOverlaps } from "../../utils/timeline";
 
 const LONG_SLEEP_MS = 18 * 60 * 60 * 1000;
 
@@ -15,13 +16,13 @@ function toLocalDatetime(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export default function SleepForm({ childId, timerId, entry, onDone, onClose }) {
+export default function SleepForm({ childId, timerId, entry, initialValues, onDone, onClose }) {
   const t = useTranslation();
   const isEdit = !!entry;
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  const [start, setStart] = useState(entry?.start ? toLocalDatetime(new Date(entry.start)) : toLocalDatetime(oneHourAgo));
-  const [end, setEnd] = useState(entry?.end ? toLocalDatetime(new Date(entry.end)) : toLocalDatetime(now));
+  const [start, setStart] = useState(toLocalDatetime(new Date(entry?.start || initialValues?.start || oneHourAgo)));
+  const [end, setEnd] = useState(toLocalDatetime(new Date(entry?.end || initialValues?.end || now)));
   const [notes, setNotes] = useState(entry?.notes || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -45,6 +46,14 @@ export default function SleepForm({ childId, timerId, entry, onDone, onClose }) 
     setSaving(true);
     setError(null);
     try {
+      if (initialValues && !isEdit && !timerId) {
+        const records = await api.getSleep({ child: childId, end_min: toApiDatetime(start), start_max: toApiDatetime(end) });
+        if (sleepOverlaps(records.results || [], toApiDatetime(start), toApiDatetime(end))) {
+          setSaving(false);
+          setError(t("timelineSleepOverlap"));
+          return;
+        }
+      }
       if (isEdit) {
         const data = {
           start: toApiDatetime(start),
@@ -85,6 +94,8 @@ export default function SleepForm({ childId, timerId, entry, onDone, onClose }) 
   return (
     <Modal title={isEdit ? t("sleepForm.editTitle") : t("sleepForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
+        {initialValues && <p className="form-hint">{t("timelineBackfillReview")}</p>}
+        {initialValues && sleepOverlaps(initialValues.sleep || [], new Date(start), new Date(end)) && <p role="status" className="form-hint">{t("timelineSleepOverlap")}</p>}
         {!isEdit && timerId ? (
           <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
             {t("form.timerNote", { type: t("action.sleep").toLowerCase() })}

@@ -14,14 +14,14 @@ function toLocalDatetime(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export default function TummyTimeForm({ childId, timerId, entry, onDone, onClose }) {
+export default function TummyTimeForm({ childId, timerId, entry, initialValues, onDone, onClose }) {
   const t = useTranslation();
   const isEdit = !!entry;
   const now = new Date();
   const tenMinsAgo = new Date(now.getTime() - 10 * 60 * 1000);
   const [milestone, setMilestone] = useState(entry?.milestone || "");
-  const [start, setStart] = useState(entry?.start ? toLocalDatetime(new Date(entry.start)) : toLocalDatetime(tenMinsAgo));
-  const [end, setEnd] = useState(entry?.end ? toLocalDatetime(new Date(entry.end)) : toLocalDatetime(now));
+  const [start, setStart] = useState(toLocalDatetime(new Date(entry?.start || initialValues?.start || tenMinsAgo)));
+  const [end, setEnd] = useState(toLocalDatetime(new Date(entry?.end || initialValues?.end || now)));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -81,6 +81,7 @@ export default function TummyTimeForm({ childId, timerId, entry, onDone, onClose
   return (
     <Modal title={isEdit ? t("tummyForm.editTitle") : t("tummyForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
+        {initialValues && <p className="form-hint">{t("timelineBackfillReview")}</p>}
         {!isEdit && timerId ? (
           <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
             {t("form.timerNote", { type: t("action.tummyTime").toLowerCase() })}

@@ -11,6 +11,14 @@ Baby Buddy Dashboard Plus remains a dashboard and companion for [Baby Buddy](htt
 - **Research** — worth investigating before a product decision.
 - **Candidate** — useful idea, but not committed to a release.
 
+## 2.6.2 — Completed
+
+- Day-specific coloured/icon filters and record counts, independent of current selection.
+- Session-only backfill mode, off by default; explicit general and between-event actions with editable suggestions, hidden-event notices and fresh sleep-overlap checks.
+- Refresh and reveal newly created records without changing the selected day or sort order. Keep task confirmations in their dedicated flow.
+- Elapsed time since successful refresh in the header; keyboard-accessible modal focus handling.
+- See [implementation and acceptance plan](PLAN_2.6.2.md). No live installation was part of this release preparation; mobile visual acceptance remains with the maintainer.
+
 ## 2.6.1 — Completed
 
 - Coloured brackets connect interval endpoints across intervening events; overlapping intervals use separate lanes and clipped day-boundary markers remain connected.

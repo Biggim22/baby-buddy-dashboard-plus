@@ -22,7 +22,7 @@ function parseNextDoseHours(interval) {
   return hours ? String(hours) : "";
 }
 
-export default function MedicationForm({ childId, entry, onDone, onClose }) {
+export default function MedicationForm({ childId, entry, initialValues, onDone, onClose }) {
   const t = useTranslation();
   const isEdit = !!entry;
 
@@ -37,7 +37,7 @@ export default function MedicationForm({ childId, entry, onDone, onClose }) {
   const [name, setName] = useState(entry?.name || "");
   const [dosage, setDosage] = useState(entry?.dosage != null ? String(entry.dosage) : "");
   const [dosageUnit, setDosageUnit] = useState(entry?.dosage_unit || "");
-  const [time, setTime] = useState(entry?.time ? toLocalDatetime(new Date(entry.time)) : toLocalDatetime(new Date()));
+  const [time, setTime] = useState(toLocalDatetime(new Date(entry?.time || initialValues?.time || new Date())));
   const [nextDoseHours, setNextDoseHours] = useState(parseNextDoseHours(entry?.next_dose_interval));
   const [notes, setNotes] = useState(entry?.notes || "");
   const [saving, setSaving] = useState(false);
@@ -106,6 +106,7 @@ export default function MedicationForm({ childId, entry, onDone, onClose }) {
   return (
     <Modal title={isEdit ? t("medicationForm.editTitle") : t("medicationForm.logTitle")} onClose={onClose}>
       <form onSubmit={handleSubmit}>
+        {initialValues && <p className="form-hint">{t("timelineBackfillReview")}</p>}
         {presets.length > 0 && (
           <div className="medication-preset-picker" role="group" aria-label={t("plus.medicationList.pick")}>
             <span>{t("plus.medicationList.pick")}</span>
