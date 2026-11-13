@@ -120,13 +120,15 @@ export default function OverviewTab({ childId, feedings, weeklyFeedings, sleepEn
   }, [settings.overview_sections]);
   const visible = (section) => !(settings.overview_hidden || []).includes(section);
   const latestFeeding = feedings[0];
+  // Baby Buddy's own "time diff based on end" is a site setting that the API does not expose.
+  const feedingAgeBasis = settings.overview_feeding_age_basis === "start" ? "start" : "end";
   const latestSleep = sleepEntries[0];
   const latestDiaper = changes[0];
   const latestSolid = lastSolidChange || changes.find((entry) => entry.solid);
   const latestMedication = medications[0];
   const latestTummy = tummyTimes[0];
   const latestCards = {
-    feeding: <LatestEvent t={t} key="feeding" title={t("plus.overview.latestFeeding")} icon={<Icons.Bottle />} color={colors.feeding} entry={latestFeeding} time={latestFeeding?.end || latestFeeding?.start} primary={latestFeeding && `${formatTime(latestFeeding.start)}–${formatTime(latestFeeding.end || latestFeeding.start)} · ${durationText(latestFeeding.duration)}`} detail={feedingLabel(latestFeeding, units.volume, t)} onClick={() => onEditEntry?.("feeding", latestFeeding)} />,
+    feeding: <LatestEvent t={t} key="feeding" title={t("plus.overview.latestFeeding")} icon={<Icons.Bottle />} color={colors.feeding} entry={latestFeeding} time={feedingAgeBasis === "start" ? latestFeeding?.start || latestFeeding?.end : latestFeeding?.end || latestFeeding?.start} primary={latestFeeding && `${formatTime(latestFeeding.start)}–${formatTime(latestFeeding.end || latestFeeding.start)} · ${durationText(latestFeeding.duration)}`} detail={feedingLabel(latestFeeding, units.volume, t)} onClick={() => onEditEntry?.("feeding", latestFeeding)} />,
     sleep: <LatestEvent t={t} key="sleep" title={t("plus.overview.latestSleep")} icon={<Icons.Moon />} color={colors.sleep} entry={latestSleep} time={latestSleep?.end || latestSleep?.start} primary={latestSleep && `${formatTime(latestSleep.start)}–${latestSleep.end ? formatTime(latestSleep.end) : t("time.ongoing")}`} detail={latestSleep && durationText(latestSleep.duration)} onClick={() => onEditEntry?.("sleep", latestSleep)} />,
     diapers: <LatestEvent t={t} key="diapers" title={t("plus.overview.latestDiaper")} icon={<Icons.Droplet />} color={colors.diaper} entry={latestDiaper} time={latestDiaper?.time} primary={latestDiaper && `${formatTime(latestDiaper.time)} · ${diaperType(latestDiaper, t)}`} extra={latestSolid ? t("plus.overview.lastSolid", { age: relativeTime(latestSolid.time, t), time: formatTime(latestSolid.time) }) : t("plus.overview.noSolid")} onClick={() => onEditEntry?.("diaper", latestDiaper)} />,
     medication: <LatestEvent t={t} key="medication" title={t("plus.overview.latestMedication")} icon={<Icons.Heart />} color={colors.temp} entry={latestMedication} time={latestMedication?.time} primary={latestMedication && `${latestMedication.name}${latestMedication.dosage != null ? ` · ${latestMedication.dosage} ${latestMedication.dosage_unit}` : ""}`} detail={nextDoseText(latestMedication, t)} onClick={() => onEditEntry?.("medication", latestMedication)} />,

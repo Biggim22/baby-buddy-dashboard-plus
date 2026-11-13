@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.3
+
+- Add a per-child Overview setting that measures "Latest feeding" from the start or the end of the feeding. The default stays "end", so nothing changes until a family switches it. Baby Buddy's own "Time diff between feedings based on end" site setting is not exposed by its API, so Dashboard Plus keeps its own choice.
+- App-only update; the optional integration remains at 2.6.0. No health records are changed.
+
 ## 2.6.2
 
 - Limit History filters to categories present on the selected day, with matching icons/colours, plain labels and distinct record counts. Unchecking a category does not remove its filter.

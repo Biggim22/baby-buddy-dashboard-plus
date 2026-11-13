@@ -55,6 +55,16 @@ async def test_timeline_sort_order_defaults_persists_and_is_child_scoped(monkeyp
         plus_local.SettingsPatch(timeline_sort_order="invalid")
 
 
+async def test_overview_feeding_age_basis_defaults_to_end_and_is_child_scoped(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    assert (await plus_local.get_local_settings(1))["overview_feeding_age_basis"] == "end"
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(overview_feeding_age_basis="start"))
+    assert (await plus_local.get_local_settings(1))["overview_feeding_age_basis"] == "start"
+    assert (await plus_local.get_local_settings(2))["overview_feeding_age_basis"] == "end"
+    with pytest.raises(ValidationError):
+        plus_local.SettingsPatch(overview_feeding_age_basis="invalid")
+
+
 async def test_care_pagination_and_latest_are_independent(monkeypatch, tmp_path):
     use_temp_database(monkeypatch, tmp_path)
     with plus_local.db() as connection:
