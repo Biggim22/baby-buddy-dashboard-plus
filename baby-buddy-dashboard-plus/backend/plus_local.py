@@ -294,6 +294,9 @@ def ensure_child_defaults(child_id: int) -> None:
             "media_player_mode": "custom",
             "calendar_entities": json.dumps([]),
             "analytics_sleep_period_mode": "rolling",
+            # A sleep session counts as night when at least half of it lies in this window.
+            "sleep_night_start": "19:00",
+            "sleep_night_end": "07:00",
             "timeline_sort_order": "newest",
             "tab_hidden_cards": json.dumps({}),
             "tab_card_order": json.dumps({}),
@@ -497,6 +500,8 @@ class SettingsPatch(BaseModel):
     media_player_mode: Literal["custom", "alexa_tts", "alexa_announce"] | None = None
     calendar_entities: list[str] | None = None
     analytics_sleep_period_mode: Literal["rolling", "calendar"] | None = None
+    sleep_night_start: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+    sleep_night_end: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     timeline_sort_order: Literal["newest", "oldest"] | None = None
     tab_hidden_cards: dict[str, list[str]] | None = None
     tab_card_order: dict[str, list[str]] | None = None

@@ -6,6 +6,7 @@ import { setTimeFormat, useTranslation } from "../locales";
 import { applyAppearance } from "../utils/appearance";
 import { getTabCardGroups, orderCards } from "../utils/tabCards";
 import { createPresetId, hasPresetNamed, MEDICATION_UNITS, normalizePresets } from "../utils/medicationPresets";
+import { normalizeNightWindow, nightWindowFromSettings } from "../utils/sleep";
 
 const CATEGORY_LABELS = {
   latest: "latest",
@@ -39,6 +40,8 @@ const DEFAULTS = {
   media_player_mode: "custom",
   calendar_entities: [],
   analytics_sleep_period_mode: "rolling",
+  sleep_night_start: "19:00",
+  sleep_night_end: "07:00",
   timeline_sort_order: "newest",
   tab_hidden_cards: {},
   tab_card_order: {},
@@ -77,6 +80,12 @@ const SECTIONS = [
   ["calendar", "plus.settings.calendar"],
   ["homeAssistant", "plus.settings.homeAssistantCare"],
 ];
+
+// An empty or zero-length window would make every phase a day phase; keep the default instead.
+const nightWindowPatch = (settings) => {
+  const night = normalizeNightWindow({ start: settings.sleep_night_start, end: settings.sleep_night_end });
+  return { sleep_night_start: night.start, sleep_night_end: night.end };
+};
 
 const isTrue = (value) => value === true || String(value).toLowerCase() === "true";
 const asObject = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
@@ -120,6 +129,9 @@ export default function SettingsTab({ childId, embedded = false, group = null })
       next.overview_show_charts = result.overview_show_charts === true || String(result.overview_show_charts).toLowerCase() === "true";
       next.overview_show_history = isTrue(result.overview_show_history);
       next.overview_feeding_age_basis = result.overview_feeding_age_basis === "start" ? "start" : "end";
+      const night = nightWindowFromSettings(result);
+      next.sleep_night_start = night.start;
+      next.sleep_night_end = night.end;
       next.appearance_schedule_enabled = result.appearance_schedule_enabled === true || String(result.appearance_schedule_enabled).toLowerCase() === "true";
       const careHeader = Array.isArray(result.care_header_types)
         ? result.care_header_types.filter((type) => CARE_HEADER_TYPES.includes(type))
@@ -249,6 +261,7 @@ export default function SettingsTab({ childId, embedded = false, group = null })
         media_player_mode: settings.media_player_mode,
         calendar_entities: settings.calendar_entities,
         analytics_sleep_period_mode: settings.analytics_sleep_period_mode,
+        ...nightWindowPatch(settings),
         timeline_sort_order: settings.timeline_sort_order,
         tab_hidden_cards: settings.tab_hidden_cards,
         tab_card_order: settings.tab_card_order,
@@ -330,6 +343,12 @@ export default function SettingsTab({ childId, embedded = false, group = null })
       {section("general", t("settingsGroups.general"), <Icons.Settings />, "#64748B", <>
         <label>{t("plus.timeFormat")}<select value={settings.time_format} onChange={(event) => update("time_format", event.target.value)}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></label>
         <p className="form-hint">{t("settingsPanelTitleHint")}</p>
+        <div className="settings-subheading">{t("plus.settings.nightWindow")}</div>
+        <div className="preview-form-grid settings-two-columns">
+          <label>{t("plus.displaySettings.from")}<input type="time" value={settings.sleep_night_start} onChange={(event) => update("sleep_night_start", event.target.value)} /></label>
+          <label>{t("plus.displaySettings.until")}<input type="time" value={settings.sleep_night_end} onChange={(event) => update("sleep_night_end", event.target.value)} /></label>
+        </div>
+        <p className="form-hint">{t("plus.settings.nightWindowHint")}</p>
       </>)}
 
       {section("appearance", t("plus.settings.appearance"), <Icons.Activity />, "#F59E0B", <>

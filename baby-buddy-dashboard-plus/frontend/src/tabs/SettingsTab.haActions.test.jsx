@@ -137,3 +137,15 @@ it("keeps overview history cards off until the family switches them on", async (
   fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
   await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({ overview_show_history: true })));
 });
+
+it("loads and saves the per-child night window for sleep analysis", async () => {
+  api.getLocalSettings.mockResolvedValue({ sleep_night_start: "20:00", sleep_night_end: "06:00" });
+  const { baseElement } = render(<SettingsModal childId={2} connected onClose={vi.fn()} />);
+  expect(await screen.findByText("Night window for sleep analysis")).toBeVisible();
+  const timeInputs = () => [...baseElement.querySelectorAll('input[type="time"]')];
+  const start = await waitFor(() => { const input = timeInputs().find(item => item.value === "20:00" && item.closest("section").id === "settings-general"); expect(input).toBeTruthy(); return input; });
+  expect(timeInputs().some(item => item.value === "06:00" && item.closest("section").id === "settings-general")).toBe(true);
+  fireEvent.change(start, { target: { value: "18:30" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
+  await waitFor(() => expect(api.updateLocalSettings).toHaveBeenCalledWith(2, expect.objectContaining({ sleep_night_start: "18:30", sleep_night_end: "06:00" })));
+});
