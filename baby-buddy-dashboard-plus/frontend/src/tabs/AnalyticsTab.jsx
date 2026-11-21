@@ -20,7 +20,7 @@ import { useUnits } from "../utils/units";
 import { getLanguage, getLocale, getTimeFormat, useTranslation } from "../locales";
 import DiaperSizeCalculator from "../components/DiaperSizeCalculator";
 import PumpingCard from "../components/PumpingCard";
-import { sleepWindows } from "../utils/sleep";
+import { sleepWindows, nightWindowFromSettings, DEFAULT_NIGHT_WINDOW } from "../utils/sleep";
 
 function dateKey(value) {
   const date = new Date(value);
@@ -167,14 +167,15 @@ export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = []
   const units = useUnits();
   const [sleepMode, setSleepMode] = useState("total");
   const [sleepPeriodMode, setSleepPeriodMode] = useState("rolling");
+  const [nightWindow, setNightWindow] = useState(DEFAULT_NIGHT_WINDOW);
   const [breastChartMode, setBreastChartMode] = useState(() => { try { return localStorage.getItem("bbd_breast_chart_mode") || "count"; } catch { return "count"; } });
   const updateBreastChartMode = (mode) => { setBreastChartMode(mode); try { localStorage.setItem("bbd_breast_chart_mode", mode); } catch { /* preference remains active for this session */ } };
-  const shownSleep = useMemo(() => sleepWindows(weeklySleep, sleepPeriodMode).map(window => ({
+  const shownSleep = useMemo(() => sleepWindows(weeklySleep, sleepPeriodMode, 7, new Date(), nightWindow).map(window => ({
     day: (sleepPeriodMode === "calendar" ? window.start : window.end).toLocaleDateString(locale, { weekday: "short" }) + (window.partial ? " *" : ""),
     period: windowLabel(window.start, window.end, locale),
     minuten: window[sleepMode],
-  })), [weeklySleep, sleepMode, sleepPeriodMode, locale]);
-  useEffect(() => { if (childId) api.getLocalSettings(childId).then((value) => setSleepPeriodMode(value.analytics_sleep_period_mode || "rolling")).catch(() => {}); }, [childId]);
+  })), [weeklySleep, sleepMode, sleepPeriodMode, nightWindow, locale]);
+  useEffect(() => { if (childId) api.getLocalSettings(childId).then((value) => { setSleepPeriodMode(value.analytics_sleep_period_mode || "rolling"); setNightWindow(nightWindowFromSettings(value)); }).catch(() => {}); }, [childId]);
   const updateSleepPeriodMode = (mode) => { setSleepPeriodMode(mode); if (childId) api.updateLocalSettings(childId, { analytics_sleep_period_mode: mode }).catch(() => {}); };
   const breasts = useMemo(() => breastData(weeklyFeedings, locale), [weeklyFeedings, locale]);
   const bottles = useMemo(() => bottleData(weeklyFeedings, locale), [weeklyFeedings, locale]);
@@ -207,7 +208,7 @@ export default function AnalyticsTab({ childId, hiddenCards = [], cardOrder = []
         <div className="analytics-summary-card" style={{ "--summary-color": colors.diaper }}><Icons.Droplet /><span>{t("plus.analytics.averageDiapers")}</span><strong>{averageDiapers ? `${averageDiapers}×` : "—"}</strong><small>{t("plus.analytics.perDay30")}</small></div>
       </div>}
       {!hiddenCards.includes("sleep") && <SectionCard style={cardStyle("sleep")} title={sleepPeriodMode === "calendar" ? t("sleepCalendarTitle") : t("plus.analytics.rollingSleep")} icon={<Icons.Moon />} color={colors.sleep} actions={<SleepPeriodMenu value={sleepPeriodMode} onChange={updateSleepPeriodMode} t={t} />}>
-        <p className="form-hint">{t("sleepExplanation")}</p>
+        <p className="form-hint">{t("sleepExplanation", nightWindow)}</p>
         {sleepPeriodMode === "calendar" && <p className="form-hint">{t("sleepCalendarSplit")}</p>}
         <div className="segmented-control">
           {[{ id: "day", label: t("plus.analytics.daySleep") }, { id: "night", label: t("plus.analytics.nightSleep") }, { id: "total", label: t("plus.analytics.totalSleep") }].map((item) => <button key={item.id} className={sleepMode === item.id ? "selected" : ""} onClick={() => setSleepMode(item.id)}>{item.label}</button>)}

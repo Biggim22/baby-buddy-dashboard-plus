@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.6.4
+
+- Night sleep is no longer capped at the length of a fixed clock window. Previously every sleep session was cut at 06:00 and 20:00, so no day could show more than 10 hours of night sleep. Now a merged sleep session counts as night sleep in full when at least half of it falls inside the night window, and it belongs to the morning on which that night ends. All other sessions are day sleep. The nap flag is still not used.
+- New per-child setting under Settings → General: night window for sleep analysis, default 19:00–07:00. Invalid or zero-length windows fall back to the default. Analytics and the paediatric report use it.
+- Total sleep is unchanged: it still counts only the time inside each calendar day or rolling window, so day + night can differ from total when a night reaches into the previous day. Averages and daily totals are not affected.
+- App-only update; the optional integration remains at 2.6.0. No health records are changed.
+
 ## 2.6.3
 
 - Add a per-child Overview setting that measures "Latest feeding" from the start or the end of the feeding. The default stays "end", so nothing changes until a family switches it. Baby Buddy's own "Time diff between feedings based on end" site setting is not exposed by its API, so Dashboard Plus keeps its own choice.

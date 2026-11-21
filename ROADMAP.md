@@ -11,6 +11,10 @@ Baby Buddy Dashboard Plus remains a dashboard and companion for [Baby Buddy](htt
 - **Research** — worth investigating before a product decision.
 - **Candidate** — useful idea, but not committed to a release.
 
+## 2.6.4 — Completed
+
+- Night sleep counts whole sessions (at least half inside the night window) instead of clipping at 06:00/20:00, which had capped night sleep at 10 hours. Per-child night window, default 19:00–07:00.
+
 ## 2.6.3 — Completed
 
 - Per-child Overview choice whether "Latest feeding" counts from the feeding's start or end; default "end". Baby Buddy's own site setting is not readable via its API.

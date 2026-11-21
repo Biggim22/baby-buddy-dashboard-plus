@@ -65,6 +65,18 @@ async def test_overview_feeding_age_basis_defaults_to_end_and_is_child_scoped(mo
         plus_local.SettingsPatch(overview_feeding_age_basis="invalid")
 
 
+async def test_sleep_night_window_defaults_persists_and_is_child_scoped(monkeypatch, tmp_path):
+    use_temp_database(monkeypatch, tmp_path)
+    settings = await plus_local.get_local_settings(1)
+    assert (settings["sleep_night_start"], settings["sleep_night_end"]) == ("19:00", "07:00")
+    await plus_local.patch_local_settings(1, plus_local.SettingsPatch(sleep_night_start="20:00", sleep_night_end="06:00"))
+    settings = await plus_local.get_local_settings(1)
+    assert (settings["sleep_night_start"], settings["sleep_night_end"]) == ("20:00", "06:00")
+    assert (await plus_local.get_local_settings(2))["sleep_night_start"] == "19:00"
+    with pytest.raises(ValidationError):
+        plus_local.SettingsPatch(sleep_night_start="24:00")
+
+
 async def test_care_pagination_and_latest_are_independent(monkeypatch, tmp_path):
     use_temp_database(monkeypatch, tmp_path)
     with plus_local.db() as connection:

@@ -1,5 +1,8 @@
 # Baby Buddy Dashboard Plus
 
+> **2.6.4** — Nachtschlaf wird nicht mehr bei 10 Stunden abgeschnitten: Eine Schlafphase zählt ganz als Nacht, wenn mindestens die Hälfte im Nachtfenster liegt. Das Nachtfenster ist pro Kind einstellbar (Einstellungen → Allgemein, Standard 19:00–07:00).
+> Night sleep is no longer cut off at 10 hours: a sleep session counts as night in full when at least half of it lies in the night window. The window is adjustable per child (Settings → General, default 19:00–07:00). App-only update; integration remains at 2.6.0.
+
 > **2.6.3** — Neue Übersicht-Einstellung: „Letzte Mahlzeit“ zählt wahlweise ab Beginn oder ab Ende der Mahlzeit (Standard bleibt „Ende“).
 > New Overview setting: "Latest feeding" can count from the start or the end of the feeding (default stays "end"). App-only update; integration remains at 2.6.0.
 

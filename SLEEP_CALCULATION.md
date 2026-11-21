@@ -19,14 +19,22 @@ The original implementation notes below are historical, not the current release 
 
 - `frontend/src/utils/sleep.js` is the common calculation for Overview,
   Analytics, the daily report and the paediatric report.
-- Completed intervals are clipped to the requested window and current time.
+- Completed intervals are merged first, then clipped to the requested window
+  and current time for the total.
   Invalid/reversed intervals and unfinished records are excluded. Running timers
   remain separate; they do not become saved sleep implicitly.
 - Calendar days use device-local midnight boundaries, including 23/25-hour DST
   days. Rolling windows are exactly 24 elapsed hours and do not overlap.
-- Day is 06:00–20:00 device-local time; night is the remainder. Baby Buddy's
-  `nap` flag does not determine this split. Day and night retain fractional
-  minutes internally and add up to the total before display rounding.
+- Since 2.6.4: a merged sleep phase is a night phase when at least half of it
+  lies inside the child's night window (setting `sleep_night_start` /
+  `sleep_night_end`, default 19:00–07:00, device-local). A night phase counts in
+  full and belongs to the morning on which its night window ends; a night still
+  in progress belongs to the newest window. Other phases are day phases and are
+  clipped to the window. Baby Buddy's `nap` flag does not determine this split.
+  Before 2.6.4 every phase was cut at 06:00/20:00, which capped night sleep at
+  10 hours per window.
+- Total stays the elapsed sleep inside the window. Day + night can therefore
+  differ from total when a night reaches across a window boundary.
 - Overlapping/duplicate intervals count once. No source records are modified.
 - Today's incomplete calendar day is marked with an asterisk and explained.
 - Sleep requests use `end_min` and `start_max`, so records beginning before the
@@ -38,7 +46,8 @@ The original implementation notes below are historical, not the current release 
 ## Verification
 
 Run the frontend suite with `TZ=Europe/Berlin` to exercise both DST transitions.
-Tests cover clipping at midnight, 06:00/20:00 boundaries, overlapping records,
+Tests cover clipping at midnight, the half-in-window night rule, custom night
+windows, nights assigned to their morning, overlapping records,
 invalid and unfinished intervals, partial today, contiguous rolling windows,
 shared totals across report/overview, and paginated reads. Also run in UTC.
 
